@@ -133,7 +133,7 @@ window.generateQuote = function() {
                 <span>${currentTotal}$</span>
             </div>
             <p class="receipt-meta" style="margin-top: 15px;">Data wystawienia: ${date}</p>
-            <div class="receipt-stamp">POTWIERDZONO</div>
+            <div class="receipt-stamp">SPRZEDANO</div>
         </div>
     `;
 
