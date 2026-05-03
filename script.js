@@ -17,7 +17,7 @@ const inventory = [
     { name: "Dziwna substancja", min: 90, max: 90, category: "inne" },
     { name: "Dziwna szara substancja", min: 160, max: 160, category: "inne" },
     { name: "Biżuteria", min: 210, max: 240, category: "biżuteria" },
-    { name: "Brudna Biżuteria", min: 130, max: 150, category: "biżuteria" },
+    { name: "Brudna biżuteria", min: 130, max: 150, category: "biżuteria" },
     { name: "Katana", min: 480, max: 480, category: "inne" },
     { name: "Mikrofala", min: 250, max: 280, category: "dom" },
     { name: "Mikser", min: 130, max: 160, category: "dom" },
