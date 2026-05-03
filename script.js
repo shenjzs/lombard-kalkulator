@@ -127,8 +127,8 @@ function generateQuote() {
     const employee = document.getElementById('employee-name-input').value;
 
     if (!hasItems) return showNotice("Koszyk jest pusty!", "warning");
-    if (!employee) return showNotice("Wpisz imię pracownika!", "warning");
-    if (!finalPrice) return showNotice("Wpisz kwotę transakcji!", "warning");
+    if (!employee) return showNotice("Wpisz dane pracownika!", "warning");
+    if (!finalPrice) return showNotice("Wpisz całkowitą kwotę transakcji!", "warning");
 
     currentReceiptID = generateID();
     document.getElementById('receipt-id-display').innerText = `NR: ${currentReceiptID}`;
