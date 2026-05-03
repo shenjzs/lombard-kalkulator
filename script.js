@@ -268,7 +268,7 @@ document.getElementById('reset-btn').onclick = () => {
     });
     document.getElementById('final-price-input').value = "";
     calculateTotal();
-    showNotice("Wyczyszczono wszystko!", "warning");
+    showNotice("Wyczyszczono koszyk!", "warning");
 };
 
 document.getElementById('send-discord-btn').onclick = sendToDiscord;
