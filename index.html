@@ -8,6 +8,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- STAŁE OGŁOSZENIE NA GÓRZE -->
+    <div class="announcement-banner">
+        <span class="announcement-icon">📢</span>
+        <div class="announcement-text">
+            Witajcie w ELCARTEL! Jakbyście wyhaczyli jakiś błąd to dajcie znać dc: @shenjzs
+        </div>
+    </div>
+
     <div class="container">
         <header>
             <h1>ELCARTEL PAWN SHOP</h1>
@@ -36,6 +44,10 @@
             <button id="reset-btn" class="reset-button">Wyczyść koszyk</button>
         </div>
     </div>
+
+    <!-- Kontener na powiadomienia (toasty) -->
+    <div id="toast-container" class="toast-container"></div>
+
     <script src="script.js"></script>
 </body>
 </html>
