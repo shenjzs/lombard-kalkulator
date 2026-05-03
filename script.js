@@ -26,7 +26,7 @@ const inventory = [
     { name: "Złote kolczyki", displayPrice: "200$", min: 200, max: 200, category: "biżuteria" },
     { name: "Złoty zegarek", displayPrice: "1000$-1500$", min: 1000, max: 1500, category: "biżuteria" },
     { name: "Rum", displayPrice: "400$-500$", min: 400, max: 500, category: "inne" },
-    { name: "Cygara", displayPrice: "1000$-1500$", min: 1000, max: 1500, category: "inne" },
+    { name: "Cygaro", displayPrice: "1000$-1500$", min: 1000, max: 1500, category: "inne" },
     { name: "Popsuty telefon", displayPrice: "90$-95$", min: 90, max: 95, category: "elektronika" }
 ];
 
@@ -122,7 +122,7 @@ document.getElementById('reset-btn').addEventListener('click', () => {
     document.getElementById('search-input').value = '';
     applyFilters();
     calculateTotal();
-    showNotice('Wyczyszczono wszystkie pola', 'warning');
+    showNotice('Wyczyszczono koszyk', 'warning');
 });
 
 function showNotice(message, type = 'success') {
