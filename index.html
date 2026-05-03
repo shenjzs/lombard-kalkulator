@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- STAŁE OGŁOSZENIE NA GÓRZE -->
     <div class="announcement-banner">
         <span class="announcement-icon">⚠️</span>
         <div class="announcement-text">
@@ -24,6 +23,14 @@
 
         <div class="search-container">
             <input type="text" id="search-input" placeholder="Wyszukaj przedmiot...">
+        </div>
+
+        <div class="categories-container">
+            <button class="cat-btn active" onclick="filterCategory('wszystkie', this)">Wszystkie</button>
+            <button class="cat-btn" onclick="filterCategory('elektronika', this)">Elektronika</button>
+            <button class="cat-btn" onclick="filterCategory('biżuteria', this)">Biżuteria</button>
+            <button class="cat-btn" onclick="filterCategory('dom', this)">Dom</button>
+            <button class="cat-btn" onclick="filterCategory('inne', this)">Inne</button>
         </div>
 
         <div id="items-list" class="items-grid">
@@ -45,7 +52,6 @@
         </div>
     </div>
 
-    <!-- Kontener na powiadomienia (toasty) -->
     <div id="toast-container" class="toast-container"></div>
 
     <script src="script.js"></script>
