@@ -6,8 +6,8 @@ const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/150054060482704607
 const inventory = [
     { name: "Zdobiona książka", min: 120, max: 120, category: "inne" },
     { name: "Dywan", min: 240, max: 240, category: "dom" },
-    { name: "Laptop", min: 570, max: 600, category: "elektronika" },
-    { name: "Komputer", min: 640, max: 680, category: "elektronika" },
+    { name: "Komputer (laptop)", min: 570, max: 600, category: "elektronika" },
+    { name: "Komputer (stacjonarny)", min: 640, max: 680, category: "elektronika" },
     { name: "Konsola", min: 370, max: 400, category: "elektronika" },
     { name: "Konsola DJ", min: 600, max: 640, category: "elektronika" },
     { name: "Kobieca plastikowa figurka", min: 90, max: 90, category: "inne" },
