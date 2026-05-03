@@ -53,10 +53,26 @@
         <div id="ad-section" class="ad-card hidden">
             <div class="ad-header">
                 <i class="fas fa-bullhorn"></i>
-                <span>Tekst ogłoszenia biznesowego</span>
+                <span>Kreator ogłoszenia</span>
             </div>
             <div class="ad-content">
-                <code id="ad-text">/businessAd  ~h~EL CARTEL PAWN SHOP ~y~OTWARTY!!! ~g~Drzwi są szeroko otwarte dla wszystkich klientów i osób szukających szybkiej gotówki! Zapraszamy.</code>
+                <!-- Panel wyboru tagów -->
+                <div class="ad-tags">
+                    <button type="button" class="tag-btn t-red" onclick="insertTag('~r~')">CZERWONY (~r~)</button>
+                    <button type="button" class="tag-btn t-green" onclick="insertTag('~g~')">ZIELONY (~g~)</button>
+                    <button type="button" class="tag-btn t-blue" onclick="insertTag('~b~')">NIEBIESKI (~b~)</button>
+                    <button type="button" class="tag-btn t-yellow" onclick="insertTag('~y~')">ZÓŁTY (~y~)</button>
+                    <button type="button" class="tag-btn t-purple" onclick="insertTag('~p~')">FIOLETOWY (~p~)</button>
+                    <button type="button" class="tag-btn t-orange" onclick="insertTag('~o~')">POMARAŃCZOWY (~o~)</button>
+                    <button type="button" class="tag-btn t-white" onclick="insertTag('~w~')">BIAŁY (~w~)</button>
+                    <button type="button" class="tag-btn t-bold" onclick="insertTag('~h~')">POGRUBIENIE (~h~)</button>
+                    <button type="button" class="tag-btn t-reset" onclick="insertTag('~s~')">(Reset) (~s~)</button>
+                </div>
+
+                <textarea id="ad-input" class="ad-textarea" placeholder="Wpisz treść reklamy...">/businessAd ~h~EL CARTEL PAWN SHOP ~y~OTWARTY!!! ~g~Drzwi są szeroko otwarte dla wszystkich klientów i osób szukających szybkiej gotówki! Zapraszamy.</textarea>
+                
+                <div class="preview-label">Podgląd w grze:</div>
+                <div id="ad-preview" class="ad-preview-box"></div>
             </div>
             <button class="copy-ad-btn" onclick="copyAd()">
                 <i class="fas fa-copy"></i> Skopiuj komendę
