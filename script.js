@@ -88,6 +88,28 @@ document.getElementById('reset-btn').addEventListener('click', () => {
     document.getElementById('search-input').value = '';
     document.querySelectorAll('.item-card').forEach(card => card.classList.remove('hidden'));
     calculateTotal();
+    showNotice('Koszyk wyczyszczony', 'warning');
 });
 
+function showNotice(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    let icon = '💡';
+    if (type === 'success') icon = '✅';
+    if (type === 'warning') icon = '⚠️';
+    if (type === 'danger') icon = '🚫';
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-message">${message}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        toast.style.transition = 'all 0.5s ease';
+        setTimeout(() => toast.remove(), 500);
+    }, 5000);
+}
+
 init();
+window.onload = () => {
+    showNotice('System gotowy!', 'success');
+};
