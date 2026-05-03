@@ -1,4 +1,7 @@
-const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1500540604827046078/_uzuOq6EK9Ip0XggKscXNsmPRZrl4EdmBSLcWcMRaavI0wimpqkxWIRn8TrELISJ6RZQ"; // WKLEJ TUTAJ SWÓJ WEBHOOK
+// ==========================================
+// KONFIGURACJA
+// ==========================================
+const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1500540604827046078/_uzuOq6EK9Ip0XggKscXNsmPRZrl4EdmBSLcWcMRaavI0wimpqkxWIRn8TrELISJ6RZQ"; 
 
 const inventory = [
     { name: "Zdobiona książka", min: 120, max: 120, category: "inne" },
@@ -14,7 +17,7 @@ const inventory = [
     { name: "Dziwna substancja", min: 90, max: 90, category: "inne" },
     { name: "Dziwna szara substancja", min: 160, max: 160, category: "inne" },
     { name: "Biżuteria", min: 210, max: 240, category: "biżuteria" },
-    { name: "Brudna biżuteria", min: 130, max: 150, category: "biżuteria" },
+    { name: "Brudna Biżuteria", min: 130, max: 150, category: "biżuteria" },
     { name: "Katana", min: 480, max: 480, category: "inne" },
     { name: "Mikrofala", min: 250, max: 280, category: "dom" },
     { name: "Mikser", min: 130, max: 160, category: "dom" },
@@ -34,21 +37,34 @@ const inventory = [
 
 let counts = {};
 let currentCategory = 'wszystkie';
-let currentReceiptID = "";
+let currentMinTotal = 0; 
+let currentMaxTotal = 0; 
 
-// Generator ID paragonu
-function generateID() {
-    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let result = 'EC-';
-    for (let i = 0; i < 4; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
-    result += '-';
-    for (let i = 0; i < 4; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
-    return result;
+// ==========================================
+// POMOCNICZE
+// ==========================================
+function getFormattedDate() {
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    return `${day}.${month}.${year}`;
 }
 
-// Inicjalizacja listy przedmiotów
+function generateID() {
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let res = 'EC-';
+    for(let i=0; i<8; i++) res += chars[Math.floor(Math.random()*chars.length)];
+    return res;
+}
+
+// ==========================================
+// LOGIKA SKLEPU
+// ==========================================
 function init() {
     const list = document.getElementById('items-list');
+    document.getElementById('header-date').innerText = getFormattedDate();
+    
     inventory.forEach((item, index) => {
         counts[index] = 0;
         const card = document.createElement('div');
@@ -86,9 +102,11 @@ function handleInput(index, value) {
 function calculateTotal() {
     let min = 0, max = 0;
     inventory.forEach((item, index) => {
-        min += item.min * counts[index];
-        max += item.max * counts[index];
+        min += item.min * (counts[index] || 0);
+        max += item.max * (counts[index] || 0);
     });
+    currentMinTotal = min; 
+    currentMaxTotal = max; 
     document.getElementById('total-price').innerText = min + '$';
     document.getElementById('bonus-range').innerText = '+' + (max - min) + '$';
 }
@@ -120,18 +138,33 @@ function applyFilters() {
     }
 }
 
-// GENEROWANIE PARAGONU
+// ==========================================
+// PARAGON I MODAL (Z WALIDACJĄ MIN/MAX)
+// ==========================================
 function generateQuote() {
     const hasItems = Object.values(counts).some(c => c > 0);
-    const finalPrice = document.getElementById('final-price-input').value;
+    const finalPriceInput = document.getElementById('final-price-input');
+    const finalPrice = parseFloat(finalPriceInput.value);
     const employee = document.getElementById('employee-name-input').value;
 
     if (!hasItems) return showNotice("Koszyk jest pusty!", "warning");
-    if (!employee) return showNotice("Wpisz dane pracownika!", "warning");
-    if (!finalPrice) return showNotice("Wpisz całkowitą kwotę transakcji!", "warning");
+    if (!employee) return showNotice("Wpisz imię pracownika!", "warning");
+    
+    if (isNaN(finalPrice)) {
+        return showNotice("Wpisz kwotę transakcji!", "danger");
+    }
+    
+    if (finalPrice < currentMinTotal) {
+        return showNotice(`Kwota zbyt niska! Minimum to ${currentMinTotal}$.`, "danger");
+    }
 
-    currentReceiptID = generateID();
-    document.getElementById('receipt-id-display').innerText = `NR: ${currentReceiptID}`;
+    if (finalPrice > currentMaxTotal) {
+        return showNotice(`Kwota zbyt wysoka! Maksimum to ${currentMaxTotal}$.`, "danger");
+    }
+
+    const receiptID = generateID();
+    document.getElementById('current-receipt-date').innerText = getFormattedDate();
+    document.getElementById('receipt-id-display').innerText = `NR: ${receiptID}`;
     document.getElementById('receipt-employee-display').innerText = `PRAC.: ${employee.toUpperCase()}`;
     document.getElementById('receipt-total').innerText = finalPrice + '$';
 
@@ -149,46 +182,46 @@ function generateQuote() {
     document.getElementById('quote-modal').classList.add('active');
 }
 
-// WYSYŁKA NA DISCORD
+// ==========================================
+// WEBHOOK / REKLAMA / TOASTS
+// ==========================================
 async function sendToDiscord() {
     const btn = document.getElementById('send-discord-btn');
     const area = document.getElementById('receipt-capture-area');
-    const employee = document.getElementById('employee-name-input').value;
     
+    // Pobranie danych do treści wiadomości
+    const receiptID = document.getElementById('receipt-id-display').innerText.replace('NR: ', '');
+    const employee = document.getElementById('employee-name-input').value;
+    const finalPrice = document.getElementById('receipt-total').innerText;
+
     btn.disabled = true;
     btn.innerText = "Wysyłanie...";
 
     try {
-        const canvas = await html2canvas(area, { scale: 2 });
+        const canvas = await html2canvas(area, { scale: 2, backgroundColor: "#ffffff" });
         canvas.toBlob(async (blob) => {
             const formData = new FormData();
-            formData.append("file", blob, `paragon-${currentReceiptID}.png`);
+            formData.append("file", blob, "paragon.png");
+            
+            // Formatowanie wiadomości zgodnie ze zrzutem ekranu
+            const discordContent = `📑 **Nowy Paragon!**\nID: \`${receiptID}\`\nPracownik: **${employee}**\nSuma: \`${finalPrice}\``;
+
             formData.append("payload_json", JSON.stringify({
-                content: `🧾 **Nowy Paragon!**\nID: \`${currentReceiptID}\`\nPracownik: **${employee}**\nSuma: \`${document.getElementById('receipt-total').innerText}\``
+                content: discordContent
             }));
+            
             const res = await fetch(DISCORD_WEBHOOK_URL, { method: "POST", body: formData });
             if (res.ok) {
                 showNotice("Wysłano na Discord!", "success");
                 closeModal();
             } else throw new Error();
-        });
+        }, "image/png");
     } catch (e) {
-        showNotice("Błąd wysyłki!", "danger");
+        showNotice("Błąd Webhooka!", "danger");
     } finally {
         btn.disabled = false;
         btn.innerText = "Wyślij na Discord";
     }
-}
-
-document.getElementById('send-discord-btn').onclick = sendToDiscord;
-document.getElementById('search-input').addEventListener('input', applyFilters);
-
-// KREATOR REKLAM
-function insertTag(tag) {
-    const area = document.getElementById('ad-input');
-    const s = area.selectionStart, e = area.selectionEnd;
-    area.value = area.value.substring(0, s) + tag + area.value.substring(e);
-    updateAdPreview();
 }
 
 function updateAdPreview() {
@@ -196,12 +229,20 @@ function updateAdPreview() {
     const preview = document.getElementById('ad-preview');
     const colors = {'~r~':'#ff4444','~g~':'#33ff33','~b~':'#3399ff','~y~':'#ffff33','~p~':'#cc66ff','~o~':'#ff9933','~w~':'#fff','~s~':'#fff'};
     let html = "", style = "color:#fff", bold = false;
+    
     input.split(/(~[a-z]~)/g).forEach(p => {
         if (p === '~h~') bold = !bold;
         else if (colors[p]) style = `color:${colors[p]}`;
         else html += `<span style="${style};font-weight:${bold?900:400}">${p}</span>`;
     });
     preview.innerHTML = html;
+}
+
+function insertTag(tag) {
+    const area = document.getElementById('ad-input');
+    const s = area.selectionStart, e = area.selectionEnd;
+    area.value = area.value.substring(0, s) + tag + area.value.substring(e);
+    updateAdPreview();
 }
 
 function copyAd() {
@@ -211,19 +252,6 @@ function copyAd() {
 
 function closeModal() { document.getElementById('quote-modal').classList.remove('active'); }
 
-// RESET WSZYSTKIEGO
-document.getElementById('reset-btn').onclick = () => {
-    Object.keys(counts).forEach(i => {
-        counts[i] = 0;
-        const inp = document.getElementById(`count-${i}`);
-        if(inp) inp.value = 0;
-    });
-    document.getElementById('final-price-input').value = "";
-    document.getElementById('employee-name-input').value = "";
-    calculateTotal();
-    showNotice("Wyczyszczono koszyk!", "warning");
-};
-
 function showNotice(msg, type) {
     const t = document.createElement('div');
     t.className = `toast ${type}`;
@@ -231,5 +259,19 @@ function showNotice(msg, type) {
     document.getElementById('toast-container').appendChild(t);
     setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, 3000);
 }
+
+document.getElementById('reset-btn').onclick = () => {
+    Object.keys(counts).forEach(i => {
+        counts[i] = 0;
+        const inp = document.getElementById(`count-${i}`);
+        if(inp) inp.value = 0;
+    });
+    document.getElementById('final-price-input').value = "";
+    calculateTotal();
+    showNotice("Wyczyszczono wszystko!", "warning");
+};
+
+document.getElementById('send-discord-btn').onclick = sendToDiscord;
+document.getElementById('search-input').addEventListener('input', applyFilters);
 
 init();
