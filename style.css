@@ -14,20 +14,53 @@ body {
     background-color: var(--bg-color);
     color: var(--text-primary);
     margin: 0;
-    padding: 20px;
+    padding: 0; /* Zmienione na 0, aby banner dolegał do krawędzi */
     display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* --- STAŁE OGŁOSZENIE --- */
+.announcement-banner {
+    width: 100%;
+    background: rgba(56, 189, 248, 0.1);
+    border-bottom: 1px solid var(--accent-color);
+    padding: 12px 0;
+    display: flex;
+    align-items: center;
     justify-content: center;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.announcement-icon {
+    font-size: 1.2rem;
+    filter: drop-shadow(0 0 5px var(--accent-color));
+}
+
+.announcement-text {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
 .container {
     width: 100%;
     max-width: 1000px;
+    padding: 20px;
     padding-bottom: 150px;
+    box-sizing: border-box;
 }
 
 header {
     text-align: center;
-    margin-bottom: 30px;
+    margin: 20px 0 30px 0;
 }
 
 header h1 {
@@ -48,7 +81,7 @@ header p {
 .search-container {
     margin-bottom: 30px;
     position: sticky;
-    top: 10px;
+    top: 60px; /* Zaraz pod bannerem */
     z-index: 50;
 }
 
@@ -148,12 +181,7 @@ header p {
     align-items: center;
     border-top: 3px solid var(--accent-color);
     box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
-}
-
-.total-group {
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
+    z-index: 200;
 }
 
 .total-amount {
@@ -181,4 +209,56 @@ header p {
 .reset-button:hover {
     background: var(--danger);
     color: white;
+}
+
+/* --- NOWOCZESNE I PRZEZROCZYSTE ALERTY --- */
+.toast-container {
+    position: fixed;
+    top: 80px; /* Pod bannerem */
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.toast {
+    position: relative;
+    min-width: 300px;
+    padding: 14px 20px;
+    border-radius: 16px;
+    color: white;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(30, 41, 59, 0.6); 
+    backdrop-filter: blur(15px); 
+    -webkit-backdrop-filter: blur(15px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1); 
+    animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    overflow: hidden;
+}
+
+.toast::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 20%;
+    height: 60%;
+    width: 4px;
+    border-radius: 0 4px 4px 0;
+}
+
+.toast.success::before { background-color: var(--success); }
+.toast.warning::before { background-color: #f59e0b; }
+.toast.danger::before { background-color: var(--danger); }
+
+.toast-icon { font-size: 1.4rem; }
+.toast-message { flex: 1; font-size: 0.9rem; opacity: 0.9; }
+
+@keyframes slideIn {
+    from { transform: translateX(120%) scale(0.9); opacity: 0; }
+    to { transform: translateX(0) scale(1); opacity: 1; }
 }
