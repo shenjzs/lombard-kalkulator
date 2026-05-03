@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lombard | Kalkulator</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ELCARTEL PAWN SHOP</h1>
+            <p>System wyceny towarów</p>
+        </header>
+
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Wyszukaj przedmiot...">
+        </div>
+
+        <div id="items-list" class="items-grid">
+            <!-- Przedmioty generowane przez JS -->
+        </div>
+
+        <div class="summary-bar">
+            <div class="summary-info">
+                <div class="total-group">
+                    <span class="total-label">Suma (minimum):</span>
+                    <span id="total-price" class="total-amount">0$</span>
+                </div>
+                <div class="bonus-group">
+                    <span class="bonus-label">Możliwa dopłata do:</span>
+                    <span id="bonus-range" class="bonus-amount">+0$</span>
+                </div>
+            </div>
+            <button id="reset-btn" class="reset-button">Wyczyść koszyk</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
