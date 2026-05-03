@@ -290,3 +290,17 @@ header p {
     header h1 { font-size: 2rem; }
     .items-grid { grid-template-columns: 1fr; }
 }
+
+/* DODATKOWY STYL DLA AKTUALIZACJI */
+.last-update {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 10px;
+    opacity: 0.8;
+    letter-spacing: 0.5px;
+}
+
+#update-date {
+    color: var(--accent-color);
+    font-weight: 600;
+}
