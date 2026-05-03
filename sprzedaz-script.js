@@ -168,7 +168,7 @@ async function sendToDiscord() {
             const formData = new FormData();
             formData.append("file", blob, "raport.png");
             formData.append("payload_json", JSON.stringify({
-                content: `🚛 **NOWY RAPORT EKSPORTU (NPC)**\n👤 Kierowca: **${employee}**\n💰 Suma: \`${currentTotal}$\``
+                content: `🚛 **NOWY RAPORT SPRZEDAŻY**\n👤 Kierowca: **${employee}**\n💰 Suma: \`${currentTotal}$\``
             }));
 
             const res = await fetch(DISCORD_WEBHOOK_URL, { method: "POST", body: formData });
