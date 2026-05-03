@@ -195,7 +195,7 @@ async function sendToDiscord() {
             const formData = new FormData();
             formData.append("file", blob, "paragon.png");
             
-            const discordContent = `📑 **Nowy Paragon!**\nID: \`${receiptID}\`\nPracownik: **${employee}**\nSuma: \`${finalPrice}\``;
+            const discordContent = `📑 **Nowy paragon!**\nNumer paragonu: \`${receiptID}\`\nPracownik: **${employee}**\nSuma: \`${finalPrice}\``;
 
             formData.append("payload_json", JSON.stringify({
                 content: discordContent
