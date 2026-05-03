@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>El Cartel | Kasa fiskalna</title>
     <link rel="stylesheet" href="style.css">
-	<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -18,15 +18,28 @@
         </div>
     </div>
 
-    <div class="container">
+    <!-- PANEL NAWIGACYJNY -->
+    <nav class="navbar" style="background: var(--card-bg, #2d1b1b); padding: 15px 40px; border-bottom: 1px solid var(--border-color, #4a2c2c); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; backdrop-filter: blur(10px);">
+        <div class="nav-logo" style="font-weight: 900; color: var(--accent-color, #f39c12); font-size: 1.2rem; font-family: 'Inter', sans-serif;">
+            <i class="fas fa-cash-register"></i> EL CARTEL SYSTEM
+        </div>
+        <div class="nav-links">
+            <a href="sprzedaz.html" style="color: #f8fafc; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: 0.3s; display: flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif;">
+                <i class="fas fa-home"></i> Sprzedaj asortyment (NPC)
+            </a>
+        </div>
+    </nav>
+
+    <div class="container" style="padding-top: 20px;">
         <header>
             <h1>ELCARTEL PAWN SHOP</h1>
             <p>Wyceń towary</p>
             <div class="last-update">Dzisiejsza data: <span id="header-date">--.--.----</span></div>
         </header>
 
-        <div class="search-container">
-            <input type="text" id="search-input" placeholder="Wyszukaj przedmiot...">
+        <div class="search-container" style="position: relative;">
+            <i class="fas fa-search" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
+            <input type="text" id="search-input" placeholder="Wyszukaj przedmiot..." style="padding-left: 55px;">
         </div>
 
         <div class="categories-container">
@@ -91,11 +104,11 @@
             </div>
             <div class="summary-actions">
                 <div class="input-field-group">
-                    <span class="field-label">PRACOWNIK:</span>
+                    <span class="field-label"><i class="fas fa-user-shield"></i> PRACOWNIK:</span>
                     <input type="text" id="employee-name-input" placeholder="Imię i Nazwisko" class="custom-input">
                 </div>
                 <div class="input-field-group">
-                    <span class="field-label">KWOTA TRANSAKCJI:</span>
+                    <span class="field-label"><i class="fas fa-hand-holding-usd"></i> KWOTA TRANSAKCJI:</span>
                     <input type="number" id="final-price-input" min="0" placeholder="Kwota $" class="custom-input">
                 </div>
                 <button id="quote-btn" class="quote-button" onclick="generateQuote()">
@@ -135,7 +148,9 @@
                 <button id="send-discord-btn" class="discord-btn">
                     <i class="fab fa-discord"></i> Wyślij na Discord
                 </button>
-                <button onclick="closeModal()" class="close-btn">Zamknij okno</button>
+                <button onclick="closeModal()" class="close-btn">
+                    <i class="fas fa-times"></i> Zamknij okno
+                </button>
             </div>
         </div>
     </div>
