@@ -29,9 +29,6 @@ const inventory = [
     { name: "Zegarek", min: 140, max: 160, category: "biżuteria" },
     { name: "Złota bransoletka", min: 200, max: 200, category: "biżuteria" },
     { name: "Złote kolczyki", min: 200, max: 200, category: "biżuteria" },
-    //{ name: "Złoty zegarek", min: 1000, max: 1500, category: "biżuteria" },//
-    //{ name: "Rum", min: 400, max: 500, category: "inne" },//
-    //{ name: "Cygaro", min: 1000, max: 1500, category: "inne" },//
     { name: "Popsuty telefon", min: 90, max: 95, category: "elektronika" }
 ];
 
@@ -40,9 +37,6 @@ let currentCategory = 'wszystkie';
 let currentMinTotal = 0; 
 let currentMaxTotal = 0; 
 
-// ==========================================
-// POMOCNICZE
-// ==========================================
 function getFormattedDate() {
     const now = new Date();
     const day = String(now.getDate()).padStart(2, '0');
@@ -58,9 +52,6 @@ function generateID() {
     return res;
 }
 
-// ==========================================
-// LOGIKA SKLEPU
-// ==========================================
 function init() {
     const list = document.getElementById('items-list');
     document.getElementById('header-date').innerText = getFormattedDate();
@@ -138,9 +129,6 @@ function applyFilters() {
     }
 }
 
-// ==========================================
-// PARAGON I MODAL (Z WALIDACJĄ MIN/MAX)
-// ==========================================
 function generateQuote() {
     const hasItems = Object.values(counts).some(c => c > 0);
     const finalPriceInput = document.getElementById('final-price-input');
@@ -179,17 +167,21 @@ function generateQuote() {
         }
     });
 
+    let sigDiv = document.querySelector('.receipt-signature');
+    if (!sigDiv) {
+        sigDiv = document.createElement('div');
+        sigDiv.className = 'receipt-signature';
+        itemsDiv.parentNode.insertBefore(sigDiv, document.querySelector('.receipt-footer'));
+    }
+    sigDiv.innerHTML = `<span class="signature-label">Podpis pracownika</span><span class="signature-text">${employee}</span>`;
+
     document.getElementById('quote-modal').classList.add('active');
 }
 
-// ==========================================
-// WEBHOOK / REKLAMA / TOASTS
-// ==========================================
 async function sendToDiscord() {
     const btn = document.getElementById('send-discord-btn');
     const area = document.getElementById('receipt-capture-area');
     
-    // Pobranie danych do treści wiadomości
     const receiptID = document.getElementById('receipt-id-display').innerText.replace('NR: ', '');
     const employee = document.getElementById('employee-name-input').value;
     const finalPrice = document.getElementById('receipt-total').innerText;
@@ -203,7 +195,6 @@ async function sendToDiscord() {
             const formData = new FormData();
             formData.append("file", blob, "paragon.png");
             
-            // Formatowanie wiadomości zgodnie ze zrzutem ekranu
             const discordContent = `📑 **Nowy Paragon!**\nID: \`${receiptID}\`\nPracownik: **${employee}**\nSuma: \`${finalPrice}\``;
 
             formData.append("payload_json", JSON.stringify({
