@@ -33,8 +33,64 @@ const inventory = [
 let counts = {};
 let currentCategory = 'wszystkie';
 
+const rageColors = {
+    '~r~': 'color: #ff4444;',
+    '~g~': 'color: #33ff33;',
+    '~b~': 'color: #3399ff;',
+    '~y~': 'color: #ffff33;',
+    '~p~': 'color: #cc66ff;',
+    '~o~': 'color: #ff9933;',
+    '~w~': 'color: #ffffff;',
+    '~s~': 'color: #ffffff;',
+    '~h~': 'font-weight: 900;'
+};
+
+// Funkcja wstawiająca tag w miejscu kursora
+function insertTag(tag) {
+    const textarea = document.getElementById('ad-input');
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    
+    textarea.value = text.substring(0, start) + tag + text.substring(end);
+    textarea.focus();
+    textarea.selectionStart = textarea.selectionEnd = start + tag.length;
+    
+    updateAdPreview();
+}
+
+function updateAdPreview() {
+    const input = document.getElementById('ad-input');
+    const preview = document.getElementById('ad-preview');
+    if (!input || !preview) return;
+
+    let text = input.value;
+    text = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    const parts = text.split(/(~[a-z]~)/g);
+    let htmlOutput = "";
+    let currentStyle = "color: #ffffff;";
+    let isBold = false;
+
+    parts.forEach(part => {
+        if (rageColors[part]) {
+            if (part === '~h~') {
+                isBold = !isBold;
+            } else {
+                currentStyle = rageColors[part];
+            }
+        } else {
+            let style = currentStyle + (isBold ? "font-weight: 900;" : "font-weight: 400;");
+            htmlOutput += `<span style="${style}">${part}</span>`;
+        }
+    });
+
+    preview.innerHTML = htmlOutput;
+}
+
 function init() {
     const list = document.getElementById('items-list');
+    if (!list) return;
     list.innerHTML = '';
     inventory.forEach((item, index) => {
         counts[index] = 0;
@@ -56,6 +112,12 @@ function init() {
         `;
         list.appendChild(card);
     });
+
+    const adInput = document.getElementById('ad-input');
+    if (adInput) {
+        adInput.addEventListener('input', updateAdPreview);
+        updateAdPreview();
+    }
 }
 
 function filterCategory(category, btn) {
@@ -121,9 +183,9 @@ function calculateTotal() {
 }
 
 function copyAd() {
-    const text = document.getElementById('ad-text').innerText;
+    const text = document.getElementById('ad-input').value;
     navigator.clipboard.writeText(text).then(() => {
-        showNotice('Skopiowano komendę!', 'success');
+        showNotice('Skopiowano treść reklamy!', 'success');
     }).catch(() => {
         showNotice('Błąd kopiowania', 'danger');
     });
@@ -179,6 +241,7 @@ document.getElementById('reset-btn').addEventListener('click', () => {
 
 function showNotice(message, type = 'success') {
     const container = document.getElementById('toast-container');
+    if (!container) return;
     const toast = document.createElement('div');
     let icon = '✅';
     if (type === 'warning') icon = '⚠️';
