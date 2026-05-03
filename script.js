@@ -1,108 +1,64 @@
+const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1500540604827046078/_uzuOq6EK9Ip0XggKscXNsmPRZrl4EdmBSLcWcMRaavI0wimpqkxWIRn8TrELISJ6RZQ"; // WKLEJ TUTAJ SWÓJ WEBHOOK
+
 const inventory = [
-    { name: "Zdobiona książka", displayPrice: "120$", min: 120, max: 120, category: "inne" },
-    { name: "Dywan", displayPrice: "240$", min: 240, max: 240, category: "dom" },
-    { name: "Laptop", displayPrice: "570$ - 600$", min: 570, max: 600, category: "elektronika" },
-    { name: "Komputer", displayPrice: "640$ - 680$", min: 640, max: 680, category: "elektronika" },
-    { name: "Konsola", displayPrice: "370$ - 400$", min: 370, max: 400, category: "elektronika" },
-    { name: "Konsola DJ", displayPrice: "600$ - 640$", min: 600, max: 640, category: "elektronika" },
-    { name: "Kobieca plastikowa figurka", displayPrice: "90$", min: 90, max: 90, category: "inne" },
-    { name: "Plastikowa figurka małpki", displayPrice: "80$", min: 80, max: 80, category: "inne" },
-    { name: "Kwiat", displayPrice: "60$", min: 60, max: 60, category: "dom" },
-    { name: "Gitara elektryczna", displayPrice: "440$ - 480$", min: 440, max: 480, category: "elektronika" },
-    { name: "Dziwna substancja", displayPrice: "90$", min: 90, max: 90, category: "inne" },
-    { name: "Dziwna szara substancja", displayPrice: "160$", min: 160, max: 160, category: "inne" },
-    { name: "Biżuteria", displayPrice: "210$ - 240$", min: 210, max: 240, category: "biżuteria" },
-    { name: "Brudna Biżuteria", displayPrice: "130$ - 150$", min: 130, max: 150, category: "biżuteria" },
-    { name: "Katana", displayPrice: "480$", min: 480, max: 480, category: "inne" },
-    { name: "Mikrofala", displayPrice: "250$ - 280$", min: 250, max: 280, category: "dom" },
-    { name: "Mikser", displayPrice: "130$ - 160$", min: 130, max: 160, category: "dom" },
-    { name: "Monitor", displayPrice: "120$ - 140$", min: 120, max: 140, category: "elektronika" },
-    { name: "Obraz", displayPrice: "110$", min: 110, max: 110, category: "dom" },
-    { name: "Obraz ścienny", displayPrice: "175$", min: 175, max: 175, category: "dom" },
-    { name: "Głośnik", displayPrice: "120$ - 145$", min: 120, max: 145, category: "elektronika" },
-    { name: "Telewizor", displayPrice: "570$ - 600$", min: 570, max: 600, category: "elektronika" },
-    { name: "Zegarek", displayPrice: "140$ - 160$", min: 140, max: 160, category: "biżuteria" },
-    { name: "Złota bransoletka", displayPrice: "200$", min: 200, max: 200, category: "biżuteria" },
-    { name: "Złote kolczyki", displayPrice: "200$", min: 200, max: 200, category: "biżuteria" },
-    { name: "Złoty zegarek", displayPrice: "1000$ - 1500$", min: 1000, max: 1500, category: "biżuteria" },
-    { name: "Rum", displayPrice: "400$ - 500$", min: 400, max: 500, category: "inne" },
-    { name: "Cygaro", displayPrice: "1000$ - 1500$", min: 1000, max: 1500, category: "inne" },
-    { name: "Popsuty telefon", displayPrice: "90$ - 95$", min: 90, max: 95, category: "elektronika" }
+    { name: "Zdobiona książka", min: 120, max: 120, category: "inne" },
+    { name: "Dywan", min: 240, max: 240, category: "dom" },
+    { name: "Laptop", min: 570, max: 600, category: "elektronika" },
+    { name: "Komputer", min: 640, max: 680, category: "elektronika" },
+    { name: "Konsola", min: 370, max: 400, category: "elektronika" },
+    { name: "Konsola DJ", min: 600, max: 640, category: "elektronika" },
+    { name: "Kobieca plastikowa figurka", min: 90, max: 90, category: "inne" },
+    { name: "Plastikowa figurka małpki", min: 80, max: 80, category: "inne" },
+    { name: "Kwiat", min: 60, max: 60, category: "dom" },
+    { name: "Gitara elektryczna", min: 440, max: 480, category: "elektronika" },
+    { name: "Dziwna substancja", min: 90, max: 90, category: "inne" },
+    { name: "Dziwna szara substancja", min: 160, max: 160, category: "inne" },
+    { name: "Biżuteria", min: 210, max: 240, category: "biżuteria" },
+    { name: "Brudna Biżuteria", min: 130, max: 150, category: "biżuteria" },
+    { name: "Katana", min: 480, max: 480, category: "inne" },
+    { name: "Mikrofala", min: 250, max: 280, category: "dom" },
+    { name: "Mikser", min: 130, max: 160, category: "dom" },
+    { name: "Monitor", min: 120, max: 140, category: "elektronika" },
+    { name: "Obraz", min: 110, max: 110, category: "dom" },
+    { name: "Obraz ścienny", min: 175, max: 175, category: "dom" },
+    { name: "Głośnik", min: 120, max: 145, category: "elektronika" },
+    { name: "Telewizor", min: 570, max: 600, category: "elektronika" },
+    { name: "Zegarek", min: 140, max: 160, category: "biżuteria" },
+    { name: "Złota bransoletka", min: 200, max: 200, category: "biżuteria" },
+    { name: "Złote kolczyki", min: 200, max: 200, category: "biżuteria" },
+    //{ name: "Złoty zegarek", min: 1000, max: 1500, category: "biżuteria" },//
+    //{ name: "Rum", min: 400, max: 500, category: "inne" },//
+    //{ name: "Cygaro", min: 1000, max: 1500, category: "inne" },//
+    { name: "Popsuty telefon", min: 90, max: 95, category: "elektronika" }
 ];
 
 let counts = {};
 let currentCategory = 'wszystkie';
+let currentReceiptID = "";
 
-const rageColors = {
-    '~r~': 'color: #ff4444;',
-    '~g~': 'color: #33ff33;',
-    '~b~': 'color: #3399ff;',
-    '~y~': 'color: #ffff33;',
-    '~p~': 'color: #cc66ff;',
-    '~o~': 'color: #ff9933;',
-    '~w~': 'color: #ffffff;',
-    '~s~': 'color: #ffffff;',
-    '~h~': 'font-weight: 900;'
-};
-
-// Funkcja wstawiająca tag w miejscu kursora
-function insertTag(tag) {
-    const textarea = document.getElementById('ad-input');
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value;
-    
-    textarea.value = text.substring(0, start) + tag + text.substring(end);
-    textarea.focus();
-    textarea.selectionStart = textarea.selectionEnd = start + tag.length;
-    
-    updateAdPreview();
+// Generator ID paragonu
+function generateID() {
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let result = 'EC-';
+    for (let i = 0; i < 4; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+    result += '-';
+    for (let i = 0; i < 4; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+    return result;
 }
 
-function updateAdPreview() {
-    const input = document.getElementById('ad-input');
-    const preview = document.getElementById('ad-preview');
-    if (!input || !preview) return;
-
-    let text = input.value;
-    text = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-    const parts = text.split(/(~[a-z]~)/g);
-    let htmlOutput = "";
-    let currentStyle = "color: #ffffff;";
-    let isBold = false;
-
-    parts.forEach(part => {
-        if (rageColors[part]) {
-            if (part === '~h~') {
-                isBold = !isBold;
-            } else {
-                currentStyle = rageColors[part];
-            }
-        } else {
-            let style = currentStyle + (isBold ? "font-weight: 900;" : "font-weight: 400;");
-            htmlOutput += `<span style="${style}">${part}</span>`;
-        }
-    });
-
-    preview.innerHTML = htmlOutput;
-}
-
+// Inicjalizacja listy przedmiotów
 function init() {
     const list = document.getElementById('items-list');
-    if (!list) return;
-    list.innerHTML = '';
     inventory.forEach((item, index) => {
         counts[index] = 0;
         const card = document.createElement('div');
         card.className = 'item-card';
-        card.id = `item-card-${index}`;
-        card.setAttribute('data-name', item.name.toLowerCase());
         card.setAttribute('data-category', item.category);
+        card.setAttribute('data-name', item.name.toLowerCase());
         card.innerHTML = `
             <div class="item-info">
                 <span class="item-name">${item.name}</span>
-                <span class="item-price">${item.displayPrice}</span>
+                <span class="item-price">${item.min === item.max ? item.min + '$' : item.min + '$ - ' + item.max + '$'}</span>
             </div>
             <div class="controls">
                 <button class="btn-circle minus" onclick="updateCount(${index}, -1)">-</button>
@@ -112,22 +68,37 @@ function init() {
         `;
         list.appendChild(card);
     });
-
-    const adInput = document.getElementById('ad-input');
-    if (adInput) {
-        adInput.addEventListener('input', updateAdPreview);
-        updateAdPreview();
-    }
+    document.getElementById('ad-input').addEventListener('input', updateAdPreview);
+    updateAdPreview();
 }
 
-function filterCategory(category, btn) {
-    currentCategory = category;
+function updateCount(index, change) {
+    counts[index] = Math.max(0, (counts[index] || 0) + change);
+    document.getElementById(`count-${index}`).value = counts[index];
+    calculateTotal();
+}
+
+function handleInput(index, value) {
+    counts[index] = Math.max(0, parseInt(value) || 0);
+    calculateTotal();
+}
+
+function calculateTotal() {
+    let min = 0, max = 0;
+    inventory.forEach((item, index) => {
+        min += item.min * counts[index];
+        max += item.max * counts[index];
+    });
+    document.getElementById('total-price').innerText = min + '$';
+    document.getElementById('bonus-range').innerText = '+' + (max - min) + '$';
+}
+
+function filterCategory(cat, btn) {
+    currentCategory = cat;
     document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     applyFilters();
 }
-
-document.getElementById('search-input').addEventListener('input', applyFilters);
 
 function applyFilters() {
     const term = document.getElementById('search-input').value.toLowerCase();
@@ -140,126 +111,125 @@ function applyFilters() {
     } else {
         adSection.classList.add('hidden');
         itemsList.classList.remove('hidden');
-        
         document.querySelectorAll('.item-card').forEach(card => {
             const name = card.getAttribute('data-name');
             const cat = card.getAttribute('data-category');
-            const matchesSearch = name.includes(term);
-            const matchesCategory = (currentCategory === 'wszystkie' || cat === currentCategory);
-            card.classList.toggle('hidden', !(matchesSearch && matchesCategory));
+            const match = name.includes(term) && (currentCategory === 'wszystkie' || cat === currentCategory);
+            card.classList.toggle('hidden', !match);
         });
     }
 }
 
-function updateCount(index, change) {
-    counts[index] = Math.max(0, (counts[index] || 0) + change);
-    document.getElementById(`count-${index}`).value = counts[index];
-    
-    const card = document.getElementById(`item-card-${index}`);
-    if (change > 0) {
-        card.classList.remove('pulse-glow');
-        void card.offsetWidth;
-        card.classList.add('pulse-glow');
-    }
-    calculateTotal();
-}
-
-function handleInput(index, value) {
-    let num = parseInt(value);
-    if (isNaN(num) || num < 0) num = 0;
-    counts[index] = num;
-    calculateTotal();
-}
-
-function calculateTotal() {
-    let minTotal = 0;
-    let maxTotal = 0;
-    inventory.forEach((item, index) => {
-        minTotal += item.min * (counts[index] || 0);
-        maxTotal += item.max * (counts[index] || 0);
-    });
-    document.getElementById('total-price').innerText = minTotal + '$';
-    document.getElementById('bonus-range').innerText = `+${maxTotal - minTotal}$`;
-}
-
-function copyAd() {
-    const text = document.getElementById('ad-input').value;
-    navigator.clipboard.writeText(text).then(() => {
-        showNotice('Skopiowano treść reklamy!', 'success');
-    }).catch(() => {
-        showNotice('Błąd kopiowania', 'danger');
-    });
-}
-
+// GENEROWANIE PARAGONU
 function generateQuote() {
-    let hasItems = Object.values(counts).some(count => count > 0);
-    if (!hasItems) {
-        showNotice('Koszyk jest pusty!', 'warning');
-        return;
-    }
+    const hasItems = Object.values(counts).some(c => c > 0);
+    const finalPrice = document.getElementById('final-price-input').value;
+    const employee = document.getElementById('employee-name-input').value;
 
-    const receiptItems = document.getElementById('receipt-items');
-    receiptItems.innerHTML = '';
-    let total = 0;
+    if (!hasItems) return showNotice("Koszyk jest pusty!", "warning");
+    if (!employee) return showNotice("Wpisz imię pracownika!", "warning");
+    if (!finalPrice) return showNotice("Wpisz kwotę transakcji!", "warning");
 
-    inventory.forEach((item, index) => {
-        const qty = counts[index] || 0;
-        if (qty > 0) {
-            const itemTotal = item.min * qty;
-            total += itemTotal;
+    currentReceiptID = generateID();
+    document.getElementById('receipt-id-display').innerText = `NR: ${currentReceiptID}`;
+    document.getElementById('receipt-employee-display').innerText = `PRAC.: ${employee.toUpperCase()}`;
+    document.getElementById('receipt-total').innerText = finalPrice + '$';
+
+    const itemsDiv = document.getElementById('receipt-items');
+    itemsDiv.innerHTML = '';
+    inventory.forEach((item, i) => {
+        if (counts[i] > 0) {
             const row = document.createElement('div');
             row.className = 'receipt-row';
-            row.innerHTML = `<span>${item.name} x${qty}</span><span>${itemTotal}$</span>`;
-            receiptItems.appendChild(row);
+            row.innerHTML = `<span>${item.name} x${counts[i]}</span><span>${item.min * counts[i]}$</span>`;
+            itemsDiv.appendChild(row);
         }
     });
 
-    document.getElementById('receipt-total').innerText = total + '$';
     document.getElementById('quote-modal').classList.add('active');
 }
 
-function closeModal() {
-    document.getElementById('quote-modal').classList.remove('active');
-}
+// WYSYŁKA NA DISCORD
+async function sendToDiscord() {
+    const btn = document.getElementById('send-discord-btn');
+    const area = document.getElementById('receipt-capture-area');
+    const employee = document.getElementById('employee-name-input').value;
+    
+    btn.disabled = true;
+    btn.innerText = "Wysyłanie...";
 
-document.getElementById('reset-btn').addEventListener('click', () => {
-    let hasItems = Object.values(counts).some(count => count > 0);
-    if (!hasItems) {
-        showNotice('Koszyk jest już pusty!', 'danger');
-        return;
+    try {
+        const canvas = await html2canvas(area, { scale: 2 });
+        canvas.toBlob(async (blob) => {
+            const formData = new FormData();
+            formData.append("file", blob, `paragon-${currentReceiptID}.png`);
+            formData.append("payload_json", JSON.stringify({
+                content: `🧾 **Nowy Paragon!**\nID: \`${currentReceiptID}\`\nPracownik: **${employee}**\nSuma: \`${document.getElementById('receipt-total').innerText}\``
+            }));
+            const res = await fetch(DISCORD_WEBHOOK_URL, { method: "POST", body: formData });
+            if (res.ok) {
+                showNotice("Wysłano na Discord!", "success");
+                closeModal();
+            } else throw new Error();
+        });
+    } catch (e) {
+        showNotice("Błąd wysyłki!", "danger");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Wyślij na Discord";
     }
-    inventory.forEach((_, index) => {
-        counts[index] = 0;
-        const el = document.getElementById(`count-${index}`);
-        if(el) el.value = 0;
-    });
-    document.getElementById('search-input').value = '';
-    applyFilters();
-    calculateTotal();
-    showNotice('Wyczyszczono koszyk', 'warning');
-});
-
-function showNotice(message, type = 'success') {
-    const container = document.getElementById('toast-container');
-    if (!container) return;
-    const toast = document.createElement('div');
-    let icon = '✅';
-    if (type === 'warning') icon = '⚠️';
-    if (type === 'danger') icon = '🚫';
-    toast.className = `toast ${type}`;
-    toast.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-message">${message}</span>`;
-    container.appendChild(toast);
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateX(100%)';
-        setTimeout(() => toast.remove(), 500);
-    }, 4000);
 }
 
-window.onclick = function(event) {
-    const modal = document.getElementById('quote-modal');
-    if (event.target == modal) closeModal();
+document.getElementById('send-discord-btn').onclick = sendToDiscord;
+document.getElementById('search-input').addEventListener('input', applyFilters);
+
+// KREATOR REKLAM
+function insertTag(tag) {
+    const area = document.getElementById('ad-input');
+    const s = area.selectionStart, e = area.selectionEnd;
+    area.value = area.value.substring(0, s) + tag + area.value.substring(e);
+    updateAdPreview();
+}
+
+function updateAdPreview() {
+    const input = document.getElementById('ad-input').value;
+    const preview = document.getElementById('ad-preview');
+    const colors = {'~r~':'#ff4444','~g~':'#33ff33','~b~':'#3399ff','~y~':'#ffff33','~p~':'#cc66ff','~o~':'#ff9933','~w~':'#fff','~s~':'#fff'};
+    let html = "", style = "color:#fff", bold = false;
+    input.split(/(~[a-z]~)/g).forEach(p => {
+        if (p === '~h~') bold = !bold;
+        else if (colors[p]) style = `color:${colors[p]}`;
+        else html += `<span style="${style};font-weight:${bold?900:400}">${p}</span>`;
+    });
+    preview.innerHTML = html;
+}
+
+function copyAd() {
+    navigator.clipboard.writeText(document.getElementById('ad-input').value);
+    showNotice("Skopiowano reklamę!", "success");
+}
+
+function closeModal() { document.getElementById('quote-modal').classList.remove('active'); }
+
+// RESET WSZYSTKIEGO
+document.getElementById('reset-btn').onclick = () => {
+    Object.keys(counts).forEach(i => {
+        counts[i] = 0;
+        const inp = document.getElementById(`count-${i}`);
+        if(inp) inp.value = 0;
+    });
+    document.getElementById('final-price-input').value = "";
+    document.getElementById('employee-name-input').value = "";
+    calculateTotal();
+    showNotice("Wyczyszczono dane!", "warning");
+};
+
+function showNotice(msg, type) {
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerText = msg;
+    document.getElementById('toast-container').appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, 3000);
 }
 
 init();
-window.onload = () => showNotice('System gotowy do pracy!', 'success');
