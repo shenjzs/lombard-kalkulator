@@ -659,6 +659,31 @@ header p {
     font-size: 1.1rem;
 }
 
+.receipt-signature {
+    margin-top: 20px;
+    padding-top: 10px;
+    border-top: 1px dashed #ccc;
+    text-align: right;
+    position: relative;
+}
+
+.signature-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    color: #888;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.signature-text {
+    font-family: 'Dancing Script', cursive; /* Nowa czcionka */
+    font-size: 26px; /* Nieco większa dla lepszego efektu */
+    color: #1a2a6c; /* Ciemnoniebieski kolor "atramentu" */
+    margin-right: 15px;
+    display: inline-block;
+    transform: rotate(-3deg); /* Lekkie pochylenie dla naturalności */
+}
+
 /* Przyciski w modalu */
 .modal-buttons {
     display: flex;
