@@ -69,13 +69,24 @@ document.getElementById('search-input').addEventListener('input', applyFilters);
 
 function applyFilters() {
     const term = document.getElementById('search-input').value.toLowerCase();
-    document.querySelectorAll('.item-card').forEach(card => {
-        const name = card.getAttribute('data-name');
-        const cat = card.getAttribute('data-category');
-        const matchesSearch = name.includes(term);
-        const matchesCategory = (currentCategory === 'wszystkie' || cat === currentCategory);
-        card.classList.toggle('hidden', !(matchesSearch && matchesCategory));
-    });
+    const adSection = document.getElementById('ad-section');
+    const itemsList = document.getElementById('items-list');
+
+    if (currentCategory === 'reklama') {
+        adSection.classList.remove('hidden');
+        itemsList.classList.add('hidden');
+    } else {
+        adSection.classList.add('hidden');
+        itemsList.classList.remove('hidden');
+        
+        document.querySelectorAll('.item-card').forEach(card => {
+            const name = card.getAttribute('data-name');
+            const cat = card.getAttribute('data-category');
+            const matchesSearch = name.includes(term);
+            const matchesCategory = (currentCategory === 'wszystkie' || cat === currentCategory);
+            card.classList.toggle('hidden', !(matchesSearch && matchesCategory));
+        });
+    }
 }
 
 function updateCount(index, change) {
@@ -109,6 +120,46 @@ function calculateTotal() {
     document.getElementById('bonus-range').innerText = `+${maxTotal - minTotal}$`;
 }
 
+function copyAd() {
+    const text = document.getElementById('ad-text').innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        showNotice('Skopiowano komendę!', 'success');
+    }).catch(() => {
+        showNotice('Błąd kopiowania', 'danger');
+    });
+}
+
+function generateQuote() {
+    let hasItems = Object.values(counts).some(count => count > 0);
+    if (!hasItems) {
+        showNotice('Koszyk jest pusty!', 'warning');
+        return;
+    }
+
+    const receiptItems = document.getElementById('receipt-items');
+    receiptItems.innerHTML = '';
+    let total = 0;
+
+    inventory.forEach((item, index) => {
+        const qty = counts[index] || 0;
+        if (qty > 0) {
+            const itemTotal = item.min * qty;
+            total += itemTotal;
+            const row = document.createElement('div');
+            row.className = 'receipt-row';
+            row.innerHTML = `<span>${item.name} x${qty}</span><span>${itemTotal}$</span>`;
+            receiptItems.appendChild(row);
+        }
+    });
+
+    document.getElementById('receipt-total').innerText = total + '$';
+    document.getElementById('quote-modal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('quote-modal').classList.remove('active');
+}
+
 document.getElementById('reset-btn').addEventListener('click', () => {
     let hasItems = Object.values(counts).some(count => count > 0);
     if (!hasItems) {
@@ -117,7 +168,8 @@ document.getElementById('reset-btn').addEventListener('click', () => {
     }
     inventory.forEach((_, index) => {
         counts[index] = 0;
-        document.getElementById(`count-${index}`).value = 0;
+        const el = document.getElementById(`count-${index}`);
+        if(el) el.value = 0;
     });
     document.getElementById('search-input').value = '';
     applyFilters();
@@ -139,6 +191,11 @@ function showNotice(message, type = 'success') {
         toast.style.transform = 'translateX(100%)';
         setTimeout(() => toast.remove(), 500);
     }, 4000);
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('quote-modal');
+    if (event.target == modal) closeModal();
 }
 
 init();
