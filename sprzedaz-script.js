@@ -129,7 +129,7 @@ window.generateQuote = function() {
             </div>
             <div class="receipt-divider"></div>
             <div class="receipt-row total">
-                <span>KWOTA ŁACZNA:</span>
+                <span>RAZEM:</span>
                 <span>${currentTotal}$</span>
             </div>
             <p class="receipt-meta" style="margin-top: 15px;">Data wystawienia: ${date}</p>
