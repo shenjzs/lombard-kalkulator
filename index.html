@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lombard | Kalkulator</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Font Awesome dla ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -19,7 +21,6 @@
         <header>
             <h1>ELCARTEL PAWN SHOP</h1>
             <p>Wyceń towary</p>
-            <!-- NOWE: Sekcja ostatniej aktualizacji -->
             <div class="last-update">Ostatnia aktualizacja cen: <span id="update-date">03.05.2026</span></div>
         </header>
 
@@ -28,11 +29,21 @@
         </div>
 
         <div class="categories-container">
-            <button class="cat-btn active" onclick="filterCategory('wszystkie', this)">Wszystkie</button>
-            <button class="cat-btn" onclick="filterCategory('elektronika', this)">Elektronika</button>
-            <button class="cat-btn" onclick="filterCategory('biżuteria', this)">Biżuteria</button>
-            <button class="cat-btn" onclick="filterCategory('dom', this)">Dom</button>
-            <button class="cat-btn" onclick="filterCategory('inne', this)">Inne</button>
+            <button class="cat-btn active" onclick="filterCategory('wszystkie', this)">
+                <i class="fas fa-border-all"></i> Wszystkie
+            </button>
+            <button class="cat-btn" onclick="filterCategory('elektronika', this)">
+                <i class="fas fa-laptop"></i> Elektronika
+            </button>
+            <button class="cat-btn" onclick="filterCategory('biżuteria', this)">
+                <i class="fas fa-gem"></i> Biżuteria
+            </button>
+            <button class="cat-btn" onclick="filterCategory('dom', this)">
+                <i class="fas fa-home"></i> Dom
+            </button>
+            <button class="cat-btn" onclick="filterCategory('inne', this)">
+                <i class="fas fa-box-open"></i> Inne
+            </button>
         </div>
 
         <div id="items-list" class="items-grid">
@@ -50,7 +61,9 @@
                     <span id="bonus-range" class="bonus-amount">+0$</span>
                 </div>
             </div>
-            <button id="reset-btn" class="reset-button">Wyczyść koszyk</button>
+            <button id="reset-btn" class="reset-button">
+                <i class="fas fa-trash-alt"></i> Wyczyść koszyk
+            </button>
         </div>
     </div>
 
