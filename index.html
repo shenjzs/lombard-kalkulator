@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lombard | Kalkulator</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Font Awesome dla ikon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
     <div class="announcement-banner">
@@ -49,14 +49,12 @@
             </button>
         </div>
 
-        <!-- Sekcja Reklamy -->
         <div id="ad-section" class="ad-card hidden">
             <div class="ad-header">
                 <i class="fas fa-bullhorn"></i>
                 <span>Kreator ogłoszenia</span>
             </div>
             <div class="ad-content">
-                <!-- Panel wyboru tagów -->
                 <div class="ad-tags">
                     <button type="button" class="tag-btn t-red" onclick="insertTag('~r~')">CZERWONY (~r~)</button>
                     <button type="button" class="tag-btn t-green" onclick="insertTag('~g~')">ZIELONY (~g~)</button>
@@ -68,9 +66,7 @@
                     <button type="button" class="tag-btn t-bold" onclick="insertTag('~h~')">POGRUBIENIE (~h~)</button>
                     <button type="button" class="tag-btn t-reset" onclick="insertTag('~s~')">(Reset) (~s~)</button>
                 </div>
-
-                <textarea id="ad-input" class="ad-textarea" placeholder="Wpisz treść reklamy...">/businessAd ~h~EL CARTEL PAWN SHOP ~y~OTWARTY!!! ~g~Drzwi są szeroko otwarte dla wszystkich klientów i osób szukających szybkiej gotówki! Zapraszamy.</textarea>
-                
+                <textarea id="ad-input" class="ad-textarea">/businessAd ~h~EL CARTEL PAWN SHOP ~y~OTWARTY!!! ~g~Drzwi są szeroko otwarte dla wszystkich klientów i osób szukających szybkiej gotówki! Zapraszamy.</textarea>
                 <div class="preview-label">Podgląd w grze:</div>
                 <div id="ad-preview" class="ad-preview-box"></div>
             </div>
@@ -79,9 +75,7 @@
             </button>
         </div>
 
-        <div id="items-list" class="items-grid">
-            <!-- Przedmioty generowane przez JS -->
-        </div>
+        <div id="items-list" class="items-grid"></div>
 
         <div class="summary-bar">
             <div class="summary-info">
@@ -95,6 +89,14 @@
                 </div>
             </div>
             <div class="summary-actions">
+                <div class="input-field-group">
+                    <span class="field-label">PRACOWNIK:</span>
+                    <input type="text" id="employee-name-input" placeholder="Imię i Nazwisko" class="custom-input">
+                </div>
+                <div class="input-field-group">
+                    <span class="field-label">KWOTA TRANSAKCJI:</span>
+                    <input type="number" id="final-price-input" placeholder="Kwota $" class="custom-input">
+                </div>
                 <button id="quote-btn" class="quote-button" onclick="generateQuote()">
                     <i class="fas fa-file-invoice-dollar"></i> Paragon
                 </button>
@@ -105,36 +107,39 @@
         </div>
     </div>
 
-    <!-- MODAL WYCENY -->
     <div id="quote-modal" class="modal">
         <div class="modal-content">
-            <div id="receipt" class="receipt">
-                <div class="receipt-header">
-                    <h2>EL CARTEL PAWN SHOP</h2>
-                    <p>Oficjalna wycena towaru</p>
-                    <div class="receipt-divider"></div>
-                </div>
-                <div id="receipt-items" class="receipt-items">
-                    <!-- Tu wpadną przedmioty -->
-                </div>
-                <div class="receipt-divider"></div>
-                <div class="receipt-footer">
-                    <div class="receipt-row total">
-                        <span>SUMA DO WYPŁATY:</span>
-                        <span id="receipt-total">0$</span>
+            <div id="receipt-capture-area">
+                <div id="receipt" class="receipt">
+                    <div class="receipt-header">
+                        <h2>EL CARTEL PAWN SHOP</h2>
+                        <p>Oficjalna wycena towaru</p>
+                        <p id="receipt-id-display" class="receipt-meta"></p>
+                        <p id="receipt-employee-display" class="receipt-meta"></p>
+                        <div class="receipt-divider"></div>
                     </div>
-                    <p class="receipt-date">Data: 03.05.2026</p>
-                    <div class="receipt-stamp">Zatwierdzono</div>
+                    <div id="receipt-items" class="receipt-items"></div>
+                    <div class="receipt-divider"></div>
+                    <div class="receipt-footer">
+                        <div class="receipt-row total">
+                            <span>SUMA DO WYPŁATY:</span>
+                            <span id="receipt-total">0$</span>
+                        </div>
+                        <p class="receipt-date">Data: 03.05.2026</p>
+                        <div class="receipt-stamp">Zatwierdzono</div>
+                    </div>
                 </div>
             </div>
             <div class="modal-buttons">
+                <button id="send-discord-btn" class="discord-btn">
+                    <i class="fab fa-discord"></i> Wyślij na Discord
+                </button>
                 <button onclick="closeModal()" class="close-btn">Zamknij okno</button>
             </div>
         </div>
     </div>
 
     <div id="toast-container" class="toast-container"></div>
-
     <script src="script.js"></script>
 </body>
 </html>
