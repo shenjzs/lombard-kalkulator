@@ -27,6 +27,8 @@ const inventory = [
     { name: "Głośnik", min: 120, max: 145, category: "elektronika" },
     { name: "Telewizor", min: 570, max: 600, category: "elektronika" },
     { name: "Zegarek", min: 140, max: 160, category: "biżuteria" },
+    //{ name: "Zegarek", min: 140, max: 160, category: "biżuteria" },//
+    //{ name: "Śmieci elektroniczne", min: 140, max: 160, category: "elektronika" },//
     { name: "Złota bransoletka", min: 200, max: 200, category: "biżuteria" },
     { name: "Złote kolczyki", min: 200, max: 200, category: "biżuteria" },
     { name: "Popsuty telefon", min: 90, max: 95, category: "elektronika" }
