@@ -1,7 +1,7 @@
 // ==========================================
 // KONFIGURACJA
 // ==========================================
-const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1500540604827046078/_uzuOq6EK9Ip0XggKscXNsmPRZrl4EdmBSLcWcMRaavI0wimpqkxWIRn8TrELISJ6RZQ"; 
+const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1497447735907975178/rrk1FwJATJJBMGOtoqb2sW50iNzZJrcevVNMz1B6Mje60toQWqOYVuUSARgpENs9qhRb"; 
 
 const inventory = [
     { name: "Zdobiona książka", min: 120, max: 120, category: "inne" },
