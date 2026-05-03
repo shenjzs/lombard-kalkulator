@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lombard | Kalkulator</title>
+    <title>El Cartel | Kasa fiskalna</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -21,7 +21,7 @@
         <header>
             <h1>ELCARTEL PAWN SHOP</h1>
             <p>Wyceń towary</p>
-            <div class="last-update">Ostatnia aktualizacja cen: <span id="update-date">03.05.2026</span></div>
+            <div class="last-update">Dzisiejsza data: <span id="header-date">--.--.----</span></div>
         </header>
 
         <div class="search-container">
@@ -56,15 +56,15 @@
             </div>
             <div class="ad-content">
                 <div class="ad-tags">
-                    <button type="button" class="tag-btn t-red" onclick="insertTag('~r~')">CZERWONY (~r~)</button>
-                    <button type="button" class="tag-btn t-green" onclick="insertTag('~g~')">ZIELONY (~g~)</button>
-                    <button type="button" class="tag-btn t-blue" onclick="insertTag('~b~')">NIEBIESKI (~b~)</button>
-                    <button type="button" class="tag-btn t-yellow" onclick="insertTag('~y~')">ZÓŁTY (~y~)</button>
-                    <button type="button" class="tag-btn t-purple" onclick="insertTag('~p~')">FIOLETOWY (~p~)</button>
-                    <button type="button" class="tag-btn t-orange" onclick="insertTag('~o~')">POMARAŃCZOWY (~o~)</button>
-                    <button type="button" class="tag-btn t-white" onclick="insertTag('~w~')">BIAŁY (~w~)</button>
-                    <button type="button" class="tag-btn t-bold" onclick="insertTag('~h~')">POGRUBIENIE (~h~)</button>
-                    <button type="button" class="tag-btn t-reset" onclick="insertTag('~s~')">(Reset) (~s~)</button>
+                    <button type="button" class="tag-btn t-red" onclick="insertTag('~r~')">CZERWONY</button>
+                    <button type="button" class="tag-btn t-green" onclick="insertTag('~g~')">ZIELONY</button>
+                    <button type="button" class="tag-btn t-blue" onclick="insertTag('~b~')">NIEBIESKI</button>
+                    <button type="button" class="tag-btn t-yellow" onclick="insertTag('~y~')">ŻÓŁTY</button>
+                    <button type="button" class="tag-btn t-purple" onclick="insertTag('~p~')">FIOLETOWY</button>
+                    <button type="button" class="tag-btn t-orange" onclick="insertTag('~o~')">POMARAŃCZOWY</button>
+                    <button type="button" class="tag-btn t-white" onclick="insertTag('~w~')">BIAŁY</button>
+                    <button type="button" class="tag-btn t-bold" onclick="insertTag('~h~')">POGRUBIENIE</button>
+                    <button type="button" class="tag-btn t-reset" onclick="insertTag('~s~')">RESET</button>
                 </div>
                 <textarea id="ad-input" class="ad-textarea">/businessAd ~h~EL CARTEL PAWN SHOP ~y~OTWARTY!!! ~g~Drzwi są szeroko otwarte dla wszystkich klientów i osób szukających szybkiej gotówki! Zapraszamy.</textarea>
                 <div class="preview-label">Podgląd w grze:</div>
@@ -95,13 +95,13 @@
                 </div>
                 <div class="input-field-group">
                     <span class="field-label">KWOTA TRANSAKCJI:</span>
-                    <input type="number" id="final-price-input" placeholder="Kwota $" class="custom-input">
+                    <input type="number" id="final-price-input" min="0" placeholder="Kwota $" class="custom-input">
                 </div>
                 <button id="quote-btn" class="quote-button" onclick="generateQuote()">
                     <i class="fas fa-file-invoice-dollar"></i> Paragon
                 </button>
                 <button id="reset-btn" class="reset-button">
-                    <i class="fas fa-trash-alt"></i> Wyczyść
+                    <i class="fas fa-trash-alt"></i>
                 </button>
             </div>
         </div>
@@ -125,7 +125,7 @@
                             <span>SUMA DO WYPŁATY:</span>
                             <span id="receipt-total">0$</span>
                         </div>
-                        <p class="receipt-date">Data: 03.05.2026</p>
+                        <p class="receipt-date">Data: <span id="current-receipt-date"></span></p>
                         <div class="receipt-stamp">Zatwierdzono</div>
                     </div>
                 </div>
