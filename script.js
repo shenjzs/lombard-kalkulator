@@ -72,15 +72,34 @@ function updateCount(index, change) {
 function calculateTotal() {
     let minTotal = 0;
     let maxTotal = 0;
+    let anyItems = false;
+
     inventory.forEach((item, index) => {
+        if (counts[index] > 0) {
+            anyItems = true;
+        }
         minTotal += item.min * counts[index];
         maxTotal += item.max * counts[index];
     });
+
+    if (!anyItems && minTotal === 0) {
+        // Opcjonalnie: możesz tutaj wywołać showNotice, 
+        // ale calculateTotal wywołuje się przy każdym kliknięciu, 
+        // więc lepiej sprawdzić to tylko przy konkretnej akcji.
+    }
+
     document.getElementById('total-price').innerText = minTotal + '$';
     document.getElementById('bonus-range').innerText = `+${maxTotal - minTotal}$`;
 }
 
 document.getElementById('reset-btn').addEventListener('click', () => {
+    let hasItems = Object.values(counts).some(count => count > 0);
+
+    if (!hasItems) {
+        showNotice('Koszyk jest już pusty!', 'danger');
+        return;
+    }
+
     inventory.forEach((_, index) => {
         counts[index] = 0;
         document.getElementById(`count-${index}`).innerText = 0;
