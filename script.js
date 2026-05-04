@@ -27,8 +27,6 @@ const inventory = [
     { name: "Głośnik", min: 120, max: 145, category: "elektronika" },
     { name: "Telewizor", min: 570, max: 600, category: "elektronika" },
     { name: "Zegarek", min: 140, max: 160, category: "biżuteria" },
-    //{ name: "Zegarek", min: 140, max: 160, category: "biżuteria" },//
-    //{ name: "Śmieci elektroniczne", min: 140, max: 160, category: "elektronika" },//
     { name: "Złota bransoletka", min: 200, max: 200, category: "biżuteria" },
     { name: "Złote kolczyki", min: 200, max: 200, category: "biżuteria" },
     { name: "Popsuty telefon", min: 90, max: 95, category: "elektronika" }
@@ -197,11 +195,23 @@ async function sendToDiscord() {
             const formData = new FormData();
             formData.append("file", blob, "paragon.png");
             
-            const discordContent = `📑 **Wystawiono nowy paragon!**\nNumer paragonu: \`${receiptID}\`\nPracownik: **${employee}**\nSuma: \`${finalPrice}\``;
+            // Definicja Embed dla Discorda
+            const embedPayload = {
+                embeds: [{
+                    title: "📑 Wystawiono nowy paragon!",
+                    color: 36991, // Jasnoniebieski kolor boczny
+                    fields: [
+                        { name: "📋 Numer paragonu:", value: `\`${receiptID}\``, inline: true },
+                        { name: "👤 Pracownik:", value: `**${employee}**`, inline: true },
+                        { name: "💰 Suma:", value: `**${finalPrice}**`, inline: false }
+                    ],
+                    image: { url: "attachment://paragon.png" },
+                    timestamp: new Date().toISOString(),
+                    footer: { text: "System EL CARTEL PAWN SHOP" }
+                }]
+            };
 
-            formData.append("payload_json", JSON.stringify({
-                content: discordContent
-            }));
+            formData.append("payload_json", JSON.stringify(embedPayload));
             
             const res = await fetch(DISCORD_WEBHOOK_URL, { method: "POST", body: formData });
             if (res.ok) {
@@ -214,6 +224,38 @@ async function sendToDiscord() {
     } finally {
         btn.disabled = false;
         btn.innerText = "Wyślij na Discord";
+    }
+}
+
+// NOWA FUNKCJA KOPIOWANIA DO SCHOWKA
+async function copyReceiptToClipboard() {
+    const btn = document.getElementById('copy-receipt-btn');
+    const area = document.getElementById('receipt-capture-area');
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generowanie...';
+
+    try {
+        const canvas = await html2canvas(area, { 
+            scale: 2, 
+            backgroundColor: "#ffffff",
+            useCORS: true 
+        });
+        
+        canvas.toBlob(async (blob) => {
+            try {
+                const data = [new ClipboardItem({ [blob.type]: blob })];
+                await navigator.clipboard.write(data);
+                showNotice("Skopiowano paragon do schowka!", "success");
+            } catch (err) {
+                showNotice("Błąd kopiowania! Spróbuj innej przeglądarki.", "danger");
+            }
+        });
+    } catch (e) {
+        showNotice("Błąd generowania obrazu!", "danger");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-copy"></i> Wydaj paragon klientowi';
     }
 }
 
@@ -265,6 +307,7 @@ document.getElementById('reset-btn').onclick = () => {
 };
 
 document.getElementById('send-discord-btn').onclick = sendToDiscord;
+document.getElementById('copy-receipt-btn').onclick = copyReceiptToClipboard;
 document.getElementById('search-input').addEventListener('input', applyFilters);
 
 init();
