@@ -303,7 +303,6 @@ header h1 {
     padding-right: 10px;
 }
 
-/* Stylizacja samego paragonu */
 .receipt {
     color: #1e293b;
     padding: 20px;
@@ -419,3 +418,78 @@ header h1 {
 .toast.danger { background: var(--danger); }
 
 .hidden { display: none !important; }
+
+/* RESPONSYWNOŚĆ I ZWIJANIE PASKA */
+.summary-toggle {
+    display: none; /* Ukryte na komputerze */
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-bottom: 250px; /* Zwiększony margines na dole na mobile */
+    }
+
+    .summary-bar {
+        flex-direction: column;
+        padding: 20px;
+        gap: 20px;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        max-width: none;
+        transform: translateX(0) translateY(calc(100% - 60px)); /* Chowa cały pasek oprócz guzika */
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 30px 30px 0 0;
+    }
+
+    .summary-bar.open {
+        transform: translateX(0) translateY(0); /* Wysunięty po kliknięciu */
+    }
+
+    .summary-toggle {
+        display: flex;
+        position: absolute;
+        top: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--accent-color);
+        border: none;
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        color: white;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
+        z-index: 101;
+    }
+
+    .actions {
+        flex-direction: column;
+        width: 100%;
+        gap: 15px;
+    }
+
+    .input-wrapper, .button-group {
+        width: 100%;
+    }
+
+    .custom-input {
+        width: 100%;
+    }
+
+    .quote-button {
+        flex: 1;
+        width: 100%;
+    }
+
+    header h1 {
+        font-size: 2.2rem;
+    }
+
+    .items-grid {
+        grid-template-columns: 1fr;
+    }
+}
