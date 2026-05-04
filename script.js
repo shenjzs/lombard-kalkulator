@@ -29,7 +29,7 @@ const inventory = [
     { name: "Telewizor", min: 570, max: 600, category: "elektronika" },
     { name: "Zegarek", min: 140, max: 160, category: "biżuteria" },
     { name: "Złota bransoletka", min: 200, max: 200, category: "biżuteria" },
-	{ name: "Złota moneta", min: 50, max: 50, category: "biżuteria" },
+	{ name: "Złota moneta", min: 50, max: 50, category: "inne" },
     { name: "Złote kolczyki", min: 200, max: 200, category: "biżuteria" },
     { name: "Popsuty telefon", min: 90, max: 95, category: "elektronika" }
 ];
