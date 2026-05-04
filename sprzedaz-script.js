@@ -177,7 +177,7 @@ async function sendToDiscord() {
                     ],
                     image: { url: "attachment://raport.png" },
                     timestamp: new Date().toISOString(),
-                    footer: { text: "System EL CARTEL" }
+                    footer: { text: "System EL CARTEL PAWN SHOP" }
                 }]
             };
 
