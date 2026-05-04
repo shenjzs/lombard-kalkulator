@@ -11,6 +11,7 @@ const inventory = [
     { name: "Konsola", price: 500, category: "elektronika" },
     { name: "Konsola DJ", price: 800, category: "elektronika" },
     { name: "Kobieca plastikowa figurka", price: 120, category: "inne" },
+	{ name: "Stara zapalniczka", price: 22, category: "inne" },
     { name: "Plastikowa figurka małpki", price: 100, category: "inne" },
     { name: "Kwiat", price: 80, category: "dom" },
     { name: "Gitara elektryczna", price: 600, category: "elektronika" },
