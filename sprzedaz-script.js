@@ -4,7 +4,7 @@ const inventory = [
     { name: "Zdobiona książka", price: 150, category: "inne" },
     { name: "Dywan", price: 300, category: "dom" },
     { name: "Komputer (laptop)", price: 750, category: "elektronika" },
-    { name: "Komputer (stacjonarny)", price: 1700, category: "elektronika" },
+    { name: "Komputer (stacjonarny)", price: 850, category: "elektronika" },
     { name: "Konsola", price: 500, category: "elektronika" },
     { name: "Konsola DJ", price: 800, category: "elektronika" },
     { name: "Kobieca plastikowa figurka", price: 120, category: "inne" },
