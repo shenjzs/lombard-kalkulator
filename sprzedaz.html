@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Cartel | Panel eksportu</title>
+    <link rel="stylesheet" href="style-sprzedaz.css">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome dla ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Biblioteka do generowania zdjęć -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+
+    <!-- PANEL NAWIGACYJNY -->
+    <nav class="navbar" style="background: var(--card-bg); padding: 15px 40px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; backdrop-filter: blur(10px);">
+        <div class="nav-logo" style="font-weight: 900; color: var(--accent-color); font-size: 1.2rem;">
+            <i class="fas fa-box-open"></i> EL CARTEL SYSTEM
+        </div>
+        <div class="nav-links">
+            <a href="index.html" style="color: var(--text-primary); text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: 0.3s; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-cash-register"></i> Powrót do kasy
+            </a>
+        </div>
+    </nav>
+
+    <div class="container" style="padding-top: 40px;">
+        <header>
+            <h1>EL CARTEL EXPORT</h1>
+            <div class="header-meta">
+                <span><i class="fas fa-truck-loading"></i> SYSTEM RAPORTOWANIA O SPRZEDAŻY PRZEDMIOTÓW</span>
+                <span id="header-date"><i class="far fa-calendar-alt"></i> --.--.----</span>
+            </div>
+        </header>
+
+        <!-- WYSZUKIWARKA -->
+        <div class="search-container">
+            <i class="fas fa-search" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+            <input type="text" id="search-input" placeholder="Szukaj przedmiotu po nazwie..." style="padding-left: 55px;">
+        </div>
+
+        <!-- FILTRY KATEGORII -->
+        <div class="categories-container">
+            <button class="cat-btn active" onclick="filterCategory('wszystkie', this)"><i class="fas fa-border-all"></i> Wszystko</button>
+            <button class="cat-btn" onclick="filterCategory('elektronika', this)"><i class="fas fa-laptop"></i> Elektronika</button>
+            <button class="cat-btn" onclick="filterCategory('biżuteria', this)"><i class="fas fa-gem"></i> Biżuteria</button>
+            <button class="cat-btn" onclick="filterCategory('dom', this)"><i class="fas fa-home"></i> Dom</button>
+            <button class="cat-btn" onclick="filterCategory('inne', this)"><i class="fas fa-box-open"></i> Inne</button>
+        </div>
+
+        <!-- LISTA PRZEDMIOTÓW -->
+        <div id="items-list" class="items-grid">
+            <!-- Tutaj JS wygeneruje karty przedmiotów -->
+        </div>
+    </div>
+
+    <!-- PASEK PODSUMOWANIA -->
+    <div class="summary-bar" id="summary-bar">
+        <button class="summary-toggle" onclick="toggleSummary()">
+            <i class="fas fa-chevron-up" id="toggle-icon"></i>
+        </button>
+        
+        <div class="total-info">
+            <span class="total-label">Suma skupu</span>
+            <span id="total-price" class="total-amount">0$</span>
+        </div>
+
+        <div class="actions">
+            <div class="input-wrapper" style="position: relative; display: flex; align-items: center;">
+                <i class="fas fa-user-tag" style="position: absolute; left: 15px; color: var(--text-secondary);"></i>
+                <input type="text" id="employee-name-input" class="custom-input" placeholder="Imię i Nazwisko" style="padding-left: 45px;" required>
+            </div>
+            
+            <div class="button-group" style="display: flex; gap: 10px;">
+                <button id="reset-btn" class="close-btn" style="padding: 15px 20px;">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+                
+                <button onclick="generateQuote()" class="quote-button">
+                    <i class="fas fa-file-invoice-dollar"></i> GENERUJ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL Z PODGLĄDEM RAPORTU -->
+    <div id="quote-modal" class="modal">
+        <div class="modal-content">
+            <div id="receipt-preview-container"></div>
+            
+            <div class="modal-buttons">
+                <button onclick="sendToDiscord()" id="send-discord-btn" class="discord-btn">
+                    <i class="fab fa-discord"></i> Wyślij raport na Discord
+                </button>
+                <button onclick="closeModal()" class="close-btn">
+                    <i class="fas fa-times"></i> Zamknij
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- KONTENER DLA HTML2CANVAS (UKRYTY) -->
+    <div id="receipt-capture-area" style="position: absolute; left: -9999px; background: white; padding: 40px; width: 450px;"></div>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- SKRYPTY -->
+    <script src="sprzedaz-script.js"></script>
+</body>
+</html>
