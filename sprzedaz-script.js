@@ -24,14 +24,13 @@ const inventory = [
     { name: "Głośnik", price: 180, category: "elektronika" },
     { name: "Telewizor", price: 750, category: "elektronika" },
     { name: "Zegarek", price: 200, category: "biżuteria" },
-    //{ name: "Złota bransoletka", price: 500, category: "biżuteria" },//
-    //{ name: "Złote kolczyki", price: 500, category: "biżuteria" },//
     { name: "Stary popsuty telefon", price: 110, category: "elektronika" }
 ];
 
 let counts = {};
 let currentCategory = 'wszystkie';
 let currentTotal = 0;
+let lastGeneratedReportID = ""; // Zmienna do przechowywania ID ostatniego raportu
 
 function getFormattedDate() {
     const now = new Date();
@@ -94,7 +93,7 @@ function applyFilters() {
     const term = document.getElementById('search-input').value.toLowerCase();
     document.querySelectorAll('.item-card').forEach(card => {
         const match = card.getAttribute('data-name').includes(term) && 
-                     (currentCategory === 'wszystkie' || card.getAttribute('data-category') === currentCategory);
+                      (currentCategory === 'wszystkie' || card.getAttribute('data-category') === currentCategory);
         card.classList.toggle('hidden', !match);
     });
 }
@@ -106,16 +105,15 @@ window.generateQuote = function() {
     if (!Object.values(counts).some(c => c > 0)) return showNotice("Lista jest pusta!", "warning");
     if (!employee) return showNotice("Wpisz imię kierowcy!", "warning");
 
-    const reportID = `EXP-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    lastGeneratedReportID = `EXP-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
     const date = getFormattedDate();
 
-    // HTML PARAGONU
     const receiptHTML = `
         <div class="receipt">
             <div class="receipt-header">
                 <h2>EL CARTEL EXPORT</h2>
                 <p class="receipt-meta">Raport sprzedaży przedmiotów</p>
-                <p class="receipt-meta">NR: ${reportID}</p>
+                <p class="receipt-meta">NR: ${lastGeneratedReportID}</p>
                 <p class="receipt-meta">KIEROWCA: ${employee.toUpperCase()}</p>
             </div>
             <div class="receipt-divider"></div>
@@ -167,9 +165,23 @@ async function sendToDiscord() {
         canvas.toBlob(async (blob) => {
             const formData = new FormData();
             formData.append("file", blob, "raport.png");
-            formData.append("payload_json", JSON.stringify({
-                content: `🚛 **NOWY RAPORT SPRZEDAŻY**\n👤 Kierowca: **${employee}**\n💰 Suma: \`${currentTotal}$\``
-            }));
+            
+            const embedPayload = {
+                embeds: [{
+                    title: "🚛 NOWY RAPORT SPRZEDAŻY",
+                    color: 15995922, // Kolor #f39c12 w systemie dziesiętnym
+                    fields: [
+                        { name: "👤 Pracownik:", value: `\`${employee}\``, inline: true },
+                        { name: "📋 Nr raportu:", value: `\`${lastGeneratedReportID}\``, inline: true },
+                        { name: "💰 Suma:", value: `\`${currentTotal}$\``, inline: false }
+                    ],
+                    image: { url: "attachment://raport.png" },
+                    timestamp: new Date().toISOString(),
+                    footer: { text: "System EL CARTEL" }
+                }]
+            };
+
+            formData.append("payload_json", JSON.stringify(embedPayload));
 
             const res = await fetch(DISCORD_WEBHOOK_URL, { method: "POST", body: formData });
             if (res.ok) {
@@ -197,6 +209,22 @@ function showNotice(msg, type) {
     t.innerText = msg;
     container.appendChild(t);
     setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, 3000);
+}
+
+// FUNKCJA ZWIJANIA PASKA NA MOBILE
+window.toggleSummary = function() {
+    const bar = document.getElementById('summary-bar');
+    const icon = document.getElementById('toggle-icon');
+    
+    if (bar && icon) {
+        bar.classList.toggle('open');
+        
+        if (bar.classList.contains('open')) {
+            icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+        } else {
+            icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+        }
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
