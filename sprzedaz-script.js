@@ -151,7 +151,7 @@ window.finalizeQuote = function(employeeName) {
                 <h2>EL CARTEL EXPORT</h2>
                 <p class="receipt-meta">Raport sprzedaży przedmiotów</p>
                 <p class="receipt-meta">NR: ${lastGeneratedReportID}</p>
-                <p class="receipt-meta">KIEROWCA: ${employeeName.toUpperCase()}</p>
+                <p class="receipt-meta">PRACOWNIK: ${employeeName.toUpperCase()}</p>
             </div>
             <div class="receipt-divider"></div>
             <div class="receipt-items-list">
