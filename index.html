@@ -20,12 +20,12 @@
     </div>
 
     <!-- PANEL NAWIGACYJNY -->
-    <nav class="navbar" style="background: var(--card-bg, #2d1b1b); padding: 15px 40px; border-bottom: 1px solid var(--border-color, #4a2c2c); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; backdrop-filter: blur(10px);">
-        <div class="nav-logo" style="font-weight: 900; color: var(--accent-color, #f39c12); font-size: 1.2rem; font-family: 'Inter', sans-serif;">
+    <nav class="navbar">
+        <div class="nav-logo">
             <i class="fas fa-cash-register"></i> EL CARTEL SYSTEM
         </div>
         <div class="nav-links">
-            <a href="sprzedaz.html" style="color: #f8fafc; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: 0.3s; display: flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif;">
+            <a href="sprzedaz.html" class="nav-link-btn">
                 <i class="fas fa-hand-holding-usd"></i> Sprzedaj asortyment (NPC)
             </a>
         </div>
@@ -177,7 +177,7 @@
     <!-- PANEL BOCZNY KOSZYKA -->
     <div id="cart-sidebar" class="cart-sidebar">
         <div class="cart-header">
-            <h2><i class="fas fa-shopping-cart"></i> Twój koszyk</h2>
+            <h2><i class="fas fa-shopping-cart"></i> Twój Koszyk</h2>
             <button id="close-cart-btn" class="close-btn-cart" onclick="toggleCart()"><i class="fas fa-times"></i></button>
         </div>
         <div id="cart-items-container" class="cart-items-container">
