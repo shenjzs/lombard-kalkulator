@@ -123,13 +123,13 @@ function calculateTotal() {
     updateCartView();
 }
 
-// NOWA FUNKCJA: Włączanie i wyłączanie koszyka
+// Włączanie i wyłączanie koszyka
 window.toggleCart = function() {
     const sidebar = document.getElementById('cart-sidebar');
     if (sidebar) sidebar.classList.toggle('active');
 };
 
-// ZMODYFIKOWANA FUNKCJA: Aktualizacja zawartości koszyka (+/- przyciski wewnatrz)
+// Aktualizacja zawartości koszyka (+/- przyciski wewnatrz)
 function updateCartView() {
     const container = document.getElementById('cart-items-container');
     const badge = document.getElementById('cart-badge');
@@ -282,7 +282,7 @@ function finalizeQuote(employeeName, finalPrice) {
             <div class="stat-box-inner">
                 <div class="stat-icon"><i class="fas fa-wallet"></i></div>
                 <div class="stat-details">
-                    <span class="stat-label">Twój dzisiejszy obrót</span>
+                    <span class="stat-label">Twój dzisiejszy obrót po wpłacie:</span>
                     <span class="stat-value">${predictedStat}$</span>
                 </div>
             </div>
@@ -330,8 +330,11 @@ async function sendToDiscord() {
             
             const res = await fetch(DISCORD_WEBHOOK_URL, { method: "POST", body: formData });
             if (res.ok) {
+                // Dopisanie do statystyk następuje TYLKO TUTAJ
                 addDailyStat(currentEmployeeName, finalPriceNumeric);
-                showNotice("Wysłano na Discord!", "success");
+                
+                showNotice("Wysłano na Discord i zaktualizowano obrót!", "success");
+                // Zamykamy okno po wysłaniu
                 closeModal();
             } else throw new Error();
         }, "image/png");
@@ -362,12 +365,8 @@ async function copyReceiptToClipboard() {
                 const data = [new ClipboardItem({ [blob.type]: blob })];
                 await navigator.clipboard.write(data);
                 
-                const finalPriceText = document.getElementById('receipt-total').innerText;
-                const finalPriceNumeric = parseFloat(finalPriceText.replace('$', ''));
-                addDailyStat(currentEmployeeName, finalPriceNumeric);
-
                 showNotice("Skopiowano paragon do schowka!", "success");
-                closeModal();
+                // NIE dodajemy już tutaj statystyk i NIE zamykamy okna
             } catch (err) {
                 showNotice("Błąd kopiowania! Spróbuj innej przeglądarki.", "danger");
             }
