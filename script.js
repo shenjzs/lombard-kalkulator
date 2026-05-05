@@ -29,7 +29,7 @@ const inventory = [
     { name: "Telewizor", min: 570, max: 600, category: "elektronika" },
     { name: "Zegarek", min: 140, max: 160, category: "biżuteria" },
     { name: "Złota bransoletka", min: 200, max: 200, category: "biżuteria" },
-	{ name: "Złota moneta", min: 50, max: 50, category: "inne" },
+    { name: "Złota moneta", min: 50, max: 50, category: "inne" },
     { name: "Złote kolczyki", min: 200, max: 200, category: "biżuteria" },
     { name: "Popsuty telefon", min: 90, max: 95, category: "elektronika" }
 ];
@@ -94,6 +94,7 @@ function init() {
     });
     document.getElementById('ad-input').addEventListener('input', updateAdPreview);
     updateAdPreview();
+    updateCartView(); // Wywołanie przy starcie dla pustego koszyka
 }
 
 function updateCount(index, change) {
@@ -117,6 +118,56 @@ function calculateTotal() {
     currentMaxTotal = max; 
     document.getElementById('total-price').innerText = min + '$';
     document.getElementById('bonus-range').innerText = '+' + (max - min) + '$';
+    
+    // Aktualizacja widoku koszyka bocznego
+    updateCartView();
+}
+
+// NOWA FUNKCJA: Włączanie i wyłączanie koszyka
+window.toggleCart = function() {
+    const sidebar = document.getElementById('cart-sidebar');
+    if (sidebar) sidebar.classList.toggle('active');
+};
+
+// ZMODYFIKOWANA FUNKCJA: Aktualizacja zawartości koszyka (+/- przyciski wewnatrz)
+function updateCartView() {
+    const container = document.getElementById('cart-items-container');
+    const badge = document.getElementById('cart-badge');
+    const sidebarTotal = document.getElementById('cart-sidebar-total');
+    
+    let totalItems = 0;
+    let html = '';
+
+    inventory.forEach((item, index) => {
+        if (counts[index] > 0) {
+            totalItems += counts[index];
+            let itemTotalMin = item.min * counts[index];
+            let itemTotalMax = item.max * counts[index];
+            let priceText = item.min === item.max ? `${itemTotalMin}$` : `${itemTotalMin}$ - ${itemTotalMax}$`;
+            
+            html += `
+                <div class="cart-item">
+                    <div class="cart-item-info-col">
+                        <span class="cart-item-name">${item.name}</span>
+                        <div class="cart-controls">
+                            <button class="cart-btn-circle minus" onclick="updateCount(${index}, -1)">-</button>
+                            <span class="cart-item-qty">${counts[index]}</span>
+                            <button class="cart-btn-circle plus" onclick="updateCount(${index}, 1)">+</button>
+                        </div>
+                    </div>
+                    <div class="cart-item-price-col">${priceText}</div>
+                </div>
+            `;
+        }
+    });
+
+    if (totalItems === 0) {
+        html = '<div class="empty-cart-msg">Koszyk jest pusty</div>';
+    }
+
+    if (container) container.innerHTML = html;
+    if (badge) badge.innerText = totalItems;
+    if (sidebarTotal) sidebarTotal.innerText = currentMinTotal + '$' + (currentMaxTotal > currentMinTotal ? ` - ${currentMaxTotal}$` : '');
 }
 
 function filterCategory(cat, btn) {
@@ -385,5 +436,21 @@ const triggerGenerateQuote = function(e) {
 };
 document.getElementById('employee-pin-input').addEventListener('keypress', triggerGenerateQuote);
 document.getElementById('final-price-input').addEventListener('keypress', triggerGenerateQuote);
+
+// FUNKCJA ZWIJANIA PASKA NA MOBILE
+window.toggleSummary = function() {
+    const bar = document.getElementById('summary-bar');
+    const icon = document.getElementById('toggle-icon');
+    
+    if (bar && icon) {
+        bar.classList.toggle('open');
+        
+        if (bar.classList.contains('open')) {
+            icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+        } else {
+            icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+        }
+    }
+}
 
 init();
