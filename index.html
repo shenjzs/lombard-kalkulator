@@ -92,7 +92,12 @@
 
         <div id="items-list" class="items-grid"></div>
 
-        <div class="summary-bar">
+        <div id="summary-bar" class="summary-bar">
+            <!-- PRZYCISK ZWIJANIA (WIDOCZNY TYLKO NA MOBILE) -->
+            <div class="mobile-toggle-btn" onclick="toggleSummary()">
+                <i id="toggle-icon" class="fas fa-chevron-up"></i>
+            </div>
+
             <div class="summary-info">
                 <div class="total-group">
                     <span class="total-label">Suma (minimum):</span>
@@ -105,6 +110,11 @@
             </div>
             
             <div class="summary-actions">
+                <!-- PRZYCISK KOSZYKA -->
+                <button type="button" class="cart-toggle-btn" onclick="toggleCart()">
+                    <i class="fas fa-shopping-cart"></i> Koszyk <span id="cart-badge" class="cart-badge">0</span>
+                </button>
+                
                 <div class="input-field-group">
                     <span class="field-label"><i class="fas fa-lock"></i> KOD PIN:</span>
                     <input type="password" id="employee-pin-input" placeholder="****" class="custom-input" style="letter-spacing: 3px; text-align: center;">
@@ -123,6 +133,7 @@
         </div>
     </div>
 
+    <!-- MODAL PARAGONU -->
     <div id="quote-modal" class="modal">
         <div class="modal-content">
             <div id="receipt-capture-area">
@@ -159,6 +170,23 @@
                 <button onclick="closeModal()" class="close-btn">
                     <i class="fas fa-times"></i> Zamknij okno
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANEL BOCZNY KOSZYKA -->
+    <div id="cart-sidebar" class="cart-sidebar">
+        <div class="cart-header">
+            <h2><i class="fas fa-shopping-cart"></i> Twój koszyk</h2>
+            <button id="close-cart-btn" class="close-btn-cart" onclick="toggleCart()"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="cart-items-container" class="cart-items-container">
+            <div class="empty-cart-msg">Koszyk jest pusty</div>
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total-row">
+                <span>Wartość:</span>
+                <span id="cart-sidebar-total">0$</span>
             </div>
         </div>
     </div>
