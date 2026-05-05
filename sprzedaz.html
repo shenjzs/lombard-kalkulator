@@ -13,12 +13,12 @@
 <body>
 
     <!-- PANEL NAWIGACYJNY -->
-    <nav class="navbar" style="background: var(--card-bg); padding: 15px 40px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; backdrop-filter: blur(10px);">
-        <div class="nav-logo" style="font-weight: 900; color: var(--accent-color); font-size: 1.2rem;">
+    <nav class="navbar">
+        <div class="nav-logo">
             <i class="fas fa-box-open"></i> EL CARTEL SYSTEM
         </div>
         <div class="nav-links">
-            <a href="index.html" style="color: var(--text-primary); text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: 0.3s; display: flex; align-items: center; gap: 8px;">
+            <a href="index.html" class="nav-link-btn">
                 <i class="fas fa-cash-register"></i> Powrót do kasy
             </a>
         </div>
@@ -68,7 +68,7 @@
         <div class="actions">
             <!-- PRZYCISK KOSZYKA -->
             <button type="button" class="cart-toggle-btn" onclick="toggleCart()">
-                <i class="fas fa-shopping-cart"></i> Koszyk <span id="cart-badge" class="cart-badge">0</span>
+                <i class="fas fa-shopping-cart"></i> Wybrane <span id="cart-badge" class="cart-badge">0</span>
             </button>
 
             <div class="input-wrapper" style="position: relative; display: flex; align-items: center;">
