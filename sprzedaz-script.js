@@ -11,7 +11,7 @@ const inventory = [
     { name: "Konsola", price: 500, category: "elektronika" },
     { name: "Konsola DJ", price: 800, category: "elektronika" },
     { name: "Kobieca plastikowa figurka", price: 120, category: "inne" },
-	{ name: "Stara zapalniczka", price: 22, category: "inne" },
+    { name: "Stara zapalniczka", price: 22, category: "inne" },
     { name: "Plastikowa figurka małpki", price: 100, category: "inne" },
     { name: "Kwiat", price: 80, category: "dom" },
     { name: "Gitara elektryczna", price: 600, category: "elektronika" },
@@ -67,6 +67,9 @@ function init() {
         `;
         list.appendChild(card);
     });
+    
+    // Inicjalizacja pustego koszyka przy starcie
+    updateCartView();
 }
 
 window.updateCount = function(i, change) {
@@ -85,7 +88,55 @@ function calculateTotal() {
     currentTotal = inventory.reduce((sum, item, i) => sum + (item.price * (counts[i] || 0)), 0);
     const totalDisplay = document.getElementById('total-price');
     if (totalDisplay) totalDisplay.innerText = currentTotal + '$';
+    
+    // Aktualizujemy koszyk przy każdej zmianie sumy
+    updateCartView();
 }
+
+// LOGIKA OTWIERANIA I ZAMYKANIA KOSZYKA
+window.toggleCart = function() {
+    const sidebar = document.getElementById('cart-sidebar');
+    if (sidebar) sidebar.classList.toggle('active');
+};
+
+// LOGIKA AKTUALIZACJI ZAWARTOŚCI KOSZYKA
+window.updateCartView = function() {
+    const container = document.getElementById('cart-items-container');
+    const badge = document.getElementById('cart-badge');
+    const sidebarTotal = document.getElementById('cart-sidebar-total');
+    
+    let totalItems = 0;
+    let html = '';
+
+    inventory.forEach((item, index) => {
+        if (counts[index] > 0) {
+            totalItems += counts[index];
+            let itemTotal = item.price * counts[index];
+            
+            html += `
+                <div class="cart-item">
+                    <div class="cart-item-info-col">
+                        <span class="cart-item-name">${item.name}</span>
+                        <div class="cart-controls">
+                            <button class="cart-btn-circle minus" onclick="updateCount(${index}, -1)">-</button>
+                            <span class="cart-item-qty">${counts[index]}</span>
+                            <button class="cart-btn-circle plus" onclick="updateCount(${index}, 1)">+</button>
+                        </div>
+                    </div>
+                    <div class="cart-item-price-col">${itemTotal}$</div>
+                </div>
+            `;
+        }
+    });
+
+    if (totalItems === 0) {
+        html = '<div class="empty-cart-msg">Brak dodanych przedmiotów</div>';
+    }
+
+    if (container) container.innerHTML = html;
+    if (badge) badge.innerText = totalItems;
+    if (sidebarTotal) sidebarTotal.innerText = currentTotal + '$';
+};
 
 window.filterCategory = function(cat, btn) {
     currentCategory = cat;
@@ -151,7 +202,7 @@ window.finalizeQuote = function(employeeName) {
                 <h2>EL CARTEL EXPORT</h2>
                 <p class="receipt-meta">Raport sprzedaży przedmiotów</p>
                 <p class="receipt-meta">NR: ${lastGeneratedReportID}</p>
-                <p class="receipt-meta">PRACOWNIK: ${employeeName.toUpperCase()}</p>
+                <p class="receipt-meta">KIEROWCA: ${employeeName.toUpperCase()}</p>
             </div>
             <div class="receipt-divider"></div>
             <div class="receipt-items-list">
