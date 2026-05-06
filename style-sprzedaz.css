@@ -272,6 +272,16 @@ header h1 {
     font-weight: 800;
 }
 
+/* Ukrycie strzałek w polu ilości */
+.quantity-input::-webkit-inner-spin-button,
+.quantity-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.quantity-input {
+    -moz-appearance: textfield;
+}
+
 /* PASEK PODSUMOWANIA */
 .summary-bar {
     position: fixed;
