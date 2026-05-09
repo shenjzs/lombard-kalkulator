@@ -43,7 +43,8 @@ const BUY_PRICES = {
     "Zegarek": 150,
     "Złota bransoletka": 200,
     "Złote kolczyki": 200,
-    "Stary popsuty telefon": 92
+    "Stary popsuty telefon": 92,
+	"Złota moneta z prezydentem": 100,
 };
 
 // ==========================================
