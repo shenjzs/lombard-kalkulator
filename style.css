@@ -35,6 +35,10 @@ body {
     overflow-x: hidden;
 }
 
+.hidden { 
+    display: none !important; 
+}
+
 /* ==========================================================================
    BANNER INFORMACYJNY
    ========================================================================== */
@@ -169,6 +173,18 @@ header h1 {
     filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.3));
 }
 
+.header-meta {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: 15px;
+}
+
 header p {
     color: var(--text-secondary);
     letter-spacing: 5px;
@@ -196,11 +212,22 @@ header p {
 .search-container {
     margin-bottom: 30px;
     width: 100%;
+    position: relative;
+}
+
+.search-container i {
+    position: absolute;
+    left: 25px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    z-index: 10;
+    font-size: 1.2rem;
 }
 
 #search-input {
     width: 100%;
-    padding: 20px 30px;
+    padding: 20px 30px 20px 65px;
     border-radius: 20px;
     border: 1px solid var(--border-color);
     background: var(--glass);
@@ -209,6 +236,8 @@ header p {
     box-sizing: border-box;
     transition: var(--transition-normal);
     backdrop-filter: blur(10px);
+    position: relative;
+    z-index: 5;
 }
 
 #search-input:focus {
@@ -288,7 +317,9 @@ header p {
     opacity: 0.8;
 }
 
-.ad-card.hidden { display: none; }
+.ad-card.hidden {
+    display: none;
+}
 
 .ad-header {
     display: flex;
@@ -357,8 +388,19 @@ header p {
 .t-orange { background: linear-gradient(135deg, #f97316, #c2410c); }
 .t-white { background: linear-gradient(135deg, #f8fafc, #94a3b8); color: #0f172a; text-shadow: none; }
 .t-bold { background: linear-gradient(135deg, #475569, #1e293b); border: 1px solid #94a3b8; }
-.t-reset { background: transparent; border: 1px dashed #64748b; color: #94a3b8; text-shadow: none; box-shadow: none; }
-.t-reset:hover { background: rgba(100, 116, 139, 0.1); color: #fff; }
+
+.t-reset {
+    background: transparent;
+    border: 1px dashed #64748b;
+    color: #94a3b8;
+    text-shadow: none;
+    box-shadow: none;
+}
+
+.t-reset:hover {
+    background: rgba(100, 116, 139, 0.1);
+    color: #fff;
+}
 
 .ad-textarea {
     width: 100%;
@@ -470,7 +512,9 @@ header p {
     gap: 25px;
 }
 
-.items-grid.hidden { display: none; }
+.items-grid.hidden {
+    display: none;
+}
 
 .item-card {
     background: var(--card-bg);
@@ -485,7 +529,9 @@ header p {
     overflow: hidden;
 }
 
-.item-card.hidden { display: none; }
+.item-card.hidden {
+    display: none;
+}
 
 .item-card:hover {
     transform: translateY(-5px);
@@ -536,6 +582,7 @@ header p {
     -webkit-appearance: none;
     margin: 0;
 }
+
 .custom-item-price,
 #final-price-input {
     -moz-appearance: textfield;
@@ -591,7 +638,10 @@ header p {
     border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
-.minus:hover { background: var(--danger); color: white; }
+.minus:hover {
+    background: var(--danger);
+    color: white;
+}
 
 .plus { 
     background: rgba(34, 197, 94, 0.15); 
@@ -599,7 +649,10 @@ header p {
     border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
-.plus:hover { background: var(--success); color: white; }
+.plus:hover {
+    background: var(--success);
+    color: white;
+}
 
 .quantity-input {
     width: 40px;
@@ -612,7 +665,9 @@ header p {
     outline: none;
 }
 
-.quantity-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.quantity-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
 
 /* ==========================================================================
    PASEK PODSUMOWANIA (DOLNY)
@@ -767,7 +822,9 @@ header p {
     padding: 20px;
 }
 
-.modal.active { display: flex; }
+.modal.active {
+    display: flex;
+}
 
 .modal-content {
     max-width: 450px;
@@ -782,9 +839,9 @@ header p {
 #receipt-capture-area {
     padding: 10px;
     background: transparent;
-    width: fit-content;      /* Ważne dla html2canvas */
-    height: fit-content;     /* Ważne dla html2canvas */
-    display: block;          /* Stabilizacja */
+    width: fit-content;
+    height: fit-content;
+    display: block;
 }
 
 .receipt {
@@ -796,7 +853,7 @@ header p {
     box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     font-family: 'Courier New', Courier, monospace;
     position: relative;
-    overflow: visible;      /* Zapobiega ucinaniu cieni i pieczątek */
+    overflow: visible;
 }
 
 .receipt-header {
@@ -985,8 +1042,13 @@ header p {
     animation: toastSlideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
-.toast.danger { border-color: var(--danger); }
-.toast.warning { border-color: var(--ad-gold); }
+.toast.danger {
+    border-color: var(--danger);
+}
+
+.toast.warning {
+    border-color: var(--ad-gold);
+}
 
 /* ==========================================================================
    ANIMACJE
@@ -1423,10 +1485,12 @@ body:has(.modal.active) .summary-bar {
     animation: slideDownUpdate 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     border: 2px solid white;
 }
+
 @keyframes slideDownUpdate {
     from { top: -100px; opacity: 0; }
     to { top: 20px; opacity: 1; }
 }
+
 .update-btn-refresh {
     background: white;
     color: var(--accent-color);
@@ -1438,7 +1502,353 @@ body:has(.modal.active) .summary-bar {
     text-transform: uppercase;
     transition: var(--transition-fast);
 }
+
 .update-btn-refresh:hover {
     transform: scale(1.1);
     background: #f1f5f9;
+}
+
+/* ==========================================================================
+   MENU UŻYTKOWNIKA W NAVBARZE
+   ========================================================================== */
+.user-profile {
+    position: relative;
+    margin-left: auto;
+}
+
+.user-profile-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.05);
+    padding: 12px 20px;
+    border-radius: 14px;
+    cursor: pointer;
+    font-weight: 700;
+    border: 1px solid var(--border-color);
+    transition: 0.3s;
+    color: var(--text-primary);
+}
+
+.user-profile-btn:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.user-dropdown {
+    position: absolute;
+    top: 115%;
+    right: 0;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    min-width: 220px;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    z-index: 1001;
+}
+
+.user-dropdown.active {
+    display: flex;
+    animation: fadeIn 0.2s ease;
+}
+
+.dropdown-item {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-primary);
+    transition: 0.2s;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item:hover {
+    background: rgba(255,255,255,0.05);
+    padding-left: 25px;
+}
+
+.dropdown-item.text-danger {
+    color: var(--danger);
+}
+
+.dropdown-item.text-danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* ==========================================================================
+   MODAL USTAWIEŃ (ZMIANA PIN)
+   ========================================================================== */
+.settings-modal-content {
+    background: rgba(15, 23, 42, 0.8) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+    padding: 35px !important;
+    border-radius: 24px !important;
+    position: relative;
+    overflow: hidden;
+    max-width: 420px;
+}
+
+.settings-modal-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+    opacity: 0.8;
+}
+
+.settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.settings-header h2 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+}
+
+.settings-header h2 i {
+    color: var(--accent-color);
+    filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.4));
+}
+
+.settings-close-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: 0.3s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.settings-close-btn:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: var(--danger);
+    transform: rotate(90deg) scale(1.05);
+}
+
+.settings-desc {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-bottom: 25px;
+    line-height: 1.6;
+    text-align: center;
+}
+
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: 100%;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+}
+
+.input-group label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: var(--text-secondary);
+    letter-spacing: 1.5px;
+    padding-left: 5px;
+}
+
+.settings-pin-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 16px;
+    border-radius: 14px;
+    text-align: center;
+    font-size: 1.5rem;
+    letter-spacing: 15px;
+    transition: 0.3s;
+    font-family: monospace;
+    outline: none;
+}
+
+.settings-pin-input::placeholder {
+    letter-spacing: normal;
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.settings-pin-input:focus {
+    border-color: var(--accent-color);
+    background: rgba(0, 0, 0, 0.6);
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5), 0 0 15px rgba(56, 189, 248, 0.15);
+}
+
+.settings-pin-input.highlight-input {
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.settings-pin-input.highlight-input:focus {
+    border-color: var(--ad-gold);
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5), 0 0 15px rgba(245, 158, 11, 0.15);
+}
+
+.settings-save-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent-color), #0284c7);
+    color: #000;
+    border: none;
+    padding: 18px;
+    border-radius: 14px;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    transition: 0.3s;
+    margin-top: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+}
+
+.settings-save-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(56, 189, 248, 0.5);
+    filter: brightness(1.1);
+}
+
+/* ==========================================================================
+   EKRAN LOGOWANIA I BLOKADA SCROLLOWANIA
+   ========================================================================== */
+body:has(.login-container.active) {
+    overflow: hidden !important;
+}
+
+body:has(.login-container.active) .summary-bar {
+    display: none !important;
+}
+
+.login-container {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: var(--bg-color);
+    z-index: 999;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-container.active {
+    display: flex;
+}
+
+.login-card {
+    background: var(--card-bg);
+    padding: 50px 40px;
+    border-radius: 24px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8);
+    max-width: 450px;
+    width: 90%;
+    animation: fadeInDown 0.4s ease-out;
+}
+
+.login-icon {
+    font-size: 3.5rem;
+    color: var(--accent-color);
+    margin-bottom: 25px;
+}
+
+.login-card h2 {
+    margin-bottom: 10px;
+    font-weight: 800;
+    font-size: 1.8rem;
+    color: var(--text-primary);
+}
+
+.login-card p {
+    color: var(--text-secondary);
+    margin-bottom: 25px;
+    font-size: 0.9rem;
+}
+
+.pin-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border-color);
+    color: white;
+    padding: 18px;
+    border-radius: 16px;
+    text-align: center;
+    font-size: 1.8rem;
+    letter-spacing: 12px;
+    margin-bottom: 25px;
+    outline: none;
+    transition: 0.3s;
+    font-family: monospace;
+}
+
+.pin-input:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+}
+
+.login-btn {
+    width: 100%;
+    background: var(--accent-color);
+    color: #000;
+    border: none;
+    padding: 18px;
+    border-radius: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: 0.3s;
+    font-size: 1.05rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(56, 189, 248, 0.4);
+    filter: brightness(1.1);
 }

@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "1.3.8";
+const APP_VERSION = "2.4.8";
 
 // ==========================================
 // KONFIGURACJA
@@ -79,6 +79,82 @@ function generateID() {
     return res;
 }
 
+// ==========================================
+// SYSTEM LOGOWANIA
+// ==========================================
+window.login = async function() {
+    const pin = document.getElementById('employee-login-pin').value;
+    const btn = document.getElementById('login-btn');
+    if (!pin) return showNotice("Wprowadź PIN!", "danger");
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Weryfikacja...';
+
+    try {
+        const response = await fetch(`${PIN_API_URL}?pin=${pin}`);
+        const data = await response.json();
+
+        if (data.isValid) {
+            currentEmployeeName = data.name;
+            document.getElementById('logged-user-name').innerText = currentEmployeeName.toUpperCase();
+            document.getElementById('login-screen').classList.remove('active');
+            
+            // TWARDE ODKRYWANIE APLIKACJI I PROFILU
+            document.getElementById('main-app').style.display = 'block';
+            document.getElementById('user-profile').style.display = 'block';
+            
+            // ODKRYWANIE BANNERA OGŁOSZEŃ PO ZALOGOWANIU
+            const banner = document.getElementById('announcement-banner');
+            if(banner) banner.style.display = 'flex';
+
+            showNotice(`Rozpoczęto zmianę: ${data.name}`, "success");
+            
+            // Inicjalizacja reszty po zalogowaniu
+            init();
+        } else {
+            showNotice("Nieprawidłowy PIN!", "danger");
+        }
+    } catch (error) {
+        showNotice("Błąd połączenia z bazą PIN!", "danger");
+        console.error(error);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Odblokuj system <i class="fas fa-unlock"></i>';
+    }
+}
+
+window.logout = function() {
+    currentEmployeeName = "";
+    document.getElementById('employee-login-pin').value = "";
+    document.getElementById('logged-user-name').innerText = "---"; // CZYSZCZENIE IMIENIA
+    document.getElementById('login-screen').classList.add('active');
+    
+    // TWARDE UKRYWANIE APLIKACJI I PROFILU
+    document.getElementById('main-app').style.display = 'none';
+    document.getElementById('user-profile').style.display = 'none';
+    document.getElementById('user-dropdown').classList.remove('active');
+    
+    // UKRYWANIE BANNERA OGŁOSZEŃ
+    const banner = document.getElementById('announcement-banner');
+    if(banner) banner.style.display = 'none';
+
+    resetCartAndInventory();
+    showNotice("Zakończono zmianę. Wylogowano.", "info");
+}
+
+window.toggleUserMenu = function() {
+    document.getElementById('user-dropdown').classList.toggle('active');
+}
+
+// Zamykanie dropdowna kliknięciem poza nim
+document.addEventListener('click', function(event) {
+    const profile = document.getElementById('user-profile');
+    const dropdown = document.getElementById('user-dropdown');
+    if (profile && dropdown && !profile.contains(event.target)) {
+        dropdown.classList.remove('active');
+    }
+});
+
 // NOWE FUNKCJE: STATYSTYKI PRACOWNIKA
 function getDailyStat(employeeName) {
     const date = getFormattedDate();
@@ -95,29 +171,22 @@ function addDailyStat(employeeName, amount) {
 
 // Funkcja resetująca cały koszyk i listę przedmiotów do stanu domyślnego
 function resetCartAndInventory() {
-    // 1. Odtwarzamy oryginalną bazę przedmiotów
     inventory = JSON.parse(JSON.stringify(defaultInventory));
     counts = {};
     
-    // 2. Zerujemy liczniki
-    inventory.forEach((_, index) => {
-        counts[index] = 0;
-    });
+    inventory.forEach((_, index) => { counts[index] = 0; });
 
-    // 3. Czyścimy pole kwoty transakcji
     const finalPriceInput = document.getElementById('final-price-input');
     if (finalPriceInput) finalPriceInput.value = "";
 
-    // 4. Przebudowujemy interfejs
     renderInventory();
     calculateTotal();
 }
 
 function renderInventory() {
     const list = document.getElementById('items-list');
-    list.innerHTML = ''; // Czyścimy starą listę
+    list.innerHTML = ''; 
     
-    // Sortujemy wizualnie: najpierw niestandardowe, potem zwykłe
     const customCards = [];
     const normalCards = [];
 
@@ -159,26 +228,21 @@ function renderInventory() {
         }
     });
     
-    // Dodajemy najpierw własne pola, a potem resztę standardową
     customCards.forEach(c => list.appendChild(c));
     normalCards.forEach(c => list.appendChild(c));
     
-    // Zastosuj aktualne filtry po przebudowie
     applyFilters();
 }
 
 function init() {
     document.getElementById('header-date').innerText = getFormattedDate();
-    
-    // Ładowanie domyślnego asortymentu
     resetCartAndInventory();
     
     document.getElementById('ad-input').addEventListener('input', updateAdPreview);
     updateAdPreview();
-    updateCartView(); // Wywołanie przy starcie dla pustego koszyka
+    updateCartView(); 
 }
 
-// LOGIKA PŁYWAJĄCEGO CENNIKA (STICKY NOTE)
 window.toggleWidget = function() {
     const widget = document.getElementById('dynamic-price-widget');
     const icon = document.getElementById('widget-toggle-icon');
@@ -192,7 +256,6 @@ window.toggleWidget = function() {
     }
 }
 
-// DYNAMICZNE DODAWANIE KOLEJNYCH PUSTYCH PÓL
 window.addCustomItemSlot = function() {
     const index = inventory.length;
     inventory.push({ name: "Własny przedmiot", min: 0, max: 0, category: "inne", isCustom: true });
@@ -202,10 +265,8 @@ window.addCustomItemSlot = function() {
     showNotice("Dodano nowe pole na własny przedmiot!", "success");
 }
 
-// Funkcje do obsługi Custom Item
 window.updateCustomName = function(index, value) {
     inventory[index].name = value || "Własny przedmiot";
-    // Zabezpieczenie przed błędem indeksów po dodaniu nowych pól:
     const inputField = document.getElementById(`custom-name-${index}`);
     if(inputField) {
         const card = inputField.closest('.item-card');
@@ -244,17 +305,14 @@ function calculateTotal() {
     document.getElementById('total-price').innerText = min + '$';
     document.getElementById('bonus-range').innerText = '+' + (max - min) + '$';
     
-    // Aktualizacja widoku koszyka bocznego
     updateCartView();
 }
 
-// Włączanie i wyłączanie koszyka
 window.toggleCart = function() {
     const sidebar = document.getElementById('cart-sidebar');
     if (sidebar) sidebar.classList.toggle('active');
 };
 
-// Aktualizacja zawartości koszyka (+/- przyciski wewnatrz)
 function updateCartView() {
     const container = document.getElementById('cart-items-container');
     const badge = document.getElementById('cart-badge');
@@ -306,13 +364,16 @@ function applyFilters() {
     const term = document.getElementById('search-input').value.toLowerCase();
     const adSection = document.getElementById('ad-section');
     const itemsList = document.getElementById('items-list');
+    const asortymentHeader = document.getElementById('asortyment-header-wrapper');
 
     if (currentCategory === 'reklama') {
         if(adSection) adSection.classList.remove('hidden');
         if(itemsList) itemsList.classList.add('hidden');
+        if(asortymentHeader) asortymentHeader.classList.add('hidden');
     } else {
         if(adSection) adSection.classList.add('hidden');
         if(itemsList) itemsList.classList.remove('hidden');
+        if(asortymentHeader) asortymentHeader.classList.remove('hidden');
         document.querySelectorAll('.item-card').forEach(card => {
             const name = card.getAttribute('data-name') || '';
             const cat = card.getAttribute('data-category') || '';
@@ -322,12 +383,11 @@ function applyFilters() {
     }
 }
 
+// ZMODYFIKOWANA LOGIKA: Nie pobieramy pinu stąd, weryfikacja była przy logowaniu
 window.generateQuote = async function() {
     const hasItems = Object.values(counts).some(c => c > 0);
     const finalPriceInput = document.getElementById('final-price-input');
     const finalPrice = parseFloat(finalPriceInput.value);
-    const pinInput = document.getElementById('employee-pin-input');
-    const pin = pinInput ? pinInput.value : "";
 
     if (!hasItems) return showNotice("Koszyk jest pusty!", "warning");
     
@@ -343,37 +403,20 @@ window.generateQuote = async function() {
         return showNotice(`Kwota zbyt wysoka! Maksimum to ${currentMaxTotal}$.`, "danger");
     }
 
-    if (!pin) return showNotice("Wprowadź PIN pracownika!", "warning");
-
     const btn = document.getElementById('quote-btn');
     const originalBtnHtml = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Weryfikacja...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Przetwarzanie...';
 
-    try {
-        // SPRAWDZANIE PINU W STARYM ARKUSZU
-        const response = await fetch(`${PIN_API_URL}?pin=${pin}`);
-        const data = await response.json();
-
-        if (data.isValid) {
-            currentEmployeeName = data.name;
-            showNotice(`Zalogowano jako: ${currentEmployeeName}`, "success");
-            
-            finalizeQuote(currentEmployeeName, finalPrice);
-        } else {
-            showNotice("Nieprawidłowy PIN!", "danger");
-        }
-    } catch (error) {
-        showNotice("Błąd połączenia z bazą PIN!", "danger");
-        console.error(error);
-    } finally {
+    // Delikatne opóźnienie dla estetyki (symulacja ładowania)
+    setTimeout(() => {
+        finalizeQuote(currentEmployeeName, finalPrice);
         btn.disabled = false;
         btn.innerHTML = originalBtnHtml;
-    }
+    }, 400);
 }
 
 function finalizeQuote(employeeName, finalPrice) {
-    // RESETUJEMY BLOKADĘ PODWÓJNEGO NALICZANIA DLA NOWEGO PARAGONU
     isStatAddedForCurrentReceipt = false;
     
     const receiptID = generateID();
@@ -385,14 +428,12 @@ function finalizeQuote(employeeName, finalPrice) {
     const itemsDiv = document.getElementById('receipt-items');
     itemsDiv.innerHTML = '';
     
-    // Ustalanie wskaźnika proporcji, by rozbić ręczną kwotę finalPrice
     const ratio = finalPrice / currentMinTotal;
 
     inventory.forEach((item, i) => {
         if (counts[i] > 0) {
             const row = document.createElement('div');
             row.className = 'receipt-row';
-            // Cena na paragonie też jest proporcjonalnie rozbita z ręcznej kwoty
             const calculatedItemTotal = Math.round(item.min * counts[i] * ratio);
             row.innerHTML = `<span>${item.name} [x${counts[i]}]</span><span>${calculatedItemTotal}$</span>`;
             itemsDiv.appendChild(row);
@@ -407,7 +448,6 @@ function finalizeQuote(employeeName, finalPrice) {
     }
     sigDiv.innerHTML = `<span class="signature-label">Podpis pracownika</span><span class="signature-text">${employeeName}</span>`;
 
-    // WYŚWIETLANIE STATYSTYK W MODALU (NOWA, ELEGANCKA WERSJA)
     const statDiv = document.getElementById('employee-stats-display');
     if (statDiv) {
         const currentStat = getDailyStat(employeeName);
@@ -440,15 +480,11 @@ async function sendToDiscord() {
     btn.disabled = true;
     btn.innerText = "Wysyłanie...";
 
-    // --- ZBIERANIE DANYCH DO PANELU SZEFA ---
     const itemsToLog = [];
     
-    // Kluczowa zmiana: Rozbijamy finalPrice proporcjonalnie na przedmioty
-    // Oraz radzimy sobie z "resztówką", gdyby proporcja dała po przecinku
     let remainingAmount = finalPriceNumeric;
     const ratio = finalPriceNumeric / currentMinTotal;
     
-    // Odfiltrowanie tylko tych elementów, które zostały dodane do koszyka
     const activeItems = inventory.map((item, index) => ({ item, index })).filter(x => counts[x.index] > 0);
 
     activeItems.forEach((x, arrayIndex) => {
@@ -456,7 +492,6 @@ async function sendToDiscord() {
         const count = counts[x.index];
         let calculatedTotal;
         
-        // Zabezpieczenie przed ułamkami: Ostatni produkt w koszyku bierze całą resztę (tzw. wyrównanie ułamków)
         if (arrayIndex === activeItems.length - 1) {
             calculatedTotal = remainingAmount;
         } else {
@@ -476,10 +511,9 @@ async function sendToDiscord() {
         type: "skup",
         date: getFormattedDateTime(),
         employee: currentEmployeeName,
-        report_id: receiptID, // <--- DODANO NUMER PARAGONU DO BAZY!
+        report_id: receiptID, 
         items: itemsToLog
     };
-    // -----------------------------------------
 
     try {
         const canvas = await html2canvas(area, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
@@ -506,13 +540,11 @@ async function sendToDiscord() {
             
             const res = await fetch(DISCORD_WEBHOOK_URL, { method: "POST", body: formData });
             if (res.ok) {
-                // WYSYŁAMY PACZKĘ DANYCH DO NOWEGO ARKUSZA SZEFA (w tle)
                 fetch(REPORTS_API_URL, {
                     method: "POST",
                     body: JSON.stringify(logPayload)
                 }).catch(e => console.error("Błąd zapisu w arkuszu:", e));
 
-                // Dopisanie do statystyk następuje TYLKO TUTAJ
                 if (!isStatAddedForCurrentReceipt) {
                     addDailyStat(currentEmployeeName, finalPriceNumeric);
                     isStatAddedForCurrentReceipt = true;
@@ -520,10 +552,7 @@ async function sendToDiscord() {
                 
                 showNotice("Wysłano na Discord i zaktualizowano obrót!", "success");
                 
-                // AUTOMATYCZNE CZYSZCZENIE KOSZYKA PO WYSŁANIU
                 resetCartAndInventory();
-                
-                // Zamykamy okno po wysłaniu
                 closeModal();
             } else throw new Error();
         }, "image/png");
@@ -555,7 +584,6 @@ window.copyReceiptToClipboard = async function() {
                 await navigator.clipboard.write(data);
                 
                 showNotice("Skopiowano paragon do schowka!", "success");
-                // NIE dodajemy już tutaj statystyk i NIE zamykamy okna
             } catch (err) {
                 showNotice("Błąd kopiowania! Spróbuj innej przeglądarki.", "danger");
             }
@@ -616,7 +644,7 @@ document.getElementById('reset-btn').onclick = () => {
 
 // Podpięcie zdarzeń przy starcie
 document.addEventListener('DOMContentLoaded', () => {
-    init();
+    // Nie robimy init(), dopóki user się nie zaloguje!
     
     const sendBtn = document.getElementById('send-discord-btn');
     if(sendBtn) sendBtn.onclick = sendToDiscord;
@@ -628,11 +656,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') generateQuote();
     };
     
-    const pinInput = document.getElementById('employee-pin-input');
-    if(pinInput) pinInput.addEventListener('keypress', triggerGenerateQuote);
-    
     const finalPriceInput = document.getElementById('final-price-input');
     if(finalPriceInput) finalPriceInput.addEventListener('keypress', triggerGenerateQuote);
+
+    // Obsługa ENTER w panelu logowania
+    const loginPinInput = document.getElementById('employee-login-pin');
+    if (loginPinInput) {
+        loginPinInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') login();
+        });
+    }
 });
 
 // FUNKCJA ZWIJANIA PASKA NA MOBILE
@@ -699,3 +732,70 @@ window.forceHardReload = async function() {
 
 setInterval(checkUpdates, 60000);
 setTimeout(checkUpdates, 3000);
+
+// ==========================================
+// SYSTEM USTAWIEŃ (ZMIANA PIN)
+// ==========================================
+window.openSettings = function() {
+    document.getElementById('user-dropdown').classList.remove('active');
+    document.getElementById('settings-modal').classList.add('active');
+}
+
+window.closeSettings = function() {
+    document.getElementById('settings-modal').classList.remove('active');
+    // Czyścimy pola po zamknięciu
+    document.getElementById('old-pin-input').value = '';
+    document.getElementById('new-pin-input').value = '';
+    document.getElementById('new-pin-confirm').value = '';
+}
+
+window.changeEmployeePin = async function() {
+    const oldPin = document.getElementById('old-pin-input').value;
+    const newPin = document.getElementById('new-pin-input').value;
+    const confirmPin = document.getElementById('new-pin-confirm').value;
+
+    if (!oldPin || !newPin || !confirmPin) {
+        return showNotice("Wypełnij wszystkie pola!", "warning");
+    }
+    if (newPin !== confirmPin) {
+        return showNotice("Nowe kody PIN nie są identyczne!", "danger");
+    }
+    if (newPin.length < 4) {
+        return showNotice("Nowy PIN musi mieć dokładnie 4 cyfry!", "warning");
+    }
+    if (oldPin === newPin) {
+        return showNotice("Nowy PIN musi różnić się od starego!", "warning");
+    }
+
+    const btn = document.getElementById('change-pin-btn');
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Zapisywanie...';
+
+    try {
+        const response = await fetch(PIN_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'change_pin',
+                old_pin: oldPin,
+                new_pin: newPin,
+                name: currentEmployeeName
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotice("Twój PIN został pomyślnie zmieniony!", "success");
+            closeSettings();
+        } else {
+            showNotice(data.message || "Błąd zmiany PINu! Prawdopodobnie wpisałeś zły obecny PIN.", "danger");
+        }
+    } catch (e) {
+        showNotice("Błąd połączenia z bazą danych!", "danger");
+        console.error(e);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+    }
+}
