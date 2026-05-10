@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "2.4.9";
+const APP_VERSION = "2.5.0";
 
 // ==========================================
 // KONFIGURACJA
@@ -16,31 +16,31 @@ const REPORTS_API_URL = "https://script.google.com/macros/s/AKfycbwcbHTDSA5H0LO2
 const defaultInventory = [
     { name: "Zdobiona książka", min: 120, max: 120, category: "inne" },
     { name: "Dywan", min: 240, max: 240, category: "dom" },
-    { name: "Komputer (laptop)", min: 570, max: 600, category: "elektronika" },
-    { name: "Komputer (stacjonarny)", min: 640, max: 680, category: "elektronika" },
-    { name: "Konsola", min: 370, max: 400, category: "elektronika" },
-    { name: "Konsola DJ", min: 600, max: 640, category: "elektronika" },
+    { name: "Komputer (laptop)", min: 600, max: 600, category: "elektronika" },
+    { name: "Komputer (stacjonarny)", min: 680, max: 680, category: "elektronika" },
+    { name: "Konsola", min: 400, max: 400, category: "elektronika" },
+    { name: "Konsola DJ", min: 640, max: 640, category: "elektronika" },
     { name: "Kobieca plastikowa figurka", min: 90, max: 90, category: "inne" },
     { name: "Plastikowa figurka małpki", min: 80, max: 80, category: "inne" },
     { name: "Kwiat", min: 60, max: 60, category: "dom" },
-    { name: "Gitara elektryczna", min: 440, max: 480, category: "elektronika" },
+    { name: "Gitara elektryczna", min: 480, max: 480, category: "elektronika" },
     { name: "Dziwna substancja", min: 90, max: 90, category: "inne" },
     { name: "Dziwna szara substancja", min: 160, max: 160, category: "inne" },
-    { name: "Biżuteria", min: 210, max: 240, category: "biżuteria" },
-    { name: "Brudna biżuteria", min: 130, max: 150, category: "biżuteria" },
+    { name: "Biżuteria", min: 240, max: 240, category: "biżuteria" },
+    { name: "Brudna biżuteria", min: 150, max: 150, category: "biżuteria" },
     { name: "Katana", min: 480, max: 480, category: "inne" },
-    { name: "Mikrofala", min: 250, max: 280, category: "dom" },
-    { name: "Mikser", min: 130, max: 160, category: "dom" },
-    { name: "Monitor", min: 120, max: 140, category: "elektronika" },
+    { name: "Mikrofala", min: 280, max: 280, category: "dom" },
+    { name: "Mikser", min: 160, max: 160, category: "dom" },
+    { name: "Monitor", min: 140, max: 140, category: "elektronika" },
     { name: "Obraz", min: 110, max: 110, category: "dom" },
     { name: "Obraz ścienny", min: 175, max: 175, category: "dom" },
-    { name: "Głośnik", min: 120, max: 145, category: "elektronika" },
-    { name: "Telewizor", min: 570, max: 600, category: "elektronika" },
-    { name: "Zegarek", min: 140, max: 160, category: "biżuteria" },
+    { name: "Głośnik", min: 145, max: 145, category: "elektronika" },
+    { name: "Telewizor", min: 600, max: 600, category: "elektronika" },
+    { name: "Zegarek", min: 160, max: 160, category: "biżuteria" },
     { name: "Złota bransoletka", min: 200, max: 200, category: "biżuteria" },
     { name: "Złota moneta z prezydentem", min: 200, max: 200, category: "inne" },
     { name: "Złote kolczyki", min: 200, max: 200, category: "biżuteria" },
-    { name: "Popsuty telefon", min: 90, max: 95, category: "elektronika" }
+    { name: "Popsuty telefon", min: 95, max: 95, category: "elektronika" }
 ];
 
 let inventory = [];
