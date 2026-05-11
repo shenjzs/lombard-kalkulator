@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>El Cartel | Przetapianie Złota</title>
+    <link rel="stylesheet" href="style-zloto.css?v=2.7.0">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-logo">
+            <i class="fas fa-fire-alt"></i> EL CARTEL GOLD
+        </div>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link-btn"><i class="fas fa-cash-register"></i> Skup</a>
+            <a href="sprzedaz.html" class="nav-link-btn"><i class="fas fa-truck-loading"></i> Sprzedaż</a>
+            
+            <div id="boss-link" style="display: none;">
+                <a href="raporty-zloto.html" class="nav-link-btn highlight-gold">
+                    <i class="fas fa-chart-line"></i> Statystyki złota
+                </a>
+            </div>
+
+            <div id="user-profile" class="user-profile" style="display: none;">
+                <div class="user-profile-btn" onclick="toggleUserMenu()">
+                    <i class="fas fa-user-circle"></i> <span id="logged-user-name">---</span> <i class="fas fa-chevron-down" style="font-size: 0.8rem; margin-left: 5px;"></i>
+                </div>
+                <div id="user-dropdown" class="user-dropdown">
+                    <div class="dropdown-item text-danger" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Zakończ zmianę</div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div id="login-screen" class="login-container active">
+        <div class="login-card">
+            <i class="fas fa-gem login-icon"></i>
+            <h2>Odlewnia El Cartel</h2>
+            <p>Dostęp ograniczony. Wymagana autoryzacja zarządu.</p>
+            <input type="password" id="employee-login-pin" placeholder="****" class="pin-input" maxlength="4">
+            <button onclick="login()" id="login-btn" class="login-btn">
+                Uruchom piec <i class="fas fa-bolt"></i>
+            </button>
+        </div>
+    </div>
+
+    <div id="main-app" style="display: none;">
+        <div class="container" style="padding-top: 20px;">
+            <header>
+                <h1>PRZETAPIANIE BIŻUTERII</h1>
+                <p>Zamień drobne złoto w sztabki</p>
+                <div class="header-meta">
+                    <span><i class="fas fa-temperature-high"></i> TEMPERATURA PIECA: 1064°C</span>
+                    <span id="header-date">--.--.----</span>
+                </div>
+            </header>
+
+            <div class="smeltery-grid">
+                <div class="smeltery-input-card">
+                    <h3 class="section-title"><i class="fas fa-boxes"></i> Wsad materiałowy (receptura)</h3>
+                    <div id="gold-items-list" class="gold-items-grid"></div>
+                </div>
+
+                <div class="smeltery-result-card">
+                    <h3 class="section-title"><i class="fas fa-microchip"></i> Podsumowanie wytopu</h3>
+                    
+                    <div class="calc-box">
+                        <div class="calc-row">
+                            <span>Koszt materiałów (wydano):</span>
+                            <span id="total-cost" class="val-red">0$</span>
+                        </div>
+                        <div class="calc-row" style="color: var(--accent-color); font-weight: 700;">
+                            <span>Uzyskane sztabki złota:</span>
+                            <span id="possible-bars">0 szt.</span>
+                        </div>
+                        <div class="divider" style="height: 1px; background: #333; margin: 10px 0;"></div>
+                        <div class="calc-row highlight">
+                            <span>Wartość rynkowa sztabek:</span>
+                            <span id="gold-bar-value" class="val-gold">0$</span>
+                        </div>
+                    </div>
+
+                    <div class="profit-comparison">
+                        <div class="comparison-card" style="border-color: var(--success); background: rgba(34, 197, 94, 0.05);">
+                            <span class="comp-label">Zysk na czysto z operacji</span>
+                            <span id="pure-profit" class="comp-val val-green">+0$</span>
+                        </div>
+                    </div>
+
+                    <button onclick="processSmelting()" id="process-btn" class="smelt-action-btn">
+                        <i class="fas fa-hammer"></i> PRZETOP
+                    </button>
+                    <button onclick="resetSmeltery()" class="reset-link">Wyczyść piec</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
+    <script src="zloto-script.js?v=2.7.0"></script>
+</body>
+</html>
