@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Kasa fiskalna</title>
-    <link rel="stylesheet" href="style.css?v=2.5.0">
+    <link rel="stylesheet" href="style.css?v=2.6.0">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -53,7 +53,7 @@
             <p>Wprowadź swój kod PIN, aby odblokować kasę i rozpocząć przyjmowanie klientów.</p>
             <input type="password" id="employee-login-pin" placeholder="****" class="pin-input" maxlength="4">
             <button onclick="login()" id="login-btn" class="login-btn">
-                Zaloguj <i class="fas fa-unlock"></i>
+                Odblokuj system <i class="fas fa-unlock"></i>
             </button>
         </div>
     </div>
@@ -136,12 +136,8 @@
 
                 <div class="summary-info">
                     <div class="total-group">
-                        <span class="total-label">Suma (minimum):</span>
-                        <span id="total-price" class="total-amount">0$</span>
-                    </div>
-                    <div class="bonus-group">
-                        <span class="bonus-label">Możliwa dopłata:</span>
-                        <span id="bonus-range" class="bonus-amount">+0$</span>
+                        <span class="total-label">Suma:</span>
+                        <span id="total-price" class="total-amount" style="color: var(--success);">0$</span>
                     </div>
                 </div>
                 
@@ -249,6 +245,6 @@
     </div>
 
     <div id="toast-container" class="toast-container"></div>
-    <script src="script.js?v=2.5.0"></script>
+    <script src="script.js?v=2.6.0"></script>
 </body>
 </html>

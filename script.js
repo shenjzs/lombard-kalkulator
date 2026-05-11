@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "2.5.0";
+const APP_VERSION = "2.6.0";
 
 // ==========================================
 // KONFIGURACJA
@@ -12,7 +12,7 @@ const PIN_API_URL = "https://script.google.com/macros/s/AKfycbycnbsg8yC8Cqk0tF-6
 // Baza Raportów:
 const REPORTS_API_URL = "https://script.google.com/macros/s/AKfycbwcbHTDSA5H0LO2hWYmBleL0z74CXyLYzm188cvhnQBLdbmrOw0r5OMj7QyPXivMZfzeg/exec";
 
-// Główna, domyślna baza przedmiotów (bez pustych pól na start)
+// Główna, domyślna baza przedmiotów
 const defaultInventory = [
     { name: "Zdobiona książka", min: 120, max: 120, category: "inne" },
     { name: "Dywan", min: 240, max: 240, category: "dom" },
@@ -294,6 +294,7 @@ window.handleInput = function(index, value) {
     calculateTotal();
 }
 
+// ZABEZPIECZONA FUNKCJA OBLICZANIA KOSZYKA
 function calculateTotal() {
     let min = 0, max = 0;
     inventory.forEach((item, index) => {
@@ -303,7 +304,12 @@ function calculateTotal() {
     currentMinTotal = min; 
     currentMaxTotal = max; 
     document.getElementById('total-price').innerText = min + '$';
-    document.getElementById('bonus-range').innerText = '+' + (max - min) + '$';
+    
+    // Zabezpieczenie! Aktualizujemy ten element tylko jeśli istnieje w HTMLu.
+    const bonusEl = document.getElementById('bonus-range');
+    if (bonusEl) {
+        bonusEl.innerText = '+' + (max - min) + '$';
+    }
     
     updateCartView();
 }
@@ -395,12 +401,13 @@ window.generateQuote = async function() {
         return showNotice("Wpisz kwotę transakcji!", "danger");
     }
     
+    // Uproszczona walidacja dla sztywnych stawek
     if (finalPrice < currentMinTotal) {
-        return showNotice(`Kwota zbyt niska! Minimum to ${currentMinTotal}$.`, "danger");
+        return showNotice(`Kwota zbyt niska! Wymagane: ${currentMinTotal}$.`, "danger");
     }
 
     if (finalPrice > currentMaxTotal) {
-        return showNotice(`Kwota zbyt wysoka! Maksimum to ${currentMaxTotal}$.`, "danger");
+        return showNotice(`Kwota zbyt wysoka! Wymagane: ${currentMaxTotal}$.`, "danger");
     }
 
     const btn = document.getElementById('quote-btn');

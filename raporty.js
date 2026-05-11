@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "2.5.0";
+const APP_VERSION = "2.6.0";
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
@@ -18,39 +18,6 @@ window.currentGlobalGoal = 0;
 
 // Globalna zmienna przechowująca przetworzone dane dla wyszukiwarki
 window.globalSortedTransactions = [];
-
-// SŁOWNIK CEN AWARYJNYCH (KOŁO RATUNKOWE)
-// Używany TYLKO wtedy, gdy towar został sprzedany w wybranym okresie dat, 
-// ale ani razu nie został w tym samym okresie skupiony. Wpisz tu maksymalne ceny skupu.
-const BUY_PRICES = {
-    "Dywan": 240,
-    "Zdobiona książka": 120,
-    "Komputer (laptop)": 585,
-    "Komputer (stacjonarny)": 660,
-    "Konsola": 385,
-    "Konsola DJ": 620,
-    "Kobieca plastikowa figurka": 90,
-    "Plastikowa figurka małpki": 80,
-    "Kwiat": 60,
-    "Gitara elektryczna": 460,
-    "Dziwna substancja": 90,
-    "Dziwna szara substancja": 160,
-    "Biżuteria": 225,
-    "Brudna biżuteria": 140,
-    "Katana": 480,
-    "Mikrofala": 265,
-    "Mikser": 145,
-    "Monitor": 130,
-    "Obraz": 110,
-    "Obraz ścienny": 175,
-    "Głośnik": 132,
-    "Telewizor": 585,
-    "Zegarek": 150,
-    "Złota bransoletka": 200,
-    "Złote kolczyki": 200,
-    "Stary popsuty telefon": 92,
-	"Złota moneta z prezydentem": 100,
-};
 
 // ==========================================
 // LOGOWANIE I AUTORYZACJA
@@ -302,8 +269,6 @@ async function loadRealData() {
                 // Używamy globalnych statystyk zakupu firmy do wyliczenia marży, żeby nie oszukiwać na zysku pracownika
                 if (dynamicBuyStats[row.name] && dynamicBuyStats[row.name].qty > 0) {
                     itemCost = dynamicBuyStats[row.name].total / dynamicBuyStats[row.name].qty;
-                } else if (BUY_PRICES[row.name] !== undefined) {
-                    itemCost = BUY_PRICES[row.name];
                 } else {
                     itemCost = (row.total / row.qty) * 0.8;
                 }
