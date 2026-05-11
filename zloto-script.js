@@ -11,7 +11,7 @@ const REPORTS_API_URL = "https://script.google.com/macros/s/AKfycbwcbHTDSA5H0LO2
 const goldInventory = [
     { name: "Złote kolczyki", price: 200, reqPerBar: 20 },
     { name: "Złota bransoletka", price: 200, reqPerBar: 20 },
-    { name: "Złota moneta z prezydentem", price: 20, reqPerBar: 10 }
+    { name: "Złota moneta", price: 200, reqPerBar: 10 }
 ];
 
 // OSTATECZNA CENA SZTABKI ZŁOTA
