@@ -1,8 +1,71 @@
 // ==========================================
 // WERSJA APLIKACJI I KONFIGURACJA
 // ==========================================
-const APP_VERSION = "2.7.0";
+const APP_VERSION = "2.7.1";
 const REPORTS_API_URL = "https://script.google.com/macros/s/AKfycbwcbHTDSA5H0LO2hWYmBleL0z74CXyLYzm188cvhnQBLdbmrOw0r5OMj7QyPXivMZfzeg/exec";
+const PIN_API_URL = "https://script.google.com/macros/s/AKfycbycnbsg8yC8Cqk0tF-6syzBTvTLvO-MyTgx-zqAPjgBXPR132MicKNtjNoq3WMQfmLR/exec";
+
+// ==========================================
+// LOGOWANIE I AUTORYZACJA
+// ==========================================
+window.loginBoss = async function() {
+    const pin = document.getElementById('boss-pin-input').value;
+    const btn = document.getElementById('login-btn');
+    if (!pin) return showNotice("Wprowadź PIN!", "danger");
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Weryfikacja...';
+
+    try {
+        const response = await fetch(`${PIN_API_URL}?pin=${pin}`);
+        const data = await response.json();
+
+        if (data.isValid) {
+            // WERYFIKACJA UPRAWNIEŃ SZEFA
+            if (data.role && data.role.toLowerCase() === 'szef') {
+                document.getElementById('logged-boss-name').innerText = data.name.toUpperCase();
+                document.getElementById('login-screen').classList.remove('active');
+                document.getElementById('dashboard-screen').classList.remove('hidden');
+                showNotice(`Zalogowano pomyślnie jako ${data.name}`, "success");
+                
+                // Ładujemy dane dopiero, gdy system wpuści usera
+                loadGoldStats(); 
+            } else {
+                showNotice("Odmowa! Brak uprawnień zarządcy.", "danger");
+                document.getElementById('boss-pin-input').value = ""; // Czyści błędny PIN
+            }
+        } else {
+            showNotice("Nieprawidłowy PIN!", "danger");
+        }
+    } catch (e) {
+        showNotice("Błąd połączenia z bazą PIN!", "danger");
+        console.error(e);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Zaloguj <i class="fas fa-unlock"></i>';
+    }
+}
+
+window.logoutBoss = function() {
+    document.getElementById('boss-pin-input').value = "";
+    document.getElementById('dashboard-screen').classList.add('hidden');
+    document.getElementById('login-screen').classList.add('active');
+    
+    // Czyszczenie tabeli żeby nie wisiała w tle
+    document.getElementById('gold-logs-body').innerHTML = '';
+    
+    showNotice("Wylogowano z panelu statystyk.", "success");
+}
+
+// Obsługa Enter dla logowania
+document.addEventListener('DOMContentLoaded', () => {
+    const pinInput = document.getElementById('boss-pin-input');
+    if (pinInput) { 
+        pinInput.addEventListener('keypress', e => { 
+            if (e.key === 'Enter') loginBoss(); 
+        }); 
+    }
+});
 
 // ==========================================
 // GŁÓWNA FUNKCJA POBIERANIA STATYSTYK
@@ -10,21 +73,14 @@ const REPORTS_API_URL = "https://script.google.com/macros/s/AKfycbwcbHTDSA5H0LO2
 async function loadGoldStats() {
     const tbody = document.getElementById('gold-logs-body');
     const icon = document.getElementById('refresh-icon');
-    
-    console.log("[SYSTEM] Rozpoczynam pobieranie danych gold...");
 
-    // Dodanie animacji kręcenia i komunikatu ładowania
     if (icon) icon.classList.add('fa-spin');
     if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color: #666;"><i class="fas fa-spinner fa-spin"></i> Pobieranie danych z bazy...</td></tr>';
     
     try {
-        // Fetch z parametrami unikającymi cache
         const response = await fetch(`${REPORTS_API_URL}?action=get_reports&t=${new Date().getTime()}`);
         const data = await response.json();
-        
-        console.log("[SYSTEM] Dane odebrane:", data);
 
-        // Filtrowanie tylko typu "zloto"
         const goldData = data.filter(row => row.type === "zloto");
 
         if (goldData.length === 0) {
@@ -35,7 +91,6 @@ async function loadGoldStats() {
         let spent = 0;
         let revenue = 0;
 
-        // Renderowanie tabeli
         if (tbody) {
             tbody.innerHTML = goldData.reverse().map(row => {
                 const itemSpent = parseFloat(row.total) || 0;
@@ -60,7 +115,6 @@ async function loadGoldStats() {
             }).join('');
         }
 
-        // Aktualizacja kart KPI
         const totalSpentEl = document.getElementById('stat-total-spent');
         if (totalSpentEl) totalSpentEl.innerText = spent + '$';
 
@@ -74,30 +128,21 @@ async function loadGoldStats() {
             profitEl.style.color = profit >= 0 ? 'var(--success)' : 'var(--danger)';
         }
 
-        console.log("[SYSTEM] Statystyki zaktualizowane pomyślnie.");
-
     } catch (e) {
         console.error("[SYSTEM] BŁĄD:", e);
-        if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--danger);">Błąd połączenia z bazą. Spróbuj odświeżyć stronę (CTRL+F5).</td></tr>';
+        if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--danger);">Błąd połączenia z bazą. Spróbuj odświeżyć stronę.</td></tr>';
     } finally {
         if (icon) icon.classList.remove('fa-spin');
     }
 }
 
-// ==========================================
-// INICJALIZACJA PO ZAŁADOWANIU STRONY
-// ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    // Ustawianie nazwy szefa
-    const bossNameEl = document.getElementById('logged-boss-name');
-    const savedName = localStorage.getItem('elcartel_gold_user_name');
-    if (bossNameEl) {
-        bossNameEl.innerText = savedName || "ZARZĄD";
-    }
-
-    // Odpalenie ładowania
-    loadGoldStats();
-});
-
-// Udostępnienie funkcji globalnie dla przycisku w HTML
 window.loadGoldStats = loadGoldStats;
+
+// System powiadomień
+function showNotice(msg, type) {
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerText = msg;
+    document.getElementById('toast-container').appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, 3000);
+}

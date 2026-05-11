@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>El Cartel | Statystyki Złota</title>
-    <link rel="stylesheet" href="style-zloto.css?v=2.7.0">
+    <link rel="stylesheet" href="style-zloto.css?v=2.7.1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
 </head>
@@ -16,13 +16,28 @@
         </div>
     </nav>
 
-    <div class="container" style="padding-top: 40px;">
+    <div id="login-screen" class="login-container active">
+        <div class="login-card">
+            <i class="fas fa-user-shield login-icon"></i>
+            <h2>Wymagana autoryzacja</h2>
+            <p>Wprowadź kod PIN z uprawnieniami zarządcy, aby uzyskać dostęp do statystyk złota.</p>
+            <input type="password" id="boss-pin-input" placeholder="****" class="pin-input" maxlength="4">
+            <button onclick="loginBoss()" id="login-btn" class="login-btn">
+                Zaloguj <i class="fas fa-unlock"></i>
+            </button>
+        </div>
+    </div>
+
+    <div id="dashboard-screen" class="container hidden" style="padding-top: 40px;">
         <header>
             <h1>RAPORTY PRZETAPU</h1>
             <p>Zalogowano jako: <strong id="logged-boss-name" style="color: var(--accent-color);">---</strong></p>
-            <div style="margin-top: 20px;">
+            <div style="margin-top: 20px; display: flex; justify-content: center; gap: 15px;">
                 <button onclick="loadGoldStats()" class="refresh-btn">
                     <i class="fas fa-sync-alt" id="refresh-icon"></i> Odśwież statystyki
+                </button>
+                <button onclick="logoutBoss()" class="refresh-btn" style="color: var(--danger); border-color: var(--danger); background: rgba(239, 68, 68, 0.1);">
+                    <i class="fas fa-sign-out-alt"></i> Wyloguj
                 </button>
             </div>
         </header>
@@ -56,8 +71,7 @@
                         </tr>
                     </thead>
                     <tbody id="gold-logs-body">
-                        <tr><td colspan="5" style="text-align:center; padding: 40px; color: #666;">Ładowanie danych z bazy...</td></tr>
-                    </tbody>
+                        </tbody>
                 </table>
             </div>
         </div>
@@ -65,6 +79,6 @@
 
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="raporty-zloto.js?v=2.7.0"></script>
+    <script src="raporty-zloto.js?v=2.7.1"></script>
 </body>
 </html>

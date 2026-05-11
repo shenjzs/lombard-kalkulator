@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "2.6.0";
+const APP_VERSION = "2.7.1";
 
 // ==========================================
 // KONFIGURACJA
