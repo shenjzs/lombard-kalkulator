@@ -1,4 +1,4 @@
-const APP_VERSION = "2.7.2";
+const APP_VERSION = "2.8.2";
 
 // ==========================================
 // KONFIGURACJA
@@ -21,12 +21,13 @@ let currentEmployeeName = "";
 let currentCounts = {};
 let isBoss = false;
 
+const delay = ms => new Promise(res => setTimeout(res, ms));
+
 function getFormattedDate() {
     const now = new Date();
     return `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
 }
 
-// OBSŁUGA KLAWISZA ENTER PRZY LOGOWANIU
 document.addEventListener('DOMContentLoaded', () => {
     const loginPinInput = document.getElementById('employee-login-pin');
     if (loginPinInput) {
@@ -49,7 +50,6 @@ async function login() {
         const data = await response.json();
 
         if (data.isValid) {
-            // TWARDA BLOKADA: TYLKO DLA RANGI SZEF DO CAŁEJ STRONY
             if (data.role && data.role.toLowerCase() === 'szef') {
                 currentEmployeeName = data.name;
                 isBoss = true;
@@ -61,14 +61,15 @@ async function login() {
                 document.getElementById('header-date').innerText = getFormattedDate();
                 
                 renderGoldItems();
+                loadWarehouseData();
 
-                // Od razu pokazujemy sekcję statystyk, bo każdy wpuszczony to szef
                 document.getElementById('boss-stats-section').style.display = 'block';
-                loadGoldStats(); // Automatyczne wczytanie po logowaniu
+                document.getElementById('admin-tools-trigger').style.display = 'block';
+                loadGoldStats(); 
                 
                 showNotice(`Witaj w odlewni ${data.name}!`, "success");
             } else {
-                showNotice("Nie masz uprawnień, aby się zalogować.", "danger");
+                showNotice("Nie jesteś uprawniony, aby się zalogować.", "danger");
                 document.getElementById('employee-login-pin').value = "";
             }
         } else {
@@ -79,6 +80,142 @@ async function login() {
     } finally {
         btn.disabled = false;
         btn.innerHTML = 'Uruchom piec <i class="fas fa-bolt"></i>';
+    }
+}
+
+// ==========================================
+// KOREKTA ZALEGŁEGO MAGAZYNU (MODAL)
+// ==========================================
+window.openKorektaModal = function() {
+    document.getElementById('korekta-modal').classList.add('active');
+}
+
+window.closeKorektaModal = function() {
+    document.getElementById('korekta-modal').classList.remove('active');
+    document.getElementById('korekta-qty').value = "";
+}
+
+window.submitKorekta = async function(isAdding) {
+    if (!isBoss) return;
+    
+    const itemName = document.getElementById('korekta-item').value;
+    const qty = parseInt(document.getElementById('korekta-qty').value);
+    const btnAdd = document.getElementById('korekta-btn-add');
+    const btnSub = document.getElementById('korekta-btn-sub');
+
+    if (!qty || qty <= 0) return showNotice("Wprowadź poprawną ilość!", "warning");
+
+    btnAdd.disabled = true;
+    btnSub.disabled = true;
+    
+    const prefix = isAdding ? "KOREKTA DODATNIA | " : "KOREKTA UJEMNA | ";
+
+    const payload = {
+        action: "save_receipt",
+        type: "zloto", 
+        employee: currentEmployeeName + " (Zarząd)",
+        date: new Date().toLocaleString('pl-PL'),
+        report_id: "KOREKTA-" + Math.random().toString(36).substr(2, 6).toUpperCase(),
+        items: prefix + itemName + " x" + qty,
+        total: 0, 
+        revenue: 0,
+        npc_alt: 0
+    };
+
+    document.getElementById('wh-count-0').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    document.getElementById('wh-count-1').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    document.getElementById('wh-count-2').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    try {
+        await fetch(REPORTS_API_URL, { 
+            method: "POST", 
+            body: JSON.stringify(payload) 
+        });
+        showNotice("Pomyślnie zaktualizowano magazyn!", "success");
+        closeKorektaModal();
+        
+        await loadWarehouseData(); 
+    } catch (e) {
+        showNotice("Błąd zapisu do bazy!", "danger");
+        console.error(e);
+    } finally {
+        btnAdd.disabled = false;
+        btnSub.disabled = false;
+    }
+}
+
+// ==========================================
+// WIRTUALNY MAGAZYN - LOGIKA OBLICZEŃ
+// ==========================================
+window.loadWarehouseData = async function() {
+    const whPanel = document.getElementById('warehouse-panel');
+    if (whPanel) whPanel.style.display = 'block';
+
+    try {
+        const response = await fetch(`${REPORTS_API_URL}?action=get_reports&t=${new Date().getTime()}`);
+        const data = await response.json();
+
+        let stock = [0, 0, 0]; 
+
+        data.forEach(row => {
+            if (row.type === "skup" || row.type === "sprzedaz") {
+                goldInventory.forEach((item, idx) => {
+                    if (row.name === item.name) {
+                        const qty = parseInt(row.qty) || 0;
+                        if (row.type === "skup") stock[idx] += qty;
+                        if (row.type === "sprzedaz") stock[idx] -= qty;
+                    }
+                });
+            } 
+            else if (row.type === "zloto") {
+                goldInventory.forEach((item, idx) => {
+                    // BEZPIECZEŃSTWO: Rzutujemy na String by uniknąć crasha gdyby Arkusz podał dziwny typ
+                    const itemsStr = String(row.items || "");
+                    const regex = new RegExp(item.name + "\\s*x(\\d+)", "i");
+                    const match = itemsStr.match(regex);
+                    if (match && match[1]) {
+                        const parsedQty = parseInt(match[1]);
+                        
+                        if (itemsStr.includes("KOREKTA DODATNIA")) {
+                            stock[idx] += parsedQty;
+                        } else if (itemsStr.includes("KOREKTA UJEMNA")) {
+                            stock[idx] -= parsedQty;
+                        } else {
+                            stock[idx] -= parsedQty; 
+                        }
+                    }
+                });
+            }
+        });
+
+        // UWAGA: Usunięto sztuczne zerowanie, system ukaże pełen minus jeśli taki jest!
+        // stock = stock.map(val => Math.max(0, val));
+
+        document.getElementById('wh-count-0').innerText = stock[0] + " szt.";
+        document.getElementById('wh-count-1').innerText = stock[1] + " szt.";
+        document.getElementById('wh-count-2').innerText = stock[2] + " szt.";
+
+        let possibleBars = Math.floor(Math.min(
+            stock[0] / goldInventory[0].reqPerBar,
+            stock[1] / goldInventory[1].reqPerBar,
+            stock[2] / goldInventory[2].reqPerBar
+        ));
+        
+        // Mimo, że magazyn może być na minusie, wyliczona liczba sztabek nie może być mniejsza niż 0
+        possibleBars = Math.max(0, possibleBars);
+
+        const possibleBarsEl = document.getElementById('wh-possible-bars');
+        possibleBarsEl.innerText = possibleBars + " szt.";
+        
+        if(possibleBars > 0) {
+            possibleBarsEl.style.color = "var(--success)";
+        } else {
+            possibleBarsEl.style.color = "var(--text-secondary)";
+        }
+
+    } catch (e) {
+        console.error("Błąd ładowania magazynu:", e);
+        document.getElementById('wh-possible-bars').innerText = "Błąd";
     }
 }
 
@@ -150,8 +287,31 @@ async function processSmelting() {
     if (possibleBars === 0) return showNotice("Za mało materiałów na sztabkę!", "danger");
 
     const btn = document.getElementById('process-btn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PRZETAPIANIE...';
+    const resetBtn = document.getElementById('reset-btn');
+    const progressBox = document.getElementById('smelting-progress-box');
+    const statusText = document.getElementById('smelting-status-text');
+    const barFill = document.getElementById('smelting-bar-fill');
+    const resultCard = document.getElementById('result-card');
+
+    btn.style.display = 'none';
+    resetBtn.style.display = 'none';
+    progressBox.style.display = 'block';
+    resultCard.classList.add('smelting-active'); 
+
+    const stages = [
+        { text: "Rozgrzewanie pieca do 1064°C...", width: "20%", time: 800 },
+        { text: "Topienie kruszcu...", width: "50%", time: 1000 },
+        { text: "Oddzielanie zanieczyszczeń...", width: "75%", time: 900 },
+        { text: "Odlewanie i chłodzenie sztabek...", width: "100%", time: 800 }
+    ];
+
+    for (const stage of stages) {
+        statusText.innerText = stage.text;
+        barFill.style.width = stage.width;
+        await delay(stage.time);
+    }
+
+    statusText.innerText = "Zapisywanie operacji...";
 
     const itemsToLog = [];
     goldInventory.forEach((item, i) => {
@@ -204,17 +364,23 @@ async function processSmelting() {
         showNotice("Przetopiono pomyślnie! Logi wysłane.", "success");
         resetSmeltery();
 
-        // Jeśli szef właśnie coś przetopił, odświeżamy mu statystyki automatycznie na dole strony!
         if (isBoss) {
-            setTimeout(loadGoldStats, 1000); 
+            document.getElementById('wh-count-0').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            document.getElementById('wh-count-1').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            document.getElementById('wh-count-2').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            await loadWarehouseData();
+            loadGoldStats();
         }
 
     } catch (e) {
-        showNotice("Wystąpił nieoczekiwany błąd!", "danger");
+        showNotice("Wystąpił nieoczekiwany błąd zapisu!", "danger");
         console.error(e);
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-hammer"></i> POTWIERDŹ PRZETOP';
+        progressBox.style.display = 'none';
+        barFill.style.width = "0%";
+        btn.style.display = 'block';
+        resetBtn.style.display = 'block';
+        resultCard.classList.remove('smelting-active');
     }
 }
 
@@ -230,7 +396,7 @@ function resetSmeltery() {
 // FUNKCJE STATYSTYK ZŁOTA (TYLKO DLA SZEFA)
 // ==========================================
 window.loadGoldStats = async function() {
-    if (!isBoss) return; // Zabezpieczenie frontendu
+    if (!isBoss) return; 
 
     const tbody = document.getElementById('gold-logs-body');
     const icon = document.getElementById('refresh-icon');
@@ -242,7 +408,7 @@ window.loadGoldStats = async function() {
         const response = await fetch(`${REPORTS_API_URL}?action=get_reports&t=${new Date().getTime()}`);
         const data = await response.json();
         
-        const goldData = data.filter(row => row.type === "zloto");
+        const goldData = data.filter(row => row.type === "zloto" && !String(row.items || "").includes("KOREKTA"));
 
         if (goldData.length === 0) {
             if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--text-secondary);">Brak zarejestrowanych przetopów w bazie danych.</td></tr>';

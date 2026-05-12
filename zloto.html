@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Przetapianie złota</title>
-    <link rel="stylesheet" href="style-zloto.css?v=2.7.2">
+    <link rel="stylesheet" href="style-zloto.css?v=2.8.2">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -56,6 +56,33 @@
                 </div>
             </header>
 
+            <!-- WIRTUALNY MAGAZYN (LIVE) -->
+            <div id="warehouse-panel" class="warehouse-card" style="display: none;">
+                <h3 class="section-title" style="margin-bottom: 20px;"><i class="fas fa-warehouse"></i> Magazyn kruszcu</h3>
+                <button id="admin-tools-trigger" class="admin-tools-btn" onclick="openKorektaModal()" style="display: none;">
+                    <i class="fas fa-tools"></i> Edytuj
+                </button>
+                
+                <div class="warehouse-grid">
+                    <div class="wh-item">
+                        <span class="wh-name">Złote kolczyki</span>
+                        <span class="wh-count" id="wh-count-0"><i class="fas fa-spinner fa-spin" style="font-size:1rem;"></i></span>
+                    </div>
+                    <div class="wh-item">
+                        <span class="wh-name">Złota bransoletka</span>
+                        <span class="wh-count" id="wh-count-1"><i class="fas fa-spinner fa-spin" style="font-size:1rem;"></i></span>
+                    </div>
+                    <div class="wh-item">
+                        <span class="wh-name">Złota moneta</span>
+                        <span class="wh-count" id="wh-count-2"><i class="fas fa-spinner fa-spin" style="font-size:1rem;"></i></span>
+                    </div>
+                </div>
+                <div class="wh-summary">
+                    <span>Szacowana ilość sztabek możliwa do wytopienia z dostępnego w firmie kruszcu:</span>
+                    <span class="wh-bars" id="wh-possible-bars">--</span>
+                </div>
+            </div>
+
             <div class="smeltery-grid">
                 <!-- Lewa strona: Wybór przedmiotów -->
                 <div class="smeltery-input-card">
@@ -64,7 +91,7 @@
                 </div>
 
                 <!-- Prawa strona: Wynik i kalkulacja -->
-                <div class="smeltery-result-card">
+                <div id="result-card" class="smeltery-result-card">
                     <h3 class="section-title"><i class="fas fa-microchip"></i> Podsumowanie wytopu</h3>
                     
                     <div class="calc-box">
@@ -93,7 +120,15 @@
                     <button onclick="processSmelting()" id="process-btn" class="smelt-action-btn">
                         <i class="fas fa-hammer"></i> POTWIERDŹ PRZETOP
                     </button>
-                    <button onclick="resetSmeltery()" class="reset-link">Wyczyść piec</button>
+
+                    <div id="smelting-progress-box" class="smelting-progress-container">
+                        <div id="smelting-status-text" class="smelting-status-text">Rozgrzewanie pieca...</div>
+                        <div class="progress-bar-wrapper">
+                            <div id="smelting-bar-fill" class="progress-bar-fill"></div>
+                        </div>
+                    </div>
+
+                    <button onclick="resetSmeltery()" id="reset-btn" class="reset-link">Wyczyść piec</button>
                 </div>
             </div>
 
@@ -146,7 +181,33 @@
         </div>
     </div>
 
+    <!-- MODAL DO KOREKT (NOWE) -->
+    <div id="korekta-modal" class="modal-overlay">
+        <div class="modal-box">
+            <i class="fas fa-times modal-close" onclick="closeKorektaModal()"></i>
+            <h3 class="section-title"><i class="fas fa-tools"></i> Korekta Magazynu</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">Dopisz lub odejmij brakujący kruszec. Nie wpłynie to na raporty finansowe.</p>
+            
+            <select id="korekta-item" class="pin-input" style="padding: 15px; font-size: 0.9rem; letter-spacing: normal;">
+                <option value="Złote kolczyki">Złote kolczyki</option>
+                <option value="Złota bransoletka">Złota bransoletka</option>
+                <option value="Złota moneta">Złota moneta</option>
+            </select>
+            
+            <input type="number" id="korekta-qty" placeholder="Wpisz ilość" class="pin-input" style="padding: 15px; font-size: 1rem; letter-spacing: normal; text-align: center;">
+            
+            <div class="modal-btn-grid">
+                <button onclick="submitKorekta(true)" id="korekta-btn-add" class="refresh-btn" style="width: 100%; justify-content: center; background: rgba(34, 197, 94, 0.1); border-color: var(--success); color: var(--success);">
+                    Dopisz (+)
+                </button>
+                <button onclick="submitKorekta(false)" id="korekta-btn-sub" class="refresh-btn" style="width: 100%; justify-content: center; background: rgba(239, 68, 68, 0.1); border-color: var(--danger); color: var(--danger);">
+                    Odejmij (-)
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="toast-container" class="toast-container"></div>
-    <script src="zloto-script.js?v=2.7.2"></script>
+    <script src="zloto-script.js?v=2.8.2"></script>
 </body>
 </html>
