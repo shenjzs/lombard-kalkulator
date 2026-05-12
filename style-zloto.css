@@ -219,3 +219,38 @@ header h1 { font-size: 2.5rem; color: var(--accent-color); }
     padding: 5px 15px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; transition: 0.3s;
 }
 .admin-tools-btn:hover { border-color: var(--accent-color); color: var(--accent-color); }
+
+/* SYSTEM AKTUALIZACJI */
+.update-notify {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--card-bg);
+    border: 2px solid var(--accent-color);
+    padding: 15px 30px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    z-index: 9999;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 20px rgba(250, 204, 21, 0.3);
+    animation: slideUp 0.5s ease-out;
+}
+@keyframes slideUp {
+    from { bottom: -100px; opacity: 0; }
+    to { bottom: 30px; opacity: 1; }
+}
+.update-btn-refresh {
+    background: var(--accent-color);
+    color: black;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.update-btn-refresh:hover {
+    transform: scale(1.05);
+}

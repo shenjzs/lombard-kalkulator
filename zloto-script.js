@@ -1,4 +1,4 @@
-const APP_VERSION = "2.8.2";
+const APP_VERSION = "2.9.2";
 
 // ==========================================
 // KONFIGURACJA
@@ -478,3 +478,52 @@ function showNotice(msg, type) {
     document.getElementById('toast-container').appendChild(t);
     setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, 3000);
 }
+
+// ==========================================
+// SYSTEM AUTOMATYCZNEJ AKTUALIZACJI STRONY
+// ==========================================
+async function checkUpdates() {
+    try {
+        const response = await fetch(`version.json?t=${new Date().getTime()}`);
+        const data = await response.json();
+        const serverVersion = data.version.trim();
+        console.log(`[SYSTEM] Wersja lokalna: ${APP_VERSION} | Wersja na serwerze: ${serverVersion}`);
+        if (serverVersion !== APP_VERSION) {
+            showUpdatePrompt();
+        }
+    } catch (e) {
+        // Ciche ignorowanie błędu
+    }
+}
+
+function showUpdatePrompt() {
+    if (document.getElementById('update-prompt')) return;
+    const div = document.createElement('div');
+    div.id = 'update-prompt';
+    div.className = 'update-notify';
+    div.innerHTML = `
+        <span><i class="fas fa-sync-alt fa-spin"></i> Wgrano nową wersję systemu!</span>
+        <button class="update-btn-refresh" onclick="forceHardReload()">Odśwież</button>
+    `;
+    document.body.appendChild(div);
+}
+
+window.forceHardReload = async function() {
+    console.log("[SYSTEM] Inicjowanie twardego przeładowania...");
+    if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (let reg of registrations) {
+            await reg.unregister();
+        }
+    }
+    if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        for (let name of cacheNames) {
+            await caches.delete(name);
+        }
+    }
+    window.location.href = window.location.pathname + '?refresh=' + new Date().getTime();
+};
+
+setInterval(checkUpdates, 60000);
+setTimeout(checkUpdates, 3000);

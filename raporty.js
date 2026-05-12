@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "2.8.2";
+const APP_VERSION = "2.9.2";
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
