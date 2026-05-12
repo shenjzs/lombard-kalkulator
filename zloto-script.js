@@ -299,7 +299,7 @@ async function processSmelting() {
     resultCard.classList.add('smelting-active'); 
 
     const stages = [
-        { text: "Rozgrzewanie pieca do 1064°C...", width: "20%", time: 800 },
+        { text: "Rozgrzewanie pieca...", width: "20%", time: 800 },
         { text: "Topienie kruszcu...", width: "50%", time: 1000 },
         { text: "Oddzielanie zanieczyszczeń...", width: "75%", time: 900 },
         { text: "Odlewanie i chłodzenie sztabek...", width: "100%", time: 800 }
