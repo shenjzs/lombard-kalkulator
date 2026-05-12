@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "2.7.1";
+const APP_VERSION = "2.7.2";
 
 // ==========================================
 // KONFIGURACJA
@@ -38,6 +38,7 @@ const defaultInventory = [
     { name: "Telewizor", min: 600, max: 600, category: "elektronika" },
     { name: "Zegarek", min: 160, max: 160, category: "biżuteria" },
     { name: "Złota bransoletka", min: 200, max: 200, category: "biżuteria" },
+	{ name: "Złota moneta", min: 200, max: 200, category: "inne" },
     { name: "Złota moneta z prezydentem", min: 200, max: 200, category: "inne" },
     { name: "Złote kolczyki", min: 200, max: 200, category: "biżuteria" },
     { name: "Popsuty telefon", min: 95, max: 95, category: "elektronika" }
