@@ -1,4 +1,4 @@
-const APP_VERSION = "2.9.2";
+const APP_VERSION = "2.9.4";
 
 // ==========================================
 // KONFIGURACJA
@@ -488,28 +488,39 @@ async function checkUpdates() {
         const data = await response.json();
         const serverVersion = data.version.trim();
         console.log(`[SYSTEM] Wersja lokalna: ${APP_VERSION} | Wersja na serwerze: ${serverVersion}`);
+        
         if (serverVersion !== APP_VERSION) {
-            showUpdatePrompt();
+            // ZABEZPIECZENIE PRZED PĘTLĄ (ANTI-LOOP)
+            if (sessionStorage.getItem('update_ignored_version') === serverVersion) {
+                return; // Ignorujemy prompt dla tej konkretnej wersji w tej sesji
+            }
+            showUpdatePrompt(serverVersion);
         }
     } catch (e) {
         // Ciche ignorowanie błędu
     }
 }
 
-function showUpdatePrompt() {
+function showUpdatePrompt(serverVersion) {
     if (document.getElementById('update-prompt')) return;
     const div = document.createElement('div');
     div.id = 'update-prompt';
     div.className = 'update-notify';
     div.innerHTML = `
         <span><i class="fas fa-sync-alt fa-spin"></i> Wgrano nową wersję systemu!</span>
-        <button class="update-btn-refresh" onclick="forceHardReload()">Odśwież</button>
+        <button class="update-btn-refresh" onclick="forceHardReload('${serverVersion}')">Odśwież</button>
     `;
     document.body.appendChild(div);
 }
 
-window.forceHardReload = async function() {
+window.forceHardReload = async function(serverVersion) {
     console.log("[SYSTEM] Inicjowanie twardego przeładowania...");
+    
+    // Blokujemy wyświetlanie komunikatu dla tej samej wersji po przeładowaniu
+    if (serverVersion) {
+        sessionStorage.setItem('update_ignored_version', serverVersion);
+    }
+    
     if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
         for (let reg of registrations) {
