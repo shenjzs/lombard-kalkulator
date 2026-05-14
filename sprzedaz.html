@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Panel eksportu</title>
-    <link rel="stylesheet" href="style-sprzedaz.css?v=2.9.4">
+    <link rel="stylesheet" href="style-sprzedaz.css?v=3.0.0">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,23 +16,26 @@
 <body>
 
     <nav class="navbar">
-        <div class="nav-logo">
-            <i class="fas fa-box-open"></i> EL CARTEL SYSTEM
+        <div class="nav-left">
+            <div class="nav-logo">
+                <i class="fas fa-box-open"></i> <span class="nav-text">EL CARTEL SYSTEM</span>
+            </div>
         </div>
-        <div class="nav-links">
-            <a href="index.html" class="nav-link-btn">
-                <i class="fas fa-cash-register"></i> Kasa (skup)
+        
+        <div class="nav-right">
+            <a href="index.html" class="nav-link-btn" title="Kasa (skup)">
+                <i class="fas fa-cash-register"></i> <span class="nav-text">Kasa (skup)</span>
             </a>
-			<a href="zloto.html" class="nav-link-btn">
-                <i class="fa-solid fa-temperature-half"></i> Przetop złoto
+            <a href="zloto.html" class="nav-link-btn" title="Przetop złoto">
+                <i class="fa-solid fa-temperature-half"></i> <span class="nav-text">Przetop złoto</span>
             </a>
-            <a href="raporty.html" class="nav-link-btn">
-                <i class="fas fa-chart-line"></i> Statystyki
+            <a href="raporty.html" class="nav-link-btn" title="Statystyki">
+                <i class="fas fa-chart-line"></i> <span class="nav-text">Statystyki</span>
             </a>
 
             <div id="user-profile" class="user-profile hidden">
-                <div class="user-profile-btn" onclick="toggleUserMenu()">
-                    <i class="fas fa-user-circle"></i> <span id="logged-user-name">---</span> <i class="fas fa-chevron-down" style="font-size: 0.8rem; margin-left: 5px;"></i>
+                <div class="user-profile-btn nav-link-btn" onclick="toggleUserMenu()" title="Profil Pracownika">
+                    <i class="fas fa-user-circle"></i> <span class="nav-text" id="logged-user-name">---</span> <i class="fas fa-chevron-down nav-text" style="font-size: 0.8rem; margin-left: 5px;"></i>
                 </div>
                 <div id="user-dropdown" class="user-dropdown">
                     <div class="dropdown-item" onclick="openSettings()"><i class="fas fa-cog"></i> Ustawienia</div>
@@ -178,6 +181,6 @@
     <div id="receipt-capture-area" style="position: absolute; left: -9999px; background: white; padding: 40px; width: 450px;"></div>
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="sprzedaz-script.js?v=2.9.4"></script>
+    <script src="sprzedaz-script.js?v=3.0.0"></script>
 </body>
 </html>

@@ -36,7 +36,7 @@ body {
 .hidden { display: none !important; }
 
 /* ==========================================================================
-   PANEL NAWIGACYJNY (NAVBAR)
+   PANEL NAWIGACYJNY (NAVBAR) Z ANIMACJĄ ZWIJANIA
    ========================================================================== */
 .navbar {
     background: rgba(45, 27, 27, 0.85);
@@ -51,6 +51,16 @@ body {
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 100%;
+    margin: 0 auto;
+}
+
+.nav-left, .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.4s ease;
 }
 
 .nav-logo {
@@ -87,9 +97,10 @@ body {
     padding: 12px 24px;
     border-radius: 14px;
     border: 1px solid rgba(243, 156, 18, 0.3);
-    transition: var(--transition-normal);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    overflow: hidden;
 }
 
 .nav-link-btn i {
@@ -108,6 +119,58 @@ body {
 
 .nav-link-btn:hover i {
     color: var(--text-primary);
+}
+
+.nav-text {
+    transition: opacity 0.3s ease;
+}
+
+/* EFEKT ZWINIĘCIA (SCROLLED NAVBAR) DLA SPRZEDAŻY */
+.navbar.scrolled {
+    top: 20px;
+    width: max-content;
+    padding: 10px;
+    border-radius: 50px;
+    border: 1px solid var(--accent-color);
+    background: rgba(45, 27, 27, 0.95);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.8), 0 0 20px rgba(243, 156, 18, 0.2);
+}
+
+.navbar.scrolled .nav-left {
+    display: none; 
+}
+
+.navbar.scrolled .nav-text {
+    display: none; 
+}
+
+.navbar.scrolled .nav-right {
+    gap: 8px; 
+}
+
+.navbar.scrolled .nav-link-btn {
+    padding: 0;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    justify-content: center;
+    border-color: transparent;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.navbar.scrolled .nav-link-btn i {
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+.navbar.scrolled .nav-link-btn:hover {
+    background: var(--accent-color);
+    transform: translateY(-3px);
+    color: #000;
+}
+
+.navbar.scrolled .nav-link-btn:hover i {
+    color: #000;
 }
 
 .container {
@@ -1061,7 +1124,18 @@ header h1 {
 }
 
 .user-profile-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.5) !important;
+    border-color: var(--accent-color) !important;
+    color: var(--text-primary) !important;
+    box-shadow: 0 0 15px rgba(243, 156, 18, 0.3) !important;
+}
+
+.user-profile-btn:hover i {
+    color: var(--accent-color) !important;
+}
+
+.user-profile-btn:hover .nav-text {
+    color: var(--text-primary) !important;
 }
 
 .user-dropdown {
@@ -1278,87 +1352,3 @@ header h1 {
     box-shadow: 0 8px 25px rgba(243, 156, 18, 0.5);
     filter: brightness(1.1);
 }
-
-/* ==========================================================================
-   NAPRAWA: EKRAN LOGOWANIA I BLOKADA SCROLLOWANIA
-   ========================================================================== */
-/* 1. Całkowita blokada przewijania strony, gdy logowanie jest aktywne */
-body:has(.login-container.active) {
-    overflow: hidden !important;
-}
-
-/* 2. Bezwzględne ukrycie dolnego paska z koszykiem przed zalogowaniem */
-body:has(.login-container.active) .summary-bar {
-    display: none !important;
-}
-
-/* 3. Naprawa uciekającego logowania - pełny ekran pod navbarem */
-.login-container {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: var(--bg-color); /* Maskuje wszystko pod spodem */
-    z-index: 999; /* Navbar ma 1000, więc zostanie elegancko na wierzchu! */
-    justify-content: center;
-    align-items: center;
-}
-
-.login-container.active { 
-    display: flex; 
-}
-
-.login-card {
-    background: var(--card-bg);
-    padding: 50px 40px;
-    border-radius: 24px;
-    text-align: center;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8);
-    max-width: 450px;
-    width: 90%;
-    animation: fadeInDown 0.4s ease-out;
-}
-
-.login-icon { font-size: 3.5rem; color: var(--accent-color); margin-bottom: 25px; }
-.login-card h2 { margin-bottom: 10px; font-weight: 800; font-size: 1.8rem; color: var(--text-primary); }
-.login-card p { color: var(--text-secondary); margin-bottom: 25px; font-size: 0.9rem; }
-
-.pin-input {
-    width: 100%;
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid var(--border-color);
-    color: white;
-    padding: 18px;
-    border-radius: 16px;
-    text-align: center;
-    font-size: 1.8rem;
-    letter-spacing: 12px;
-    margin-bottom: 25px;
-    outline: none;
-    transition: 0.3s;
-    font-family: monospace;
-}
-
-.pin-input:focus { border-color: var(--accent-color); box-shadow: 0 0 15px rgba(56, 189, 248, 0.2); }
-
-.login-btn {
-    width: 100%;
-    background: var(--accent-color);
-    color: #000;
-    border: none;
-    padding: 18px;
-    border-radius: 16px;
-    font-weight: 800;
-    cursor: pointer;
-    transition: 0.3s;
-    font-size: 1.05rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-}
-
-.login-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(56, 189, 248, 0.4); filter: brightness(1.1); }

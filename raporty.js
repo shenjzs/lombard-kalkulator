@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "2.9.4";
+const APP_VERSION = "3.0.0";
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
@@ -18,6 +18,18 @@ window.currentGlobalGoal = 0;
 
 // Globalna zmienna przechowująca przetworzone dane dla wyszukiwarki
 window.globalSortedTransactions = [];
+
+// ==========================================
+// SCROLL NAVBAR LISTENER (Smart Navbar)
+// ==========================================
+document.addEventListener('scroll', function() {
+    const navbar = document.querySelector('.navbar');
+    if (window.scrollY > 50) {
+        navbar.classList.add('scrolled');
+    } else {
+        navbar.classList.remove('scrolled');
+    }
+});
 
 // ==========================================
 // LOGOWANIE I AUTORYZACJA
@@ -971,27 +983,34 @@ async function checkUpdates() {
         const serverVersion = data.version.trim();
         console.log(`[SYSTEM] Wersja lokalna: ${APP_VERSION} | Wersja na serwerze: ${serverVersion}`);
         if (serverVersion !== APP_VERSION) {
-            showUpdatePrompt();
+            // ZABEZPIECZENIE PRZED PĘTLĄ (ANTI-LOOP - ulepszone localStorage)
+            if (localStorage.getItem('update_ignored_version') === serverVersion) {
+                return; // Ignorujemy prompt dla tej konkretnej wersji w tej sesji/przeglądarce
+            }
+            showUpdatePrompt(serverVersion);
         }
     } catch (e) {
         // Ciche ignorowanie błędu
     }
 }
 
-function showUpdatePrompt() {
+function showUpdatePrompt(serverVersion) {
     if (document.getElementById('update-prompt')) return;
     const div = document.createElement('div');
     div.id = 'update-prompt';
     div.className = 'update-notify';
     div.innerHTML = `
         <span><i class="fas fa-sync-alt fa-spin"></i> Wgrano nową wersję systemu!</span>
-        <button class="update-btn-refresh" onclick="forceHardReload()">Odśwież</button>
+        <button class="update-btn-refresh" onclick="forceHardReload('${serverVersion}')">Odśwież</button>
     `;
     document.body.appendChild(div);
 }
 
-window.forceHardReload = async function() {
+window.forceHardReload = async function(serverVersion) {
     console.log("[SYSTEM] Inicjowanie twardego przeładowania...");
+    if (serverVersion) {
+        localStorage.setItem('update_ignored_version', serverVersion);
+    }
     if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
         for (let reg of registrations) {

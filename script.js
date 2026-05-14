@@ -1,7 +1,7 @@
 // ==========================================
-// WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
+// WERSJA APLIKACJI
 // ==========================================
-const APP_VERSION = "2.9.4";
+const APP_VERSION = "3.0.0";
 
 // ==========================================
 // KONFIGURACJA
@@ -61,7 +61,6 @@ function getFormattedDate() {
     return `${day}.${month}.${year}`;
 }
 
-// NOWA FUNKCJA Z GODZINĄ
 function getFormattedDateTime() {
     const now = new Date();
     const day = String(now.getDate()).padStart(2, '0');
@@ -79,6 +78,16 @@ function generateID() {
     for(let i=0; i<8; i++) res += chars[Math.floor(Math.random()*chars.length)];
     return res;
 }
+
+// NASŁUCHIWANIE SCROLLA DLA NAVBARA
+document.addEventListener('scroll', function() {
+    const navbar = document.querySelector('.navbar');
+    if (window.scrollY > 50) {
+        navbar.classList.add('scrolled');
+    } else {
+        navbar.classList.remove('scrolled');
+    }
+});
 
 // ==========================================
 // SYSTEM LOGOWANIA
@@ -100,17 +109,14 @@ window.login = async function() {
             document.getElementById('logged-user-name').innerText = currentEmployeeName.toUpperCase();
             document.getElementById('login-screen').classList.remove('active');
             
-            // TWARDE ODKRYWANIE APLIKACJI I PROFILU
             document.getElementById('main-app').style.display = 'block';
             document.getElementById('user-profile').style.display = 'block';
             
-            // ODKRYWANIE BANNERA OGŁOSZEŃ PO ZALOGOWANIU
             const banner = document.getElementById('announcement-banner');
             if(banner) banner.style.display = 'flex';
 
             showNotice(`Rozpoczęto zmianę: ${data.name}`, "success");
             
-            // Inicjalizacja reszty po zalogowaniu
             init();
         } else {
             showNotice("Nieprawidłowy PIN!", "danger");
@@ -127,15 +133,13 @@ window.login = async function() {
 window.logout = function() {
     currentEmployeeName = "";
     document.getElementById('employee-login-pin').value = "";
-    document.getElementById('logged-user-name').innerText = "---"; // CZYSZCZENIE IMIENIA
+    document.getElementById('logged-user-name').innerText = "---";
     document.getElementById('login-screen').classList.add('active');
     
-    // TWARDE UKRYWANIE APLIKACJI I PROFILU
     document.getElementById('main-app').style.display = 'none';
     document.getElementById('user-profile').style.display = 'none';
     document.getElementById('user-dropdown').classList.remove('active');
     
-    // UKRYWANIE BANNERA OGŁOSZEŃ
     const banner = document.getElementById('announcement-banner');
     if(banner) banner.style.display = 'none';
 
@@ -156,7 +160,7 @@ document.addEventListener('click', function(event) {
     }
 });
 
-// NOWE FUNKCJE: STATYSTYKI PRACOWNIKA
+// STATYSTYKI PRACOWNIKA
 function getDailyStat(employeeName) {
     const date = getFormattedDate();
     const key = `elcartel_stats_${employeeName}_${date}`;
@@ -170,7 +174,6 @@ function addDailyStat(employeeName, amount) {
     localStorage.setItem(key, current + amount);
 }
 
-// Funkcja resetująca cały koszyk i listę przedmiotów do stanu domyślnego
 function resetCartAndInventory() {
     inventory = JSON.parse(JSON.stringify(defaultInventory));
     counts = {};
@@ -295,7 +298,6 @@ window.handleInput = function(index, value) {
     calculateTotal();
 }
 
-// ZABEZPIECZONA FUNKCJA OBLICZANIA KOSZYKA
 function calculateTotal() {
     let min = 0, max = 0;
     inventory.forEach((item, index) => {
@@ -306,7 +308,6 @@ function calculateTotal() {
     currentMaxTotal = max; 
     document.getElementById('total-price').innerText = min + '$';
     
-    // Zabezpieczenie! Aktualizujemy ten element tylko jeśli istnieje w HTMLu.
     const bonusEl = document.getElementById('bonus-range');
     if (bonusEl) {
         bonusEl.innerText = '+' + (max - min) + '$';
@@ -390,7 +391,6 @@ function applyFilters() {
     }
 }
 
-// ZMODYFIKOWANA LOGIKA: Nie pobieramy pinu stąd, weryfikacja była przy logowaniu
 window.generateQuote = async function() {
     const hasItems = Object.values(counts).some(c => c > 0);
     const finalPriceInput = document.getElementById('final-price-input');
@@ -402,7 +402,6 @@ window.generateQuote = async function() {
         return showNotice("Wpisz kwotę transakcji!", "danger");
     }
     
-    // Uproszczona walidacja dla sztywnych stawek
     if (finalPrice < currentMinTotal) {
         return showNotice(`Kwota zbyt niska! Wymagane: ${currentMinTotal}$.`, "danger");
     }
@@ -416,7 +415,6 @@ window.generateQuote = async function() {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Przetwarzanie...';
 
-    // Delikatne opóźnienie dla estetyki (symulacja ładowania)
     setTimeout(() => {
         finalizeQuote(currentEmployeeName, finalPrice);
         btn.disabled = false;
@@ -644,15 +642,12 @@ window.showNotice = function(msg, type) {
     setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, 3000);
 }
 
-// PRZYCISK KOSZA (RESET RĘCZNY)
 document.getElementById('reset-btn').onclick = () => {
     resetCartAndInventory();
     showNotice("Wyczyszczono koszyk!", "warning");
 };
 
-// Podpięcie zdarzeń przy starcie
 document.addEventListener('DOMContentLoaded', () => {
-    // Nie robimy init(), dopóki user się nie zaloguje!
     
     const sendBtn = document.getElementById('send-discord-btn');
     if(sendBtn) sendBtn.onclick = sendToDiscord;
@@ -667,7 +662,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const finalPriceInput = document.getElementById('final-price-input');
     if(finalPriceInput) finalPriceInput.addEventListener('keypress', triggerGenerateQuote);
 
-    // Obsługa ENTER w panelu logowania
     const loginPinInput = document.getElementById('employee-login-pin');
     if (loginPinInput) {
         loginPinInput.addEventListener('keypress', function(e) {
@@ -676,7 +670,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// FUNKCJA ZWIJANIA PASKA NA MOBILE
 window.toggleSummary = function() {
     const bar = document.getElementById('summary-bar');
     const icon = document.getElementById('toggle-icon');
@@ -692,9 +685,6 @@ window.toggleSummary = function() {
     }
 }
 
-// ==========================================
-// SYSTEM AUTOMATYCZNEJ AKTUALIZACJI STRONY
-// ==========================================
 async function checkUpdates() {
     try {
         const response = await fetch(`version.json?t=${new Date().getTime()}`);
@@ -702,27 +692,33 @@ async function checkUpdates() {
         const serverVersion = data.version.trim();
         console.log(`[SYSTEM] Wersja lokalna: ${APP_VERSION} | Wersja na serwerze: ${serverVersion}`);
         if (serverVersion !== APP_VERSION) {
-            showUpdatePrompt();
+            if (localStorage.getItem('update_ignored_version') === serverVersion) {
+                return;
+            }
+            showUpdatePrompt(serverVersion);
         }
     } catch (e) {
         // Ciche ignorowanie błędu
     }
 }
 
-function showUpdatePrompt() {
+function showUpdatePrompt(serverVersion) {
     if (document.getElementById('update-prompt')) return;
     const div = document.createElement('div');
     div.id = 'update-prompt';
     div.className = 'update-notify';
     div.innerHTML = `
         <span><i class="fas fa-sync-alt fa-spin"></i> Wgrano nową wersję systemu!</span>
-        <button class="update-btn-refresh" onclick="forceHardReload()">Odśwież</button>
+        <button class="update-btn-refresh" onclick="forceHardReload('${serverVersion}')">Odśwież</button>
     `;
     document.body.appendChild(div);
 }
 
-window.forceHardReload = async function() {
+window.forceHardReload = async function(serverVersion) {
     console.log("[SYSTEM] Inicjowanie twardego przeładowania...");
+    if (serverVersion) {
+        localStorage.setItem('update_ignored_version', serverVersion);
+    }
     if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
         for (let reg of registrations) {
@@ -751,7 +747,6 @@ window.openSettings = function() {
 
 window.closeSettings = function() {
     document.getElementById('settings-modal').classList.remove('active');
-    // Czyścimy pola po zamknięciu
     document.getElementById('old-pin-input').value = '';
     document.getElementById('new-pin-input').value = '';
     document.getElementById('new-pin-confirm').value = '';

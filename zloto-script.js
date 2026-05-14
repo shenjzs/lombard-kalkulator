@@ -1,4 +1,4 @@
-const APP_VERSION = "2.9.4";
+const APP_VERSION = "3.0.0";
 
 // ==========================================
 // KONFIGURACJA
@@ -34,6 +34,16 @@ document.addEventListener('DOMContentLoaded', () => {
         loginPinInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') login();
         });
+    }
+});
+
+// Nasłuchiwanie scrolla, żeby zwinąć pasek w ikonki
+document.addEventListener('scroll', function() {
+    const navbar = document.querySelector('.navbar');
+    if (window.scrollY > 50) {
+        navbar.classList.add('scrolled');
+    } else {
+        navbar.classList.remove('scrolled');
     }
 });
 
@@ -79,7 +89,7 @@ async function login() {
         showNotice("Błąd bazy PIN!", "danger");
     } finally {
         btn.disabled = false;
-        btn.innerHTML = 'Uruchom piec <i class="fas fa-bolt"></i>';
+        btn.innerHTML = 'Zaloguj <i class="fas fa-lock"></i>';
     }
 }
 
@@ -145,6 +155,26 @@ window.submitKorekta = async function(isAdding) {
 }
 
 // ==========================================
+// GLOBALNE ODŚWIEŻANIE (MAGAZYN + STATYSTYKI)
+// ==========================================
+window.refreshAllData = async function() {
+    const icon = document.getElementById('global-refresh-icon');
+    if (icon) icon.classList.add('fa-spin');
+    
+    document.getElementById('wh-count-0').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    document.getElementById('wh-count-1').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    document.getElementById('wh-count-2').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
+    await loadWarehouseData();
+    if (isBoss) {
+        await loadGoldStats();
+    }
+    
+    if (icon) icon.classList.remove('fa-spin');
+    showNotice("Dane odświeżone pomyślnie!", "success");
+}
+
+// ==========================================
 // WIRTUALNY MAGAZYN - LOGIKA OBLICZEŃ
 // ==========================================
 window.loadWarehouseData = async function() {
@@ -169,7 +199,6 @@ window.loadWarehouseData = async function() {
             } 
             else if (row.type === "zloto") {
                 goldInventory.forEach((item, idx) => {
-                    // BEZPIECZEŃSTWO: Rzutujemy na String by uniknąć crasha gdyby Arkusz podał dziwny typ
                     const itemsStr = String(row.items || "");
                     const regex = new RegExp(item.name + "\\s*x(\\d+)", "i");
                     const match = itemsStr.match(regex);
@@ -188,9 +217,6 @@ window.loadWarehouseData = async function() {
             }
         });
 
-        // UWAGA: Usunięto sztuczne zerowanie, system ukaże pełen minus jeśli taki jest!
-        // stock = stock.map(val => Math.max(0, val));
-
         document.getElementById('wh-count-0').innerText = stock[0] + " szt.";
         document.getElementById('wh-count-1').innerText = stock[1] + " szt.";
         document.getElementById('wh-count-2').innerText = stock[2] + " szt.";
@@ -201,7 +227,6 @@ window.loadWarehouseData = async function() {
             stock[2] / goldInventory[2].reqPerBar
         ));
         
-        // Mimo, że magazyn może być na minusie, wyliczona liczba sztabek nie może być mniejsza niż 0
         possibleBars = Math.max(0, possibleBars);
 
         const possibleBarsEl = document.getElementById('wh-possible-bars');
@@ -230,9 +255,9 @@ function renderGoldItems() {
                     <span class="gold-sub">Skup: ${item.price}$ | Receptura: ${item.reqPerBar} szt.</span>
                 </div>
                 <div class="gold-controls">
-                    <button class="gold-btn minus" onclick="updateCount(${index}, -1)">-</button>
+                    <button class="gold-btn minus" onclick="updateCount(${index}, -1)"><i class="fas fa-minus"></i></button>
                     <input type="number" id="count-${index}" class="gold-input" value="0" min="0" oninput="handleInput(${index}, this.value)">
-                    <button class="gold-btn plus" onclick="updateCount(${index}, 1)">+</button>
+                    <button class="gold-btn plus" onclick="updateCount(${index}, 1)"><i class="fas fa-plus"></i></button>
                 </div>
             </div>
         `;
@@ -399,9 +424,7 @@ window.loadGoldStats = async function() {
     if (!isBoss) return; 
 
     const tbody = document.getElementById('gold-logs-body');
-    const icon = document.getElementById('refresh-icon');
     
-    if (icon) icon.classList.add('fa-spin');
     if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color: #666;"><i class="fas fa-spinner fa-spin"></i> Pobieranie danych z bazy...</td></tr>';
     
     try {
@@ -431,7 +454,7 @@ window.loadGoldStats = async function() {
                 }
 
                 return `
-                    <tr style="border-bottom: 1px solid #222;">
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                         <td style="padding: 15px; font-size: 0.85rem; color: #94a3b8;">${dateDisplay}</td>
                         <td style="padding: 15px; font-weight: 700; color: #fff;">${row.employee}</td>
                         <td style="padding: 15px; color: var(--text-secondary); font-size: 0.85rem; line-height: 1.4;">${row.items}</td>
@@ -458,8 +481,6 @@ window.loadGoldStats = async function() {
     } catch (e) {
         console.error("Błąd ładowania statystyk:", e);
         if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--danger);">Błąd połączenia z bazą. Spróbuj odświeżyć ponownie.</td></tr>';
-    } finally {
-        if (icon) icon.classList.remove('fa-spin');
     }
 }
 
@@ -474,9 +495,9 @@ function toggleUserMenu() {
 function showNotice(msg, type) {
     const t = document.createElement('div');
     t.className = `toast ${type}`;
-    t.innerText = msg;
+    t.innerHTML = msg; 
     document.getElementById('toast-container').appendChild(t);
-    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, 3000);
+    setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(100%)'; setTimeout(() => t.remove(), 500); }, 3000);
 }
 
 // ==========================================
@@ -490,9 +511,8 @@ async function checkUpdates() {
         console.log(`[SYSTEM] Wersja lokalna: ${APP_VERSION} | Wersja na serwerze: ${serverVersion}`);
         
         if (serverVersion !== APP_VERSION) {
-            // ZABEZPIECZENIE PRZED PĘTLĄ (ANTI-LOOP)
-            if (sessionStorage.getItem('update_ignored_version') === serverVersion) {
-                return; // Ignorujemy prompt dla tej konkretnej wersji w tej sesji
+            if (localStorage.getItem('update_ignored_version') === serverVersion) {
+                return;
             }
             showUpdatePrompt(serverVersion);
         }
@@ -516,9 +536,8 @@ function showUpdatePrompt(serverVersion) {
 window.forceHardReload = async function(serverVersion) {
     console.log("[SYSTEM] Inicjowanie twardego przeładowania...");
     
-    // Blokujemy wyświetlanie komunikatu dla tej samej wersji po przeładowaniu
     if (serverVersion) {
-        sessionStorage.setItem('update_ignored_version', serverVersion);
+        localStorage.setItem('update_ignored_version', serverVersion);
     }
     
     if ('serviceWorker' in navigator) {
