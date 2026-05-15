@@ -33,10 +33,14 @@ body {
     padding-bottom: 120px;
 }
 
-/* FIX: Gdy aktywny jest login-screen, resetujemy padding na body i ukrywamy scrollbar */
+/* FIX: Blokada scrollowania przed zalogowaniem */
 body:has(.login-container.active) {
-    padding-bottom: 0 !important;
     overflow: hidden !important;
+    padding-bottom: 0 !important;
+}
+
+body:has(.login-container.active) .summary-bar {
+    display: none !important;
 }
 
 .hidden { display: none !important; }
@@ -347,13 +351,16 @@ header h1 {
     width: 90px;
 }
 
-/* WYŁĄCZENIE STRZAŁEK W POLU CENY */
+/* WYŁĄCZENIE STRZAŁEK W POLU CENY I SSN */
 .custom-price-input::-webkit-inner-spin-button,
-.custom-price-input::-webkit-outer-spin-button {
+.custom-price-input::-webkit-outer-spin-button,
+#customer-ssn-input::-webkit-inner-spin-button,
+#customer-ssn-input::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
-.custom-price-input {
+.custom-price-input,
+#customer-ssn-input {
     -moz-appearance: textfield;
 }
 
@@ -504,6 +511,20 @@ header h1 {
     display: flex;
     gap: 15px;
     align-items: center;
+}
+
+.input-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.field-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: var(--accent-color);
+    font-weight: 800;
+    letter-spacing: 1px;
 }
 
 .custom-input {
@@ -714,6 +735,7 @@ header h1 {
     gap: 10px;
     transition: var(--transition-normal);
     font-size: 0.95rem;
+    height: 48px; /* dopasowanie wysokości */
 }
 
 .cart-toggle-btn:hover {
@@ -983,6 +1005,21 @@ header h1 {
     .nav-logo {
         font-size: 1.1rem;
     }
+}
+
+/* KLUCZOWA POPRAWKA - UKRYWANIE PASKA PRZY OTWARTYM MODALU */
+body:has(.modal.active) .summary-bar {
+    display: none !important;
+}
+
+/* NAPRAWA UCINANIA NA DISCORDZIE (MOBILE) */
+.modal-content {
+    max-height: 95vh;
+    overflow-y: auto;
+}
+
+#receipt-capture-area {
+    background: white; /* Zapobiega przezroczystości tła */
 }
 
 /* ==========================================================================

@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI
 // ==========================================
-const APP_VERSION = "3.0.1";
+const APP_VERSION = "3.0.2";
 
 // ==========================================
 // KONFIGURACJA
@@ -50,6 +50,7 @@ let currentCategory = 'wszystkie';
 let currentMinTotal = 0; 
 let currentMaxTotal = 0; 
 let currentEmployeeName = ""; 
+let currentCustomerSSN = ""; // Nowa zmienna na SSN
 // BLOKADA PODWÓJNEGO NALICZANIA UTARGU
 let isStatAddedForCurrentReceipt = false;
 
@@ -182,6 +183,9 @@ function resetCartAndInventory() {
 
     const finalPriceInput = document.getElementById('final-price-input');
     if (finalPriceInput) finalPriceInput.value = "";
+    
+    const ssnInput = document.getElementById('customer-ssn-input');
+    if (ssnInput) ssnInput.value = "";
 
     renderInventory();
     calculateTotal();
@@ -395,6 +399,8 @@ window.generateQuote = async function() {
     const hasItems = Object.values(counts).some(c => c > 0);
     const finalPriceInput = document.getElementById('final-price-input');
     const finalPrice = parseFloat(finalPriceInput.value);
+    const ssnInput = document.getElementById('customer-ssn-input');
+    currentCustomerSSN = ssnInput ? ssnInput.value.trim() : "";
 
     if (!hasItems) return showNotice("Koszyk jest pusty!", "warning");
     
@@ -428,7 +434,13 @@ function finalizeQuote(employeeName, finalPrice) {
     const receiptID = generateID();
     document.getElementById('current-receipt-date').innerText = getFormattedDate();
     document.getElementById('receipt-id-display').innerText = `NR: ${receiptID}`;
-    document.getElementById('receipt-employee-display').innerText = `PRAC.: ${employeeName.toUpperCase()}`;
+    
+    let employeeText = `PRACOWNIK: ${employeeName.toUpperCase()}`;
+    if (currentCustomerSSN !== "") {
+        employeeText += `<br>KLIENT (SSN): ${currentCustomerSSN}`;
+    }
+    document.getElementById('receipt-employee-display').innerHTML = employeeText;
+    
     document.getElementById('receipt-total').innerText = finalPrice + '$';
 
     const itemsDiv = document.getElementById('receipt-items');
@@ -527,13 +539,18 @@ async function sendToDiscord() {
             const formData = new FormData();
             formData.append("file", blob, "paragon.png");
             
+            let employeeFieldValue = `**${employee}**`;
+            if (currentCustomerSSN !== "") {
+                employeeFieldValue += `\n(Klient SSN: **${currentCustomerSSN}**)`;
+            }
+
             const embedPayload = {
                 embeds: [{
                     title: "📑 Wystawiono nowy paragon!",
                     color: 36991, 
                     fields: [
                         { name: "📋 Numer paragonu:", value: `\`${receiptID}\``, inline: true },
-                        { name: "👤 Pracownik:", value: `**${employee}**`, inline: true },
+                        { name: "👤 Pracownik:", value: employeeFieldValue, inline: true },
                         { name: "💰 Suma:", value: `**${finalPriceText}**`, inline: false }
                     ],
                     image: { url: "attachment://paragon.png" },

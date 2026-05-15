@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "3.0.1";
+const APP_VERSION = "3.0.2";
 
 const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1500573620605550725/VmpdLB3qN1FT6Jkf-U-Wo1cig-WEpVjleki4f-EA45G5QfSuBJeC3f1fqCKB_LTeXOQ5"; 
 const PIN_API_URL = "https://script.google.com/macros/s/AKfycbycnbsg8yC8Cqk0tF-6syzBTvTLvO-MyTgx-zqAPjgBXPR132MicKNtjNoq3WMQfmLR/exec"; 
@@ -42,6 +42,7 @@ let currentCategory = 'wszystkie';
 let currentTotal = 0;
 let lastGeneratedReportID = ""; 
 let currentEmployeeName = ""; 
+let currentCustomerSSN = ""; // Nowa zmienna na SSN
 
 function getFormattedDate() {
     const now = new Date();
@@ -278,9 +279,12 @@ function applyFilters() {
     });
 }
 
-// LOGIKA BEZ DODATKOWEGO PINU Z PASKA
+// LOGIKA
 window.generateQuote = async function() {
     if (!Object.values(counts).some(c => c > 0)) return showNotice("Koszyk jest pusty!", "warning");
+    
+    const ssnInput = document.getElementById('customer-ssn-input');
+    currentCustomerSSN = ssnInput ? ssnInput.value.trim() : "";
 
     const btn = document.getElementById('quote-btn');
     const originalBtnHtml = btn.innerHTML;
@@ -297,6 +301,11 @@ window.generateQuote = async function() {
 window.finalizeQuote = function(employeeName) {
     lastGeneratedReportID = `EXP-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
     const date = getFormattedDate();
+    
+    let employeeText = `PRACOWNIK: ${employeeName.toUpperCase()}`;
+    if (currentCustomerSSN !== "") {
+        employeeText += `<br>KLIENT (SSN): ${currentCustomerSSN}`;
+    }
 
     const receiptHTML = `
         <div class="receipt">
@@ -304,7 +313,7 @@ window.finalizeQuote = function(employeeName) {
                 <h2>EL CARTEL EXPORT</h2>
                 <p class="receipt-meta">Raport sprzedaży przedmiotów</p>
                 <p class="receipt-meta">NR: ${lastGeneratedReportID}</p>
-                <p class="receipt-meta">PRACOWNIK: ${employeeName.toUpperCase()}</p>
+                <p class="receipt-meta">${employeeText}</p>
             </div>
             <div class="receipt-divider"></div>
             <div class="receipt-items-list">
@@ -377,12 +386,17 @@ async function sendToDiscord() {
             const formData = new FormData();
             formData.append("file", blob, "raport.png");
             
+            let employeeFieldValue = `\`${currentEmployeeName}\``;
+            if (currentCustomerSSN !== "") {
+                employeeFieldValue += `\n(Klient SSN: **${currentCustomerSSN}**)`;
+            }
+
             const embedPayload = {
                 embeds: [{
                     title: "🚛 NOWY RAPORT SPRZEDAŻY",
                     color: 15995922,
                     fields: [
-                        { name: "👤 Pracownik:", value: `\`${currentEmployeeName}\``, inline: true },
+                        { name: "👤 Pracownik:", value: employeeFieldValue, inline: true },
                         { name: "📋 Nr raportu:", value: `\`${lastGeneratedReportID}\``, inline: true },
                         { name: "💰 Suma:", value: `\`${currentTotal}$\``, inline: false }
                     ],
@@ -410,6 +424,11 @@ async function sendToDiscord() {
                     if (inp) inp.value = 0;
                 });
                 document.querySelectorAll('.custom-item').forEach(el => el.remove());
+                
+                const ssnInput = document.getElementById('customer-ssn-input');
+                if (ssnInput) ssnInput.value = "";
+                currentCustomerSSN = "";
+
                 calculateTotal();
 
             } else {
@@ -466,6 +485,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (inp) inp.value = 0;
             });
             document.querySelectorAll('.custom-item').forEach(el => el.remove());
+            
+            const ssnInput = document.getElementById('customer-ssn-input');
+            if (ssnInput) ssnInput.value = "";
+            currentCustomerSSN = "";
+
             calculateTotal();
             showNotice("Wyczyszczono listę!", "warning");
         };

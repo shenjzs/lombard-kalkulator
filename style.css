@@ -35,6 +35,15 @@ body {
     overflow-x: hidden;
 }
 
+/* BLOKADA SCROLLA NA EKRANIE LOGOWANIA */
+body:has(.login-container.active) {
+    overflow: hidden !important;
+}
+
+body:has(.login-container.active) .summary-bar {
+    display: none !important;
+}
+
 .hidden { 
     display: none !important; 
 }
@@ -51,7 +60,7 @@ body {
     justify-content: center;
     align-items: center;
     gap: 12px;
-    position: relative; /* Zmiana ze sticky na relative - przewija się ze stroną */
+    position: relative;
     z-index: 1001;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
@@ -114,6 +123,12 @@ body {
     filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.5));
 }
 
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
 .nav-link-btn {
     color: var(--text-primary);
     text-decoration: none;
@@ -165,18 +180,9 @@ body {
     box-shadow: 0 15px 40px rgba(0,0,0,0.8), 0 0 20px rgba(56, 189, 248, 0.2);
 }
 
-.navbar.scrolled .nav-left {
-    display: none; 
-}
-
-.navbar.scrolled .nav-text {
-    display: none; 
-}
-
-.navbar.scrolled .nav-right {
-    gap: 8px; 
-}
-
+.navbar.scrolled .nav-left { display: none; }
+.navbar.scrolled .nav-text { display: none; }
+.navbar.scrolled .nav-right { gap: 8px; }
 .navbar.scrolled .nav-link-btn {
     padding: 0;
     width: 45px;
@@ -198,6 +204,104 @@ body {
 }
 
 /* ==========================================================================
+   EKRAN LOGOWANIA
+   ========================================================================== */
+.login-container {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: var(--bg-color);
+    z-index: 999;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-container.active { display: flex; }
+
+.login-card {
+    background: var(--card-bg);
+    padding: 50px 40px;
+    border-radius: 24px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    max-width: 450px;
+    width: 90%;
+    animation: fadeInDown 0.4s ease-out;
+}
+
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.login-icon {
+    font-size: 3.5rem;
+    color: var(--accent-color);
+    margin-bottom: 25px;
+    filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.3));
+}
+
+.login-card h2 {
+    margin-bottom: 10px;
+    font-weight: 800;
+    font-size: 1.8rem;
+    color: var(--text-primary);
+}
+
+.login-card p {
+    color: var(--text-secondary);
+    margin-bottom: 25px;
+    font-size: 0.9rem;
+}
+
+.pin-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    color: white;
+    padding: 18px;
+    border-radius: 16px;
+    text-align: center;
+    font-size: 1.8rem;
+    letter-spacing: 12px;
+    margin-bottom: 25px;
+    outline: none;
+    transition: 0.3s;
+    font-family: monospace;
+}
+
+.pin-input:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+}
+
+.login-btn {
+    width: 100%;
+    background: var(--accent-color);
+    color: #000;
+    border: none;
+    padding: 18px;
+    border-radius: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: 0.3s;
+    font-size: 1.05rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(56, 189, 248, 0.4);
+}
+
+/* ==========================================================================
    UKŁAD STRONY (CONTAINER)
    ========================================================================== */
 .container {
@@ -206,11 +310,7 @@ body {
     padding: 60px 25px 200px 25px;
 }
 
-header {
-    text-align: center;
-    margin-bottom: 50px;
-}
-
+header { text-align: center; margin-bottom: 50px; }
 header h1 {
     font-size: 3.5rem;
     font-weight: 800;
@@ -258,21 +358,8 @@ header p {
 /* ==========================================================================
    WYSZUKIWARKA I FILTRY
    ========================================================================== */
-.search-container {
-    margin-bottom: 30px;
-    width: 100%;
-    position: relative;
-}
-
-.search-container i {
-    position: absolute;
-    left: 25px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-secondary);
-    z-index: 10;
-    font-size: 1.2rem;
-}
+.search-container { margin-bottom: 30px; width: 100%; position: relative; }
+.search-container i { position: absolute; left: 25px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); z-index: 10; font-size: 1.2rem; }
 
 #search-input {
     width: 100%;
@@ -366,9 +453,7 @@ header p {
     opacity: 0.8;
 }
 
-.ad-card.hidden {
-    display: none;
-}
+.ad-card.hidden { display: none; }
 
 .ad-header {
     display: flex;
@@ -623,17 +708,22 @@ header p {
     border-color: var(--accent-color);
 }
 
-/* KOD DO UKRYCIA STRZAŁEK W POLU CENY I KWOTY TRANSAKCJI */
+/* ==========================================================================
+   KOD DO UKRYCIA STRZAŁEK W POLU CENY I KWOTY TRANSAKCJI ORAZ SSN
+   ========================================================================== */
 .custom-item-price::-webkit-inner-spin-button,
 .custom-item-price::-webkit-outer-spin-button,
 #final-price-input::-webkit-inner-spin-button,
-#final-price-input::-webkit-outer-spin-button {
+#final-price-input::-webkit-outer-spin-button,
+#customer-ssn-input::-webkit-inner-spin-button,
+#customer-ssn-input::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
 
 .custom-item-price,
-#final-price-input {
+#final-price-input,
+#customer-ssn-input {
     -moz-appearance: textfield;
 }
 
@@ -1101,57 +1191,120 @@ header p {
     to { transform: translateX(0); opacity: 1; }
 }
 
-.toast.success { background: var(--success); }
-.toast.warning { background: var(--accent-color); border-color: var(--ad-gold); }
-.toast.danger { background: var(--danger); border-color: var(--danger); }
+.toast.success { background: var(--success); border-left-color: var(--success); }
+.toast.warning { background: var(--accent-color); border-left-color: white; color: black; }
+.toast.danger { background: var(--danger); border-left-color: var(--danger); }
+
+/* ==========================================================================
+   STATYSTYKI PRACOWNIKA (MODAL) - NOWOCZESNY DESIGN
+   ========================================================================== */
+.stats-display-container {
+    width: 100%;
+    margin-bottom: 20px;
+    display: none;
+}
+
+.stat-box-inner {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(15, 23, 42, 0.8));
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    padding: 20px 25px;
+    border-radius: 20px;
+    text-align: left;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(34, 197, 94, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-box-inner::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    background: var(--success);
+    box-shadow: 0 0 15px var(--success);
+}
+
+.stat-icon {
+    background: linear-gradient(135deg, var(--success), #166534);
+    color: #fff;
+    width: 55px;
+    height: 55px;
+    border-radius: 14px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.8rem;
+    box-shadow: 0 5px 15px rgba(34, 197, 94, 0.4);
+}
+
+.stat-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    letter-spacing: 1.5px;
+    font-weight: 700;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 2px 10px rgba(255,255,255,0.2);
+    line-height: 1;
+    margin-top: 5px;
+    letter-spacing: 1px;
+}
 
 /* ==========================================================================
    KOSZYK (SIDEBAR) DODANY DO PANELU EXPORTU
    ========================================================================== */
 .cart-toggle-btn {
-    background: rgba(56, 189, 248, 0.1);
-    color: var(--accent-color);
-    border: 1px solid var(--accent-color);
+    background: var(--accent-color);
+    color: var(--bg-color);
+    border: none;
     padding: 14px 20px;
-    border-radius: 16px;
+    border-radius: 15px;
     font-weight: 800;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     transition: var(--transition-normal);
     font-size: 0.95rem;
 }
 
 .cart-toggle-btn:hover {
-    background: var(--accent-color);
-    color: var(--bg-color);
-    transform: translateY(-2px);
+    transform: scale(1.05);
+    filter: brightness(1.1);
 }
 
 .cart-badge {
-    background: var(--accent-color);
-    color: var(--bg-color);
+    background: rgba(0, 0, 0, 0.2);
     padding: 2px 8px;
     border-radius: 10px;
-    font-size: 0.85rem;
-    font-weight: 900;
-}
-
-.cart-toggle-btn:hover .cart-badge {
-    background: var(--bg-color);
-    color: var(--accent-color);
+    font-size: 0.8rem;
 }
 
 .cart-sidebar {
     position: fixed;
     top: 0;
     right: 0;
-    width: 400px;
+    width: 380px;
     height: 100vh;
     max-width: 100vw;
     background: rgba(15, 23, 42, 0.95);
     backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border-left: 1px solid var(--border-color);
     box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
     z-index: 9998;
@@ -1193,7 +1346,7 @@ header p {
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    transition: var(--transition-normal);
+    transition: var(--transition-fast);
 }
 
 .close-btn-cart:hover {
@@ -1204,7 +1357,7 @@ header p {
 .cart-items-container {
     flex: 1;
     overflow-y: auto;
-    padding: 25px;
+    padding: 20px 25px;
     display: flex;
     flex-direction: column;
     gap: 15px;
@@ -1229,10 +1382,10 @@ header p {
 }
 
 .cart-item {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     padding: 15px;
-    border-radius: 16px;
+    border-radius: 12px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1268,24 +1421,26 @@ header p {
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: 0.2s;
+    transition: var(--transition-fast);
 }
 
 .cart-btn-circle.minus {
-    background: rgba(231, 76, 60, 0.1);
-    color: var(--danger);
+    background: rgba(239, 68, 68, 0.15); 
+    color: var(--danger); 
+    border: 1px solid rgba(239, 68, 68, 0.3);
 }
-.cart-btn-circle.minus:hover {
-    background: var(--danger);
-    color: white;
+.cart-btn-circle.minus:hover { 
+    background: var(--danger); 
+    color: white; 
 }
 .cart-btn-circle.plus {
-    background: rgba(39, 174, 96, 0.1);
-    color: var(--success);
+    background: rgba(34, 197, 94, 0.15); 
+    color: var(--success); 
+    border: 1px solid rgba(34, 197, 94, 0.3);
 }
-.cart-btn-circle.plus:hover {
-    background: var(--success);
-    color: white;
+.cart-btn-circle.plus:hover { 
+    background: var(--success); 
+    color: white; 
 }
 
 .cart-item-qty {
@@ -1306,7 +1461,7 @@ header p {
 .cart-footer {
     padding: 25px;
     border-top: 1px solid var(--border-color);
-    background: rgba(0,0,0,0.3);
+    background: rgba(15, 23, 42, 1);
 }
 
 .cart-total-row {
@@ -1395,7 +1550,7 @@ header p {
         padding: 15px 20px;
         gap: 15px;
     }
-    .nav-left, .nav-right {
+    .nav-links {
         width: 100%;
         flex-direction: column;
         justify-content: center;
@@ -1457,12 +1612,10 @@ body:has(.modal.active) .summary-bar {
     animation: slideDownUpdate 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     border: 2px solid white;
 }
-
 @keyframes slideDownUpdate {
     from { top: -100px; opacity: 0; }
     to { top: 20px; opacity: 1; }
 }
-
 .update-btn-refresh {
     background: white;
     color: var(--accent-color);
@@ -1472,12 +1625,11 @@ body:has(.modal.active) .summary-bar {
     cursor: pointer;
     font-weight: 900;
     text-transform: uppercase;
-    transition: var(--transition-fast);
+    transition: 0.2s ease;
 }
-
 .update-btn-refresh:hover {
     transform: scale(1.1);
-    background: #f1f5f9;
+    background: #fdfbf7;
 }
 
 /* ==========================================================================
@@ -1492,7 +1644,7 @@ body:has(.modal.active) .summary-bar {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
     padding: 12px 20px;
     border-radius: 14px;
     cursor: pointer;
@@ -1508,9 +1660,11 @@ body:has(.modal.active) .summary-bar {
     color: var(--text-primary) !important;
     box-shadow: 0 0 15px rgba(56, 189, 248, 0.3) !important;
 }
+
 .user-profile-btn:hover i {
     color: var(--accent-color) !important;
 }
+
 .user-profile-btn:hover .nav-text {
     color: var(--text-primary) !important;
 }
@@ -1526,7 +1680,7 @@ body:has(.modal.active) .summary-bar {
     display: none;
     flex-direction: column;
     overflow: hidden;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
     z-index: 1001;
 }
 
@@ -1544,7 +1698,7 @@ body:has(.modal.active) .summary-bar {
     font-weight: 600;
     color: var(--text-primary);
     transition: 0.2s;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .dropdown-item:last-child {
@@ -1552,7 +1706,7 @@ body:has(.modal.active) .summary-bar {
 }
 
 .dropdown-item:hover {
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
     padding-left: 25px;
 }
 
@@ -1700,7 +1854,7 @@ body:has(.modal.active) .summary-bar {
 }
 
 .settings-pin-input.highlight-input:focus {
-    border-color: var(--ad-gold);
+    border-color: var(--warning);
     box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5), 0 0 15px rgba(245, 158, 11, 0.15);
 }
 
@@ -1728,178 +1882,5 @@ body:has(.modal.active) .summary-bar {
 .settings-save-btn:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 25px rgba(56, 189, 248, 0.5);
-    filter: brightness(1.1);
-}
-
-/* ==========================================================================
-   STATYSTYKI PRACOWNIKA (MODAL) - NOWOCZESNY DESIGN
-   ========================================================================== */
-.stats-display-container {
-    width: 100%;
-    margin-bottom: 20px;
-    display: none;
-}
-
-.stat-box-inner {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(15, 23, 42, 0.8));
-    border: 1px solid rgba(34, 197, 94, 0.3);
-    padding: 20px 25px;
-    border-radius: 20px;
-    text-align: left;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(34, 197, 94, 0.05);
-    position: relative;
-    overflow: hidden;
-}
-
-.stat-box-inner::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 5px;
-    background: var(--success);
-    box-shadow: 0 0 15px var(--success);
-}
-
-.stat-icon {
-    background: linear-gradient(135deg, var(--success), #166534);
-    color: #fff;
-    width: 55px;
-    height: 55px;
-    border-radius: 14px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 1.8rem;
-    box-shadow: 0 5px 15px rgba(34, 197, 94, 0.4);
-}
-
-.stat-details {
-    display: flex;
-    flex-direction: column;
-}
-
-.stat-label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    color: var(--text-secondary);
-    letter-spacing: 1.5px;
-    font-weight: 700;
-}
-
-.stat-value {
-    font-size: 2rem;
-    font-weight: 900;
-    color: #fff;
-    text-shadow: 0 2px 10px rgba(255,255,255,0.2);
-    line-height: 1;
-    margin-top: 5px;
-    letter-spacing: 1px;
-}
-
-/* ==========================================================================
-   EKRAN LOGOWANIA I BLOKADA SCROLLOWANIA
-   ========================================================================== */
-body:has(.login-container.active) {
-    overflow: hidden !important;
-}
-
-body:has(.login-container.active) .summary-bar {
-    display: none !important;
-}
-
-.login-container {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: var(--bg-color);
-    z-index: 999;
-    justify-content: center;
-    align-items: center;
-}
-
-.login-container.active {
-    display: flex;
-}
-
-.login-card {
-    background: var(--card-bg);
-    padding: 50px 40px;
-    border-radius: 24px;
-    text-align: center;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8);
-    max-width: 450px;
-    width: 90%;
-    animation: fadeInDown 0.4s ease-out;
-}
-
-.login-icon {
-    font-size: 3.5rem;
-    color: var(--accent-color);
-    margin-bottom: 25px;
-}
-
-.login-card h2 {
-    margin-bottom: 10px;
-    font-weight: 800;
-    font-size: 1.8rem;
-    color: var(--text-primary);
-}
-
-.login-card p {
-    color: var(--text-secondary);
-    margin-bottom: 25px;
-    font-size: 0.9rem;
-}
-
-.pin-input {
-    width: 100%;
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid var(--border-color);
-    color: white;
-    padding: 18px;
-    border-radius: 16px;
-    text-align: center;
-    font-size: 1.8rem;
-    letter-spacing: 12px;
-    margin-bottom: 25px;
-    outline: none;
-    transition: 0.3s;
-    font-family: monospace;
-}
-
-.pin-input:focus {
-    border-color: var(--accent-color);
-    box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
-}
-
-.login-btn {
-    width: 100%;
-    background: var(--accent-color);
-    color: #000;
-    border: none;
-    padding: 18px;
-    border-radius: 16px;
-    font-weight: 800;
-    cursor: pointer;
-    transition: 0.3s;
-    font-size: 1.05rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-}
-
-.login-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(56, 189, 248, 0.4);
     filter: brightness(1.1);
 }
