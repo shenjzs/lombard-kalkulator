@@ -382,9 +382,9 @@ async function sendToDiscord() {
                     title: "🚛 NOWY RAPORT SPRZEDAŻY",
                     color: 15995922,
                     fields: [
-						{ name: "📋 Nr raportu:", value: `\`${lastGeneratedReportID}\``, inline: true },
                         { name: "👤 Pracownik:", value: `\`${currentEmployeeName}\``, inline: true },
-						{ name: "💰 Suma:", value: `\`${currentTotal}$\``, inline: false }
+                        { name: "📋 Nr raportu:", value: `\`${lastGeneratedReportID}\``, inline: true },
+                        { name: "💰 Suma:", value: `\`${currentTotal}$\``, inline: false }
                     ],
                     image: { url: "attachment://raport.png" },
                     timestamp: new Date().toISOString(),
