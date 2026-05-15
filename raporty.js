@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "3.0.0";
+const APP_VERSION = "3.0.1";
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
@@ -18,6 +18,7 @@ window.currentGlobalGoal = 0;
 
 // Globalna zmienna przechowująca przetworzone dane dla wyszukiwarki
 window.globalSortedTransactions = [];
+let currentEmployeeName = "";
 
 // ==========================================
 // SCROLL NAVBAR LISTENER (Smart Navbar)
@@ -47,18 +48,18 @@ async function loginBoss() {
         const data = await response.json();
         
         if (data.isValid) { 
-            // WERYFIKACJA UPRAWNIEŃ SZEFA
             if (data.role && data.role.toLowerCase().trim() === 'szef') {
-                document.getElementById('logged-boss-name').innerText = data.name.toUpperCase();
+                currentEmployeeName = data.name;
+                document.getElementById('logged-boss-name').innerText = currentEmployeeName.toUpperCase();
                 document.getElementById('login-screen').classList.remove('active');
                 document.getElementById('dashboard-screen').classList.remove('hidden');
+                document.getElementById('user-profile').classList.remove('hidden');
                 showNotice(`Zalogowano pomyślnie jako ${data.name}`, "success");
                 
                 loadRealData(); 
             } else {
-                // Jeśli kod PIN jest poprawny, ale pracownik nie ma roli "szef"
                 showNotice("Odmowa! Brak uprawnień zarządcy.", "danger");
-                document.getElementById('boss-pin-input').value = ""; // Czyści błędny PIN z pola
+                document.getElementById('boss-pin-input').value = ""; 
             }
         } else {
             showNotice("Nieprawidłowy PIN!", "danger");
@@ -71,11 +72,27 @@ async function loginBoss() {
     }
 }
 
-function logoutBoss() {
+window.logoutBoss = function() {
+    currentEmployeeName = "";
     document.getElementById('boss-pin-input').value = "";
+    document.getElementById('logged-boss-name').innerText = "---";
     document.getElementById('dashboard-screen').classList.add('hidden');
+    document.getElementById('user-profile').classList.add('hidden');
     document.getElementById('login-screen').classList.add('active');
+    document.getElementById('user-dropdown').classList.remove('active');
 }
+
+window.toggleUserMenu = function() {
+    document.getElementById('user-dropdown').classList.toggle('active');
+}
+
+document.addEventListener('click', function(event) {
+    const profile = document.getElementById('user-profile');
+    const dropdown = document.getElementById('user-dropdown');
+    if (profile && dropdown && !profile.contains(event.target)) {
+        dropdown.classList.remove('active');
+    }
+});
 
 // ==========================================
 // ANALIZA I FILTROWANIE DANYCH
@@ -83,30 +100,31 @@ function logoutBoss() {
 
 function parseDate(dateStr) {
     if (!dateStr) return new Date();
-    // Odczyt formatu ISO (z literką T) z arkuszy Google
     if (typeof dateStr === 'string' && dateStr.includes("T")) {
         return new Date(dateStr); 
     }
-    
-    // Obsługa formatu daty z czasem (DD.MM.YYYY HH:mm:ss)
     const parts = String(dateStr).split(" ");
     const dateParts = parts[0].split(".");
-    
-    if (dateParts.length !== 3) {
-        return new Date(dateStr);
-    }
-    
+    if (dateParts.length !== 3) return new Date(dateStr);
     const d = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
-    
-    // Jeśli mamy też godzinę, dopisujemy ją do obiektu Date
     if (parts[1]) {
         const timeParts = parts[1].split(":");
         d.setHours(timeParts[0] || 0, timeParts[1] || 0, timeParts[2] || 0, 0);
     } else {
         d.setHours(0, 0, 0, 0);
     }
-    
     return d;
+}
+
+function getFormattedDateTime() {
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    return `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`;
 }
 
 window.applyFilter = function() {
@@ -137,8 +155,6 @@ window.refreshPage = function() {
 async function loadRealData() {
     const dateFromValue = document.getElementById('filter-date-from').value;
     const dateToValue = document.getElementById('filter-date-to').value;
-    
-    // Zczytujemy wartość z nowego filtra pracowników
     const empSelect = document.getElementById('filter-employee');
     const empFilterValue = empSelect ? empSelect.value : "ALL";
 
@@ -158,26 +174,23 @@ async function loadRealData() {
     }
 
     try {
-        const response = await fetch(`${REPORTS_API_URL}?action=get_reports`);
+        const response = await fetch(`${REPORTS_API_URL}?action=get_reports&t=${new Date().getTime()}`);
         const rawData = await response.json();
         
-        // FILTR: ODRZUCAMY TRANSAKCJE ZŁOTA ABY NIE MIESZAŁY SIĘ ZE STANDARDOWYM LOMBARDEM
-        const data = rawData.filter(row => row.type !== "zloto");
+        // Filtrujemy tylko to co związane z kasą (skup i sprzedaż)
+        const data = rawData.filter(row => row.type === "skup" || row.type === "sprzedaz");
         
-        // POBIERANIE GLOBALNEGO CELU Z GOOGLE SHEETS
         try {
-            const goalResponse = await fetch(`${REPORTS_API_URL}?action=get_goal`);
+            const goalResponse = await fetch(`${REPORTS_API_URL}?action=get_goal&t=${new Date().getTime()}`);
             const goalData = await goalResponse.json();
             if (goalData && goalData.goal !== undefined) {
                 window.currentGlobalGoal = parseFloat(goalData.goal) || 0;
                 document.getElementById('goal-amount-input').value = window.currentGlobalGoal;
             }
         } catch(e) {
-            console.error("Błąd pobierania celu:", e);
             window.currentGlobalGoal = 0;
         }
 
-        // Zbieranie wszystkich unikalnych pracowników do dropdowna (z całej bazy)
         const allEmployees = new Set();
         data.forEach(row => {
             if (row.employee && row.employee.trim() !== "") {
@@ -185,7 +198,6 @@ async function loadRealData() {
             }
         });
         
-        // Aktualizowanie dropdowna (z zachowaniem zaznaczenia)
         if (empSelect) {
             empSelect.innerHTML = '<option value="ALL">Wszyscy pracownicy</option>';
             Array.from(allEmployees).sort().forEach(emp => {
@@ -203,19 +215,13 @@ async function loadRealData() {
         
         const groupedBuy = {};
         const groupedSell = {};
-
         const rankingBuy = {};
         const rankingSell = {};
-        
         const rawFeed = [];
         const dailyData = {}; 
-        
         const dynamicBuyStats = {};
-        
-        // TABLICA DLA GODZIN SZCZYTU (24 godziny)
         const hourlyData = new Array(24).fill(0);
 
-        // PIERWSZA PĘTLA: Zbieramy dane TYLKO ze skupu do ustalenia realnych kosztów (Dla całej firmy)
         data.forEach(row => {
             const rowDate = parseDate(row.date);
             const rowTS = rowDate.getTime();
@@ -232,7 +238,6 @@ async function loadRealData() {
             }
         });
 
-        // DRUGA PĘTLA: Główne obliczenia (Z uwzględnieniem filtra pracownika!)
         data.forEach(row => {
             const rowDate = parseDate(row.date);
             const rowTS = rowDate.getTime();
@@ -242,20 +247,16 @@ async function loadRealData() {
 
             const empName = row.employee || "Nieznany";
             
-            // JEŚLI JEST WYBRANY PRACOWNIK - ODRZUCAMY RESZTĘ
             if (empFilterValue !== "ALL" && empName !== empFilterValue) return;
 
-            // DODAJEMY DO LIVE FEED
             rawFeed.push(row);
             
-            // ZLICZANIE DO GODZIN SZCZYTU (TYLKO JEŚLI DATA ZAWIERA CZAS)
             const dateStrStr = String(row.date);
             if (dateStrStr.includes('T') || dateStrStr.includes(':')) {
                 const hour = rowDate.getHours();
                 hourlyData[hour]++;
             }
 
-            // PRZYGOTOWANIE DANYCH DO WYKRESU LINIOWEGO
             const dayString = rowDate.toLocaleDateString('pl-PL');
             if (!dailyData[dayString]) {
                 dailyData[dayString] = { dateStr: dayString, timestamp: rowTS, buy: 0, sell: 0 };
@@ -269,10 +270,7 @@ async function loadRealData() {
                 groupedBuy[row.name].qty += row.qty;
                 groupedBuy[row.name].total += row.total;
 
-                // Do rankingu skupu dodajemy całkowitą wydaną kwotę
-                if (!rankingBuy[empName]) {
-                    rankingBuy[empName] = { name: empName, totalBuyVal: 0 };
-                }
+                if (!rankingBuy[empName]) rankingBuy[empName] = { name: empName, totalBuyVal: 0 };
                 rankingBuy[empName].totalBuyVal += row.total;
 
             } else if (row.type === "sprzedaz") {
@@ -281,7 +279,6 @@ async function loadRealData() {
                 
                 let itemCost = 0;
                 
-                // Używamy globalnych statystyk zakupu firmy do wyliczenia marży, żeby nie oszukiwać na zysku pracownika
                 if (dynamicBuyStats[row.name] && dynamicBuyStats[row.name].qty > 0) {
                     itemCost = dynamicBuyStats[row.name].total / dynamicBuyStats[row.name].qty;
                 } else {
@@ -295,15 +292,11 @@ async function loadRealData() {
                 groupedSell[row.name].qty += row.qty;
                 groupedSell[row.name].total += row.total;
                 
-                // Do rankingu sprzedaży dodajemy całkowity zysk pracownika 
-                if (!rankingSell[empName]) {
-                    rankingSell[empName] = { name: empName, totalSellVal: 0 };
-                }
+                if (!rankingSell[empName]) rankingSell[empName] = { name: empName, totalSellVal: 0 };
                 rankingSell[empName].totalSellVal += row.total;
             }
         });
 
-        // AKTUALIZACJA WIDOKU KPI
         document.getElementById('total-buy').innerText = `${totalBuy}$`;
         document.getElementById('total-sell').innerText = `${totalSell}$`;
         
@@ -314,10 +307,8 @@ async function loadRealData() {
         document.getElementById('total-profit').innerText = `${Math.round(totalProfit)}$`;
         document.getElementById('total-profit').style.color = totalProfit >= 0 ? 'var(--warning)' : 'var(--danger)';
 
-        // AKTUALIZACJA CELU TYGODNIOWEGO Z UWZGLĘDNIENIEM SERWERA
         updateGoalProgress(totalSell);
 
-        // RENDEROWANIE TABEL
         const renderRows = (tableId, arr, isExpense) => {
             const tbody = document.getElementById(tableId);
             const items = Object.values(arr).sort((a,b) => b.total - a.total);
@@ -341,7 +332,6 @@ async function loadRealData() {
         renderRows('buy-table-body', groupedBuy, true);
         renderRows('sell-table-body', groupedSell, false);
         
-        // RENDEROWANIE RANKINGU SKUPU
         const renderBuyRanking = () => {
             const tbody = document.getElementById('ranking-buy-table-body');
             const rankingItems = Object.values(rankingBuy).sort((a,b) => b.totalBuyVal - a.totalBuyVal);
@@ -351,8 +341,7 @@ async function loadRealData() {
                 return;
             }
             
-            tbody.innerHTML = rankingItems
-                .map((item, index) => `
+            tbody.innerHTML = rankingItems.map((item, index) => `
                 <tr>
                     <td style="width: 80px;"><span class="rank-badge">#${index + 1}</span></td>
                     <td><strong>${item.name}</strong></td>
@@ -363,7 +352,6 @@ async function loadRealData() {
             `).join('');
         };
 
-        // RENDEROWANIE RANKINGU SPRZEDAŻY
         const renderSellRanking = () => {
             const tbody = document.getElementById('ranking-sell-table-body');
             const rankingItems = Object.values(rankingSell).sort((a,b) => b.totalSellVal - a.totalSellVal);
@@ -373,8 +361,7 @@ async function loadRealData() {
                 return;
             }
             
-            tbody.innerHTML = rankingItems
-                .map((item, index) => `
+            tbody.innerHTML = rankingItems.map((item, index) => `
                 <tr>
                     <td style="width: 80px;"><span class="rank-badge">#${index + 1}</span></td>
                     <td><strong>${item.name}</strong></td>
@@ -388,9 +375,6 @@ async function loadRealData() {
         renderBuyRanking();
         renderSellRanking();
 
-        // ==========================================
-        // PRZYGOTOWANIE DANYCH DO LIVE FEED (Wyszukiwarka)
-        // ==========================================
         const prepareLiveFeed = () => {
             const groupedTransactions = {};
             
@@ -424,19 +408,14 @@ async function loadRealData() {
         };
 
         prepareLiveFeed();
-        
-        // RENDEROWANIE WYKRESÓW
         renderCharts(groupedSell, dailyData, hourlyData);
-
         document.getElementById('report-timestamp').innerText = `Ostatnia aktualizacja: ${new Date().toLocaleTimeString()}`;
 
     } catch (err) {
         console.error("Błąd bazy danych:", err);
-        throw err; 
     }
 }
 
-// Globalna funkcja renderowania transakcji uwzględniająca wyszukiwarkę
 window.renderLiveFeed = function() {
     const container = document.getElementById('activity-feed-container');
     if (!container) return;
@@ -514,20 +493,15 @@ window.renderLiveFeed = function() {
     }).join('');
 };
 
-// ==========================================
-// FUNKCJE CELU TYGODNIOWEGO
-// ==========================================
 window.updateGoalValue = function(val) {
     const goal = parseFloat(val) || 0;
     window.currentGlobalGoal = goal;
     
-    // Zapisujemy nowy cel do Google Sheets
     fetch(REPORTS_API_URL, {
         method: "POST",
         body: JSON.stringify({ action: "set_goal", goal: goal })
     }).catch(e => console.error("Błąd zapisu celu do chmury:", e));
     
-    // Pobieramy aktualną sumę sprzedaży z karty KPI
     const currentSell = parseFloat(document.getElementById('total-sell').innerText.replace('$', '')) || 0;
     updateGoalProgress(currentSell);
     showNotice("Cel został zaktualizowany!", "info");
@@ -551,7 +525,6 @@ function updateGoalProgress(currentSell) {
     statusText.innerText = `Realizacja: ${currentSell}$ / ${goal}$`;
     pctText.innerText = percentage + "%";
 
-    // Zmiana kolorów paska w zależności od sukcesu
     if (percentage >= 100) {
         fill.style.background = "linear-gradient(90deg, #22c55e, #10b981)";
         fill.style.boxShadow = "0 0 20px rgba(34, 197, 94, 0.5)";
@@ -561,9 +534,6 @@ function updateGoalProgress(currentSell) {
     }
 }
 
-// ==========================================
-// FUNKCJA RYSUJĄCA WYKRESY (CHART.JS)
-// ==========================================
 function renderCharts(groupedSell, dailyData, hourlyData) {
     Chart.defaults.color = '#94a3b8';
     Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
@@ -594,12 +564,8 @@ function renderCharts(groupedSell, dailyData, hourlyData) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: { beginAtZero: true }
-            }
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
         }
     });
 
@@ -632,10 +598,7 @@ function renderCharts(groupedSell, dailyData, hourlyData) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            interaction: {
-                mode: 'index',
-                intersect: false,
-            },
+            interaction: { mode: 'index', intersect: false },
             plugins: {
                 tooltip: {
                     callbacks: {
@@ -648,19 +611,15 @@ function renderCharts(groupedSell, dailyData, hourlyData) {
                     }
                 }
             },
-            scales: {
-                y: { beginAtZero: true }
-            }
+            scales: { y: { beginAtZero: true } }
         }
     });
 
-    // NOWE: HEATMAPA (WYKRES SŁUPKOWY GODZIN)
-    // Dynamiczne kolory (im więcej transakcji, tym bardziej intensywny kolor)
     const maxTransactions = Math.max(...hourlyData) || 1;
     const dynamicColors = hourlyData.map(val => {
         if(val === 0) return 'rgba(255, 255, 255, 0.05)';
-        const intensity = 0.3 + (0.7 * (val / maxTransactions)); // Od 0.3 do 1.0
-        return `rgba(245, 158, 11, ${intensity})`; // Kolor warning (--warning z CSS)
+        const intensity = 0.3 + (0.7 * (val / maxTransactions));
+        return `rgba(245, 158, 11, ${intensity})`; 
     });
 
     const ctxPeak = document.getElementById('peakHoursChart').getContext('2d');
@@ -680,24 +639,17 @@ function renderCharts(groupedSell, dailyData, hourlyData) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
+            plugins: { legend: { display: false } },
             scales: {
-                x: {
-                    ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12 }
-                },
-                y: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 1 }
-                }
+                x: { ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12 } },
+                y: { beginAtZero: true, ticks: { stepSize: 1 } }
             }
         }
     });
 }
 
 // ==========================================
-// ZARZĄDZANIE PRACOWNIKAMI (NOWY MODUŁ)
+// ZARZĄDZANIE PRACOWNIKAMI
 // ==========================================
 
 window.openEmployeeManager = async function() {
@@ -764,12 +716,7 @@ window.addNewEmployee = async function() {
     try {
         const res = await fetch(PIN_API_URL, {
             method: 'POST',
-            body: JSON.stringify({
-                action: 'add',
-                name: name,
-                pin: pin,
-                role: isBoss ? 'szef' : ''
-            })
+            body: JSON.stringify({ action: 'add', name: name, pin: pin, role: isBoss ? 'szef' : '' })
         });
         
         showNotice("Przetwarzanie...", "info");
@@ -778,7 +725,6 @@ window.addNewEmployee = async function() {
         nameInput.value = '';
         pinInput.value = '';
         document.getElementById('new-emp-boss').checked = false;
-        
     } catch (e) {
         showNotice("Nie udało się zapisać pracownika!", "danger");
     } finally {
@@ -789,32 +735,21 @@ window.addNewEmployee = async function() {
 
 window.deleteEmployee = async function(pin, name) {
     if (!confirm(`Na pewno chcesz usunąć pracownika: ${name}?`)) return;
-    
     try {
         showNotice("Usuwanie pracownika...", "info");
-        await fetch(PIN_API_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'delete', pin: pin })
-        });
+        await fetch(PIN_API_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', pin: pin }) });
         await loadEmployeesToTable();
         showNotice("Pracownik usunięty!", "warning");
-    } catch (e) {
-        showNotice("Błąd usuwania!", "danger");
-    }
+    } catch (e) { showNotice("Błąd usuwania!", "danger"); }
 }
 
 window.toggleEmployeeRole = async function(pin, newRole) {
     try {
         showNotice("Zmienianie uprawnień...", "info");
-        await fetch(PIN_API_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'toggle_role', pin: pin, role: newRole })
-        });
+        await fetch(PIN_API_URL, { method: 'POST', body: JSON.stringify({ action: 'toggle_role', pin: pin, role: newRole }) });
         await loadEmployeesToTable();
         showNotice("Zmieniono uprawnienia!", "success");
-    } catch (e) {
-        showNotice("Błąd zmiany uprawnień!", "danger");
-    }
+    } catch (e) { showNotice("Błąd zmiany uprawnień!", "danger"); }
 }
 
 // ==========================================
@@ -955,7 +890,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }); 
     }
     
-    // Podpięcie wyszukiwarki na żywo
     const feedSearchInput = document.getElementById('feed-search-input');
     if (feedSearchInput) {
         feedSearchInput.addEventListener('input', () => {
@@ -964,7 +898,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// FUNKCJA ZWIJANIA TABEL
 window.toggleTable = function(id, header) {
     const el = document.getElementById(id);
     if (el) {
@@ -983,14 +916,12 @@ async function checkUpdates() {
         const serverVersion = data.version.trim();
         console.log(`[SYSTEM] Wersja lokalna: ${APP_VERSION} | Wersja na serwerze: ${serverVersion}`);
         if (serverVersion !== APP_VERSION) {
-            // ZABEZPIECZENIE PRZED PĘTLĄ (ANTI-LOOP - ulepszone localStorage)
             if (localStorage.getItem('update_ignored_version') === serverVersion) {
-                return; // Ignorujemy prompt dla tej konkretnej wersji w tej sesji/przeglądarce
+                return;
             }
             showUpdatePrompt(serverVersion);
         }
     } catch (e) {
-        // Ciche ignorowanie błędu
     }
 }
 

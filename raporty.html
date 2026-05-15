@@ -7,7 +7,7 @@
 	<meta http-equiv="Pragma" content="no-cache">
 	<meta http-equiv="Expires" content="0">
     <title>El Cartel | Statystyki</title>
-    <link rel="stylesheet" href="style-raporty.css?v=3.0.0">
+    <link rel="stylesheet" href="style-raporty.css?v=3.0.1">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -29,10 +29,18 @@
             <a href="sprzedaz.html" class="nav-link-btn" title="Kasa (sprzedaż)">
                 <i class="fas fa-hand-holding-usd"></i> <span class="nav-text">Sprzedaj asortyment / NPC</span>
             </a>
-			<a href="zloto.html" class="nav-link-btn" title="Przetop złoto">
+            <a href="zloto.html" class="nav-link-btn" title="Przetop złoto">
                 <i class="fa-solid fa-temperature-half"></i> <span class="nav-text">Przetop złoto</span>
             </a>
-			
+            
+            <div id="user-profile" class="user-profile hidden">
+                <div class="user-profile-btn nav-link-btn" onclick="toggleUserMenu()" title="Mój profil">
+                    <i class="fas fa-user-shield"></i> <span class="nav-text" id="logged-boss-name">---</span> <i class="fas fa-chevron-down nav-text" style="font-size: 0.8rem; margin-left: 5px;"></i>
+                </div>
+                <div id="user-dropdown" class="user-dropdown">
+                    <div class="dropdown-item text-danger" onclick="logoutBoss()"><i class="fas fa-sign-out-alt"></i> Wyloguj</div>
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -52,9 +60,7 @@
         <header>
             <h1>RAPORTY FINANSOWE</h1>
             <div class="header-meta">
-                <span>Zalogowano jako: <strong id="logged-boss-name" style="color: var(--accent-color);">---</strong></span>
-                <button onclick="openEmployeeManager()" class="manage-emp-btn"><i class="fas fa-users-cog"></i> Ekipa</button>
-                <button onclick="logoutBoss()" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Wyloguj</button>
+                <button onclick="openEmployeeManager()" class="manage-emp-btn"><i class="fas fa-users-cog"></i> Zarządzaj ekipą</button>
             </div>
         </header>
 
@@ -351,6 +357,6 @@
     </div>
 
     <div id="toast-container" class="toast-container"></div>
-    <script src="raporty.js?v=3.0.0"></script>
+    <script src="raporty.js?v=3.0.1"></script>
 </body>
 </html>

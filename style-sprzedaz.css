@@ -33,6 +33,12 @@ body {
     padding-bottom: 120px;
 }
 
+/* FIX: Gdy aktywny jest login-screen, resetujemy padding na body i ukrywamy scrollbar */
+body:has(.login-container.active) {
+    padding-bottom: 0 !important;
+    overflow: hidden !important;
+}
+
 .hidden { display: none !important; }
 
 /* ==========================================================================
@@ -651,7 +657,7 @@ header h1 {
     padding: 40px;
 }
 
-/* TOASTY (Teraz wyżej niż ekran logowania!) */
+/* TOASTY */
 .toast-container {
     position: fixed;
     top: 120px;

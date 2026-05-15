@@ -94,10 +94,10 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: rgba(56, 189, 248, 0.05);
+    background: rgba(255, 255, 255, 0.05);
     padding: 12px 24px;
     border-radius: 14px;
-    border: 1px solid rgba(56, 189, 248, 0.2);
+    border: 1px solid var(--border-color);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -112,14 +112,14 @@ body {
 
 .nav-link-btn:hover {
     background: var(--accent-color);
-    color: var(--bg-color);
+    color: #000;
     border-color: var(--accent-color);
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(56, 189, 248, 0.3);
 }
 
 .nav-link-btn:hover i {
-    color: var(--bg-color);
+    color: #000;
 }
 
 .nav-text {
@@ -137,18 +137,9 @@ body {
     box-shadow: 0 15px 40px rgba(0,0,0,0.8), 0 0 20px rgba(56, 189, 248, 0.2);
 }
 
-.navbar.scrolled .nav-left {
-    display: none; 
-}
-
-.navbar.scrolled .nav-text {
-    display: none; 
-}
-
-.navbar.scrolled .nav-right {
-    gap: 8px; 
-}
-
+.navbar.scrolled .nav-left { display: none; }
+.navbar.scrolled .nav-text { display: none; }
+.navbar.scrolled .nav-right { gap: 8px; }
 .navbar.scrolled .nav-link-btn {
     padding: 0;
     width: 45px;
@@ -197,7 +188,7 @@ body:has(.login-container.active) {
     border-radius: 24px;
     text-align: center;
     border: 1px solid var(--border-color);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     max-width: 450px;
     width: 90%;
     animation: fadeInDown 0.4s ease-out;
@@ -215,22 +206,9 @@ body:has(.login-container.active) {
     filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.3));
 }
 
-.login-card h2 {
-    margin-bottom: 10px;
-    font-weight: 800;
-    font-size: 1.8rem;
-    color: var(--text-primary);
-}
-
-.login-card p {
-    color: var(--text-secondary);
-    margin-bottom: 25px;
-    font-size: 0.9rem;
-}
-
 .pin-input {
     width: 100%;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.3);
     border: 1px solid var(--border-color);
     color: white;
     padding: 18px;
@@ -269,7 +247,6 @@ body:has(.login-container.active) {
 .login-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(56, 189, 248, 0.4);
-    filter: brightness(1.1);
 }
 
 /* ==========================================================================
@@ -925,6 +902,7 @@ header h1 {
     flex-direction: column;
     box-shadow: 0 25px 50px rgba(0,0,0,0.5);
     overflow: hidden;
+    animation: fadeInDown 0.3s ease-out;
 }
 
 .emp-modal-header {
@@ -936,9 +914,9 @@ header h1 {
     background: rgba(255,255,255,0.02);
 }
 
-.emp-modal-header h2 { font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+.emp-modal-header h2 { font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 10px; margin:0;}
 .emp-close-btn { background: none; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer; transition: 0.3s; }
-.emp-close-btn:hover { color: var(--danger); }
+.emp-close-btn:hover { color: var(--danger); transform: scale(1.1); }
 
 .emp-modal-body {
     padding: 30px;
@@ -968,6 +946,9 @@ header h1 {
     flex: 1;
     min-width: 150px;
 }
+
+.emp-input:focus { border-color: var(--accent-color); }
+.emp-input option { background: var(--card-bg); color: white; }
 
 .pin-input-small { flex: 0.5; text-align: center; letter-spacing: 5px; }
 
@@ -1028,7 +1009,7 @@ header h1 {
     color: #000;
     padding: 15px 30px;
     border-radius: 50px;
-    z-index: 10000;
+    z-index: 100000;
     font-weight: 900;
     display: flex;
     align-items: center;
