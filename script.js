@@ -41,7 +41,7 @@ const defaultInventory = [
 	{ name: "Złota moneta", min: 200, max: 200, category: "inne" },
     { name: "Złota moneta z prezydentem", min: 200, max: 200, category: "inne" },
     { name: "Złote kolczyki", min: 200, max: 200, category: "biżuteria" },
-    { name: "Popsuty telefon", min: 95, max: 95, category: "elektronika" }
+    { name: "Zepsuty telefon", min: 95, max: 95, category: "elektronika" }
 ];
 
 let inventory = [];
