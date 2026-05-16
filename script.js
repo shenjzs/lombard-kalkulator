@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI
 // ==========================================
-const APP_VERSION = "3.0.2";
+const APP_VERSION = "3.1.2";
 
 // ==========================================
 // KONFIGURACJA
@@ -41,7 +41,7 @@ const defaultInventory = [
 	{ name: "Złota moneta", min: 200, max: 200, category: "inne" },
     { name: "Złota moneta z prezydentem", min: 200, max: 200, category: "inne" },
     { name: "Złote kolczyki", min: 200, max: 200, category: "biżuteria" },
-    { name: "Zepsuty telefon", min: 95, max: 95, category: "elektronika" }
+    { name: "Popsuty telefon", min: 95, max: 95, category: "elektronika" }
 ];
 
 let inventory = [];
@@ -50,9 +50,12 @@ let currentCategory = 'wszystkie';
 let currentMinTotal = 0; 
 let currentMaxTotal = 0; 
 let currentEmployeeName = ""; 
-let currentCustomerSSN = ""; // Nowa zmienna na SSN
+let currentCustomerSSN = ""; 
 // BLOKADA PODWÓJNEGO NALICZANIA UTARGU
 let isStatAddedForCurrentReceipt = false;
+
+// Do statystyk globalnych pracownika
+let myStatsRawData = [];
 
 function getFormattedDate() {
     const now = new Date();
@@ -161,7 +164,7 @@ document.addEventListener('click', function(event) {
     }
 });
 
-// STATYSTYKI PRACOWNIKA
+// STATYSTYKI PRACOWNIKA (Lokale Storage)
 function getDailyStat(employeeName) {
     const date = getFormattedDate();
     const key = `elcartel_stats_${employeeName}_${date}`;
@@ -818,4 +821,124 @@ window.changeEmployeePin = async function() {
         btn.disabled = false;
         btn.innerHTML = originalHtml;
     }
+}
+
+// ==========================================
+// SYSTEM STATYSTYK PRACOWNIKA (MODAL)
+// ==========================================
+window.openMyStats = async function() {
+    document.getElementById('user-dropdown').classList.remove('active');
+    document.getElementById('my-stats-modal').classList.add('active');
+    
+    document.getElementById('my-stats-loader').classList.remove('hidden');
+    document.getElementById('my-stats-content').classList.add('hidden');
+    
+    try {
+        const response = await fetch(`${REPORTS_API_URL}?action=get_reports&t=${new Date().getTime()}`);
+        const rawData = await response.json();
+        
+        // Zapisujemy wszystkie dane przypisane do pracownika
+        myStatsRawData = rawData.filter(row => row.employee === currentEmployeeName);
+        
+        // Odpalamy domyślnie widok SKUP
+        switchStatsView('skup');
+        
+        document.getElementById('my-stats-loader').classList.add('hidden');
+        document.getElementById('my-stats-content').classList.remove('hidden');
+        
+    } catch (err) {
+        console.error(err);
+        document.getElementById('my-stats-loader').innerHTML = '<p style="color:var(--danger);"><i class="fas fa-exclamation-triangle"></i> Błąd pobierania danych.</p>';
+    }
+}
+
+window.switchStatsView = function(type) {
+    // Stylizacja przycisków
+    document.getElementById('btn-stats-skup').classList.toggle('active', type === 'skup');
+    document.getElementById('btn-stats-sprzedaz').classList.toggle('active', type === 'sprzedaz');
+
+    // Filtrujemy dane wg wybranego typu (skup / sprzedaz)
+    const typeData = myStatsRawData.filter(row => row.type === type);
+    
+    let allTimeTotal = 0;
+    let todayTotal = 0;
+    let txSet = new Set();
+    let itemCounts = {};
+    let totalItemsQty = 0;
+    
+    const todayStr = getFormattedDate(); 
+    
+    typeData.forEach(row => {
+        allTimeTotal += row.total;
+        totalItemsQty += row.qty;
+        
+        let isToday = false;
+        let rowDateStr = String(row.date);
+        
+        if (rowDateStr.includes(todayStr) || rowDateStr.startsWith(todayStr)) {
+            isToday = true;
+        } else {
+            try {
+                const d = new Date(row.date);
+                if (!isNaN(d)) {
+                    const day = String(d.getDate()).padStart(2, '0');
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const year = d.getFullYear();
+                    if (`${day}.${month}.${year}` === todayStr) isToday = true;
+                }
+            } catch(e){}
+        }
+        
+        if (isToday) todayTotal += row.total;
+        if (row.report_id) txSet.add(row.report_id);
+        if (!itemCounts[row.name]) itemCounts[row.name] = 0;
+        itemCounts[row.name] += row.qty;
+    });
+    
+    // Obliczanie "Dzisiejszego obrotu"
+    let displayToday = todayTotal;
+    if (type === 'skup') {
+        let localToday = getDailyStat(currentEmployeeName);
+        displayToday = Math.max(todayTotal, localToday); 
+    }
+    
+    // Szukanie TOP Przedmiotu
+    let topItem = "Brak";
+    let maxQty = 0;
+    for (const [name, qty] of Object.entries(itemCounts)) {
+        if (qty > maxQty) {
+            maxQty = qty;
+            topItem = name;
+        }
+    }
+
+    let txCount = txSet.size > 0 ? txSet.size : typeData.length;
+    let avgTx = txCount > 0 ? Math.round(allTimeTotal / txCount) : 0;
+    
+    document.getElementById('ms-today').innerText = displayToday + '$';
+    document.getElementById('ms-alltime').innerText = allTimeTotal + '$';
+    document.getElementById('ms-count').innerText = txCount;
+    document.getElementById('ms-avg').innerText = avgTx + '$';
+    document.getElementById('ms-items').innerText = totalItemsQty;
+    
+    if (topItem.length > 15) topItem = topItem.substring(0, 15) + '...';
+    document.getElementById('ms-topitem').innerText = topItem;
+
+    // Dynamiczna zmiana etykiet i opisów
+    const labelEl = document.getElementById('ms-label-items');
+    if (labelEl) {
+        labelEl.innerText = type === 'skup' ? 'Skupione sztuki' : 'Sprzedane sztuki';
+    }
+    const descEl = document.getElementById('my-stats-desc');
+    if (descEl) {
+        descEl.innerText = type === 'skup' ? 'Podsumowanie Twojej aktywności w firmie (skup).' : 'Podsumowanie Twojej aktywności w firmie (sprzedaż).';
+    }
+}
+
+window.closeMyStats = function() {
+    document.getElementById('my-stats-modal').classList.remove('active');
+    document.getElementById('my-stats-loader').innerHTML = `
+        <i class="fas fa-circle-notch fa-spin fa-3x" style="color: var(--accent-color);"></i>
+        <p style="margin-top: 15px; color: var(--text-secondary); font-weight: 600;">Pobieranie danych z bazy...</p>
+    `;
 }
