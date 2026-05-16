@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI
 // ==========================================
-const APP_VERSION = "3.2.3";
+const APP_VERSION = "3.2.4";
 
 // ==========================================
 // KONFIGURACJA
@@ -56,6 +56,8 @@ let isStatAddedForCurrentReceipt = false;
 
 // Do statystyk globalnych pracownika
 let myStatsRawData = [];
+let currentStatsType = 'skup';
+let currentStatsRange = 'today';
 
 function getFormattedDate() {
     const now = new Date();
@@ -74,6 +76,25 @@ function getFormattedDateTime() {
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const seconds = String(now.getSeconds()).padStart(2, '0');
     return `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`;
+}
+
+// Funkcja parsująca daty przychodzące z Google Sheets
+function parseDate(dateStr) {
+    if (!dateStr) return new Date();
+    if (typeof dateStr === 'string' && dateStr.includes("T")) {
+        return new Date(dateStr); 
+    }
+    const parts = String(dateStr).split(" ");
+    const dateParts = parts[0].split(".");
+    if (dateParts.length !== 3) return new Date(dateStr);
+    const d = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
+    if (parts[1]) {
+        const timeParts = parts[1].split(":");
+        d.setHours(timeParts[0] || 0, timeParts[1] || 0, timeParts[2] || 0, 0);
+    } else {
+        d.setHours(0, 0, 0, 0);
+    }
+    return d;
 }
 
 function generateID() {
@@ -438,9 +459,9 @@ function finalizeQuote(employeeName, finalPrice) {
     document.getElementById('current-receipt-date').innerText = getFormattedDate();
     document.getElementById('receipt-id-display').innerText = `NR: ${receiptID}`;
     
-    let employeeText = `PRACOWNIK: ${employeeName.toUpperCase()}`;
+    let employeeText = `PRAC.: ${employeeName.toUpperCase()}`;
     if (currentCustomerSSN !== "") {
-        employeeText += `<br>KLIENT [SSN]: ${currentCustomerSSN}`;
+        employeeText += `<br>KLI.: ${currentCustomerSSN}`;
     }
     document.getElementById('receipt-employee-display').innerHTML = employeeText;
     
@@ -823,8 +844,15 @@ window.openMyStats = async function() {
         // Zapisujemy wszystkie dane przypisane do pracownika
         myStatsRawData = rawData.filter(row => row.employee === currentEmployeeName);
         
-        // Odpalamy domyślnie widok SKUP
-        switchStatsView('skup');
+        // Domyślnie ładujemy dzisiejsze dane dla skupu
+        document.getElementById('my-stats-time-filter').value = 'today';
+        currentStatsType = 'skup';
+        currentStatsRange = 'today';
+        
+        document.getElementById('btn-stats-skup').classList.add('active');
+        document.getElementById('btn-stats-sprzedaz').classList.remove('active');
+
+        renderMyStatsDisplay();
         
         document.getElementById('my-stats-loader').classList.add('hidden');
         document.getElementById('my-stats-content').classList.remove('hidden');
@@ -836,56 +864,68 @@ window.openMyStats = async function() {
 }
 
 window.switchStatsView = function(type) {
-    // Stylizacja przycisków
+    currentStatsType = type;
     document.getElementById('btn-stats-skup').classList.toggle('active', type === 'skup');
     document.getElementById('btn-stats-sprzedaz').classList.toggle('active', type === 'sprzedaz');
+    renderMyStatsDisplay();
+}
 
-    // Filtrujemy dane wg wybranego typu (skup / sprzedaz)
-    const typeData = myStatsRawData.filter(row => row.type === type);
+window.changeStatsTimeRange = function(range) {
+    currentStatsRange = range;
+    renderMyStatsDisplay();
+}
+
+function renderMyStatsDisplay() {
+    const typeData = myStatsRawData.filter(row => row.type === currentStatsType);
     
+    let periodTotal = 0;
     let allTimeTotal = 0;
-    let todayTotal = 0;
     let txSet = new Set();
     let itemCounts = {};
-    let totalItemsQty = 0;
+    let periodItemsQty = 0;
     
-    const todayStr = getFormattedDate(); 
-    
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const startOfYesterday = startOfToday - (24 * 60 * 60 * 1000);
+    const startOf7Days = startOfToday - (6 * 24 * 60 * 60 * 1000);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+
     typeData.forEach(row => {
-        allTimeTotal += row.total;
-        totalItemsQty += row.qty;
+        allTimeTotal += row.total; 
         
-        let isToday = false;
-        let rowDateStr = String(row.date);
+        let rowTime = 0;
+        const d = parseDate(row.date);
+        if(d) rowTime = d.getTime();
+
+        let isInRange = false;
         
-        if (rowDateStr.includes(todayStr) || rowDateStr.startsWith(todayStr)) {
-            isToday = true;
-        } else {
-            try {
-                const d = new Date(row.date);
-                if (!isNaN(d)) {
-                    const day = String(d.getDate()).padStart(2, '0');
-                    const month = String(d.getMonth() + 1).padStart(2, '0');
-                    const year = d.getFullYear();
-                    if (`${day}.${month}.${year}` === todayStr) isToday = true;
-                }
-            } catch(e){}
+        if (currentStatsRange === 'all') {
+            isInRange = true;
+        } else if (currentStatsRange === 'today') {
+            if (rowTime >= startOfToday) isInRange = true;
+        } else if (currentStatsRange === 'yesterday') {
+            if (rowTime >= startOfYesterday && rowTime < startOfToday) isInRange = true;
+        } else if (currentStatsRange === '7days') {
+            if (rowTime >= startOf7Days) isInRange = true;
+        } else if (currentStatsRange === 'month') {
+            if (rowTime >= startOfMonth) isInRange = true;
         }
         
-        if (isToday) todayTotal += row.total;
-        if (row.report_id) txSet.add(row.report_id);
-        if (!itemCounts[row.name]) itemCounts[row.name] = 0;
-        itemCounts[row.name] += row.qty;
+        if (isInRange) {
+            periodTotal += row.total;
+            periodItemsQty += row.qty;
+            if (row.report_id) txSet.add(row.report_id);
+            if (!itemCounts[row.name]) itemCounts[row.name] = 0;
+            itemCounts[row.name] += row.qty;
+        }
     });
-    
-    // Obliczanie "Dzisiejszego obrotu"
-    let displayToday = todayTotal;
-    if (type === 'skup') {
+
+    let displayPeriodTotal = periodTotal;
+    if (currentStatsRange === 'today' && currentStatsType === 'skup') {
         let localToday = getDailyStat(currentEmployeeName);
-        displayToday = Math.max(todayTotal, localToday); 
+        displayPeriodTotal = Math.max(periodTotal, localToday); 
     }
     
-    // Szukanie TOP Przedmiotu
     let topItem = "Brak";
     let maxQty = 0;
     for (const [name, qty] of Object.entries(itemCounts)) {
@@ -895,26 +935,38 @@ window.switchStatsView = function(type) {
         }
     }
 
-    let txCount = txSet.size > 0 ? txSet.size : typeData.length;
-    let avgTx = txCount > 0 ? Math.round(allTimeTotal / txCount) : 0;
+    let txCount = txSet.size;
+    if (txCount === 0 && displayPeriodTotal > 0) {
+        txCount = Object.keys(itemCounts).length > 0 ? 1 : 0; 
+    }
+
+    let avgTx = txCount > 0 ? Math.round(displayPeriodTotal / txCount) : 0;
     
-    document.getElementById('ms-today').innerText = displayToday + '$';
+    document.getElementById('ms-today').innerText = displayPeriodTotal + '$';
     document.getElementById('ms-alltime').innerText = allTimeTotal + '$';
     document.getElementById('ms-count').innerText = txCount;
     document.getElementById('ms-avg').innerText = avgTx + '$';
-    document.getElementById('ms-items').innerText = totalItemsQty;
+    document.getElementById('ms-items').innerText = periodItemsQty;
     
     if (topItem.length > 15) topItem = topItem.substring(0, 15) + '...';
     document.getElementById('ms-topitem').innerText = topItem;
 
-    // Dynamiczna zmiana etykiet i opisów
+    const labelAction = currentStatsType === 'skup' ? 'Skupione' : 'Sprzedane';
     const labelEl = document.getElementById('ms-label-items');
-    if (labelEl) {
-        labelEl.innerText = type === 'skup' ? 'Skupione sztuki' : 'Sprzedane sztuki';
-    }
+    if(labelEl) labelEl.innerText = `${labelAction} sztuki`;
+    
     const descEl = document.getElementById('my-stats-desc');
     if (descEl) {
-        descEl.innerText = type === 'skup' ? 'Podsumowanie Twojej aktywności w firmie (skup).' : 'Podsumowanie Twojej aktywności w firmie (sprzedaż).';
+        descEl.innerText = currentStatsType === 'skup' ? 'Podsumowanie Twojej aktywności w firmie (skup).' : 'Podsumowanie Twojej aktywności w firmie (sprzedaż).';
+    }
+
+    const periodLabelEl = document.getElementById('ms-label-period');
+    if (periodLabelEl) {
+        if (currentStatsRange === 'today') periodLabelEl.innerText = 'Dzisiejszy obrót';
+        else if (currentStatsRange === 'yesterday') periodLabelEl.innerText = 'Wczorajszy obrót';
+        else if (currentStatsRange === '7days') periodLabelEl.innerText = 'Obrót (7 dni)';
+        else if (currentStatsRange === 'month') periodLabelEl.innerText = 'Obrót (Miesiąc)';
+        else periodLabelEl.innerText = 'Obrót (Całkowity)';
     }
 }
 

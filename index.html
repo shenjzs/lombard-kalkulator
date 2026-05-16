@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Kasa fiskalna</title>
-    <link rel="stylesheet" href="style.css?v=3.2.3">
+    <link rel="stylesheet" href="style.css?v=3.2.4">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -174,24 +174,26 @@
                     <button onclick="closeModal()" class="settings-close-btn"><i class="fas fa-times"></i></button>
                 </div>
 
-                <div id="receipt-capture-area" style="display: flex; justify-content: center; width: 100%;">
-                    <div id="receipt" class="receipt">
-                        <div class="receipt-header">
-                            <h2>EL CARTEL PAWN SHOP</h2>
-                            <p>Oficjalna wycena towaru</p>
-                            <p id="receipt-id-display" class="receipt-meta"></p>
-                            <p id="receipt-employee-display" class="receipt-meta"></p>
-                            <div class="receipt-divider"></div>
-                        </div>
-                        <div id="receipt-items" class="receipt-items"></div>
-                        <div class="receipt-divider"></div>
-                        <div class="receipt-footer">
-                            <div class="receipt-row total">
-                                <span>KWOTA DO WYPŁATY:</span>
-                                <span id="receipt-total">0$</span>
+                <div class="receipt-scroll-wrapper" style="width: 100%; display: flex; justify-content: center;">
+                    <div id="receipt-capture-area" style="display: flex; justify-content: center; width: 100%;">
+                        <div id="receipt" class="receipt">
+                            <div class="receipt-header">
+                                <h2>EL CARTEL PAWN SHOP</h2>
+                                <p>Oficjalna wycena towaru</p>
+                                <p id="receipt-id-display" class="receipt-meta"></p>
+                                <p id="receipt-employee-display" class="receipt-meta"></p>
+                                <div class="receipt-divider"></div>
                             </div>
-                            <p class="receipt-date">Data: <span id="current-receipt-date"></span></p>
-                            <div class="receipt-stamp">WYPŁACONO</div>
+                            <div id="receipt-items" class="receipt-items"></div>
+                            <div class="receipt-divider"></div>
+                            <div class="receipt-footer">
+                                <div class="receipt-row total">
+                                    <span>KWOTA DO WYPŁATY:</span>
+                                    <span id="receipt-total">0$</span>
+                                </div>
+                                <p class="receipt-date">Data: <span id="current-receipt-date"></span></p>
+                                <div class="receipt-stamp">WYPŁACONO</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -279,10 +281,20 @@
                     </button>
                 </div>
 
+                <div class="my-stats-filter-container">
+                    <select id="my-stats-time-filter" onchange="changeStatsTimeRange(this.value)" class="my-stats-select">
+                        <option value="today">Dzisiaj</option>
+                        <option value="yesterday">Wczoraj</option>
+                        <option value="7days">Ostatnie 7 dni</option>
+                        <option value="month">Ten miesiąc</option>
+                        <option value="all">Od początku</option>
+                    </select>
+                </div>
+
                 <div class="my-stats-grid">
                     <div class="my-stat-box">
                         <i class="fas fa-calendar-day stat-box-icon text-success"></i>
-                        <span class="my-stat-label">Dzisiejszy obrót</span>
+                        <span class="my-stat-label" id="ms-label-period">Dzisiejszy obrót</span>
                         <span class="my-stat-value" id="ms-today">0$</span>
                     </div>
                     <div class="my-stat-box">
@@ -316,6 +328,6 @@
     </div>
 
     <div id="toast-container" class="toast-container"></div>
-    <script src="script.js?v=3.2.3"></script>
+    <script src="script.js?v=3.2.4"></script>
 </body>
 </html>

@@ -1197,30 +1197,39 @@ header p {
    KOSZYK (SIDEBAR) DODANY DO PANELU EXPORTU
    ========================================================================== */
 .cart-toggle-btn {
-    background: var(--accent-color);
-    color: var(--bg-color);
-    border: none;
+    background: rgba(56, 189, 248, 0.1);
+    color: var(--accent-color);
+    border: 1px solid var(--accent-color);
     padding: 14px 20px;
-    border-radius: 15px;
+    border-radius: 16px;
     font-weight: 800;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     transition: var(--transition-normal);
     font-size: 0.95rem;
+    height: 48px; /* dopasowanie wysokości */
 }
 
 .cart-toggle-btn:hover {
-    transform: scale(1.05);
-    filter: brightness(1.1);
+    background: var(--accent-color);
+    color: var(--bg-color);
+    transform: translateY(-2px);
 }
 
 .cart-badge {
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--accent-color);
+    color: var(--bg-color);
     padding: 2px 8px;
     border-radius: 10px;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
+    font-weight: 900;
+}
+
+.cart-toggle-btn:hover .cart-badge {
+    background: var(--bg-color);
+    color: var(--accent-color);
 }
 
 .cart-sidebar {
@@ -1285,7 +1294,7 @@ header p {
 .cart-items-container {
     flex: 1;
     overflow-y: auto;
-    padding: 20px 25px;
+    padding: 25px;
     display: flex;
     flex-direction: column;
     gap: 15px;
@@ -1310,10 +1319,10 @@ header p {
 }
 
 .cart-item {
-    background: rgba(30, 41, 59, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
     padding: 15px;
-    border-radius: 12px;
+    border-radius: 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1500,10 +1509,22 @@ body:has(.modal.active) .summary-bar {
     display: none !important;
 }
 
-/* NAPRAWA UCINANIA NA DISCORDZIE (MOBILE) */
+/* NAPRAWA UCINANIA NA DISCORDZIE (MOBILE) ORAZ SCROLL W MODALU */
 .modal-content {
     max-height: 95vh;
     overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.modal-content::-webkit-scrollbar {
+    width: 6px;
+}
+.modal-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+.modal-content::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 10px;
 }
 
 #receipt-capture-area {
@@ -1638,7 +1659,7 @@ body:has(.modal.active) .summary-bar {
 }
 
 /* ==========================================================================
-   MODALE (USTAWIENIA, STATYSTYKI, PARAGON)
+   MODAL USTAWIEŃ I STATYSTYK
    ========================================================================== */
 .settings-modal-content {
     background: rgba(15, 23, 42, 0.8) !important;
@@ -1649,22 +1670,7 @@ body:has(.modal.active) .summary-bar {
     padding: 35px !important;
     border-radius: 24px !important;
     position: relative;
-    overflow-y: auto; /* Zmiana: pozwala na scrollowanie długich elementów! */
-    overflow-x: hidden;
     max-width: 420px;
-    max-height: 90vh; /* Zabezpieczenie przed ucieczką za ekran */
-}
-
-/* Elegancki scrollbar dla modala */
-.settings-modal-content::-webkit-scrollbar {
-    width: 6px;
-}
-.settings-modal-content::-webkit-scrollbar-track {
-    background: transparent;
-}
-.settings-modal-content::-webkit-scrollbar-thumb {
-    background: var(--accent-color);
-    border-radius: 10px;
 }
 
 .settings-modal-content::before {
@@ -1859,6 +1865,35 @@ body:has(.modal.active) .summary-bar {
     background: var(--accent-color);
     color: #000;
     box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+}
+
+.my-stats-filter-container {
+    margin-bottom: 25px;
+}
+
+.my-stats-select {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border-color);
+    color: white;
+    padding: 12px 15px;
+    border-radius: 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.my-stats-select:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.15);
+}
+
+.my-stats-select option {
+    background: var(--card-bg);
+    color: white;
 }
 
 .my-stats-grid {

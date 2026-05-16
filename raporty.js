@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "3.2.3";
+const APP_VERSION = "3.2.4";
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
@@ -836,8 +836,8 @@ async function sendReportToDiscord() {
                         { name: "📈 Przychody (sprzedaż)", value: `\`${totalSellVal}\``, inline: true },
                         { name: "⚖️ Bilans", value: `\`${totalBalVal}\``, inline: true },
                         { name: "💎 Czysty zysk", value: ` 💰 ${totalProfitVal}`, inline: false },
-                        { name: "🏆 Top zaopatrzeniowcy (skup)", value: topBuyStr, inline: true },
-                        { name: "🚚 Top sprzedający (sprzedaż)", value: topSellStr, inline: true }
+                        { name: "🏆 Top zaopatrzeniowcy", value: topBuyStr, inline: true },
+                        { name: "🚚 Top sprzedający", value: topSellStr, inline: true }
                     ],
                     image: { url: "attachment://raport_elcartel.png" },
                     timestamp: new Date().toISOString(),
