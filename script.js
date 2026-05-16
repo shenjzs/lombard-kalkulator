@@ -914,7 +914,7 @@ window.switchStatsView = function(type) {
     }
     const descEl = document.getElementById('my-stats-desc');
     if (descEl) {
-        descEl.innerText = type === 'skup' ? 'Podsumowanie Twojej aktywności w firmie (Skup).' : 'Podsumowanie Twojej aktywności w firmie (Sprzedaż).';
+        descEl.innerText = type === 'skup' ? 'Podsumowanie Twojej aktywności w firmie (skup).' : 'Podsumowanie Twojej aktywności w firmie (sprzedaż).';
     }
 }
 
