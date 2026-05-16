@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI
 // ==========================================
-const APP_VERSION = "3.1.3";
+const APP_VERSION = "3.2.3";
 
 // ==========================================
 // KONFIGURACJA
@@ -164,7 +164,7 @@ document.addEventListener('click', function(event) {
     }
 });
 
-// STATYSTYKI PRACOWNIKA (Lokale Storage)
+// STATYSTYKI PRACOWNIKA (Lokale Storage - tylko w tle do zliczania live)
 function getDailyStat(employeeName) {
     const date = getFormattedDate();
     const key = `elcartel_stats_${employeeName}_${date}`;
@@ -440,7 +440,7 @@ function finalizeQuote(employeeName, finalPrice) {
     
     let employeeText = `PRACOWNIK: ${employeeName.toUpperCase()}`;
     if (currentCustomerSSN !== "") {
-        employeeText += `<br>KLIENT (SSN): ${currentCustomerSSN}`;
+        employeeText += `<br>KLIENT [SSN]: ${currentCustomerSSN}`;
     }
     document.getElementById('receipt-employee-display').innerHTML = employeeText;
     
@@ -468,23 +468,6 @@ function finalizeQuote(employeeName, finalPrice) {
         itemsDiv.parentNode.insertBefore(sigDiv, document.querySelector('.receipt-footer'));
     }
     sigDiv.innerHTML = `<span class="signature-label">Podpis pracownika</span><span class="signature-text">${employeeName}</span>`;
-
-    const statDiv = document.getElementById('employee-stats-display');
-    if (statDiv) {
-        const currentStat = getDailyStat(employeeName);
-        const predictedStat = currentStat + finalPrice;
-        
-        statDiv.innerHTML = `
-            <div class="stat-box-inner">
-                <div class="stat-icon"><i class="fas fa-wallet"></i></div>
-                <div class="stat-details">
-                    <span class="stat-label">Twój dzisiejszy obrót po wpłacie:</span>
-                    <span class="stat-value">${predictedStat}$</span>
-                </div>
-            </div>
-        `;
-        statDiv.style.display = "block";
-    }
 
     document.getElementById('quote-modal').classList.add('active');
 }
@@ -931,7 +914,7 @@ window.switchStatsView = function(type) {
     }
     const descEl = document.getElementById('my-stats-desc');
     if (descEl) {
-        descEl.innerText = type === 'skup' ? 'Podsumowanie Twojej aktywności w firmie (skup).' : 'Podsumowanie Twojej aktywności w firmie (sprzedaż).';
+        descEl.innerText = type === 'skup' ? 'Podsumowanie Twojej aktywności w firmie (Skup).' : 'Podsumowanie Twojej aktywności w firmie (Sprzedaż).';
     }
 }
 

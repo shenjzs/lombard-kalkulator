@@ -1194,76 +1194,6 @@ header p {
 .toast.danger { background: var(--danger); border-left-color: var(--danger); }
 
 /* ==========================================================================
-   STATYSTYKI PRACOWNIKA (MODAL PO SPRZEDAŻY)
-   ========================================================================== */
-.stats-display-container {
-    width: 100%;
-    margin-bottom: 20px;
-    display: none;
-}
-
-.stat-box-inner {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(15, 23, 42, 0.8));
-    border: 1px solid rgba(34, 197, 94, 0.3);
-    padding: 20px 25px;
-    border-radius: 20px;
-    text-align: left;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(34, 197, 94, 0.05);
-    position: relative;
-    overflow: hidden;
-}
-
-.stat-box-inner::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 5px;
-    background: var(--success);
-    box-shadow: 0 0 15px var(--success);
-}
-
-.stat-icon {
-    background: linear-gradient(135deg, var(--success), #166534);
-    color: #fff;
-    width: 55px;
-    height: 55px;
-    border-radius: 14px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 1.8rem;
-    box-shadow: 0 5px 15px rgba(34, 197, 94, 0.4);
-}
-
-.stat-details {
-    display: flex;
-    flex-direction: column;
-}
-
-.stat-label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    color: var(--text-secondary);
-    letter-spacing: 1.5px;
-    font-weight: 700;
-}
-
-.stat-value {
-    font-size: 2rem;
-    font-weight: 900;
-    color: #fff;
-    text-shadow: 0 2px 10px rgba(255,255,255,0.2);
-    line-height: 1;
-    margin-top: 5px;
-    letter-spacing: 1px;
-}
-
-/* ==========================================================================
    KOSZYK (SIDEBAR) DODANY DO PANELU EXPORTU
    ========================================================================== */
 .cart-toggle-btn {
@@ -1563,15 +1493,6 @@ header p {
     .nav-logo {
         font-size: 1.1rem;
     }
-    .announcement-banner {
-        flex-direction: column;
-        gap: 5px;
-        padding: 10px;
-    }
-    .announcement-text {
-        font-size: 0.75rem;
-        line-height: 1.4;
-    }
 }
 
 /* KLUCZOWA POPRAWKA - UKRYWANIE PASKA PRZY OTWARTYM MODALU */
@@ -1717,7 +1638,7 @@ body:has(.modal.active) .summary-bar {
 }
 
 /* ==========================================================================
-   MODAL USTAWIEŃ I STATYSTYK
+   MODALE (USTAWIENIA, STATYSTYKI, PARAGON)
    ========================================================================== */
 .settings-modal-content {
     background: rgba(15, 23, 42, 0.8) !important;
@@ -1728,8 +1649,22 @@ body:has(.modal.active) .summary-bar {
     padding: 35px !important;
     border-radius: 24px !important;
     position: relative;
-    overflow: hidden;
+    overflow-y: auto; /* Zmiana: pozwala na scrollowanie długich elementów! */
+    overflow-x: hidden;
     max-width: 420px;
+    max-height: 90vh; /* Zabezpieczenie przed ucieczką za ekran */
+}
+
+/* Elegancki scrollbar dla modala */
+.settings-modal-content::-webkit-scrollbar {
+    width: 6px;
+}
+.settings-modal-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+.settings-modal-content::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 10px;
 }
 
 .settings-modal-content::before {
