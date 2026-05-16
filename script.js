@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI
 // ==========================================
-const APP_VERSION = "3.2.4";
+const APP_VERSION = "3.2.5";
 
 // ==========================================
 // KONFIGURACJA
@@ -20,20 +20,20 @@ const defaultInventory = [
     { name: "Komputer (stacjonarny)", min: 680, max: 680, category: "elektronika" },
     { name: "Konsola", min: 400, max: 400, category: "elektronika" },
     { name: "Konsola DJ", min: 640, max: 640, category: "elektronika" },
-    { name: "Kobieca plastikowa figurka", min: 90, max: 90, category: "inne" },
+    { name: "Kobieca plastikowa figurka", min: 100, max: 100, category: "inne" },
     { name: "Plastikowa figurka małpki", min: 80, max: 80, category: "inne" },
-    { name: "Kwiat", min: 60, max: 60, category: "dom" },
+    { name: "Kwiat", min: 65, max: 65, category: "dom" },
     { name: "Gitara elektryczna", min: 480, max: 480, category: "elektronika" },
-    { name: "Dziwna substancja", min: 90, max: 90, category: "inne" },
+    { name: "Dziwna substancja", min: 100, max: 100, category: "inne" },
     { name: "Dziwna szara substancja", min: 160, max: 160, category: "inne" },
     { name: "Biżuteria", min: 240, max: 240, category: "biżuteria" },
     { name: "Brudna biżuteria", min: 150, max: 150, category: "biżuteria" },
     { name: "Katana", min: 480, max: 480, category: "inne" },
     { name: "Mikrofala", min: 280, max: 280, category: "dom" },
     { name: "Mikser", min: 160, max: 160, category: "dom" },
-    { name: "Monitor", min: 140, max: 140, category: "elektronika" },
-    { name: "Obraz", min: 110, max: 110, category: "dom" },
-    { name: "Obraz ścienny", min: 175, max: 175, category: "dom" },
+    { name: "Monitor", min: 150, max: 150, category: "elektronika" },
+    { name: "Obraz", min: 115, max: 115, category: "dom" },
+    { name: "Obraz ścienny", min: 180, max: 180, category: "dom" },
     { name: "Głośnik", min: 145, max: 145, category: "elektronika" },
     { name: "Telewizor", min: 600, max: 600, category: "elektronika" },
     { name: "Zegarek", min: 160, max: 160, category: "biżuteria" },
