@@ -459,9 +459,9 @@ function finalizeQuote(employeeName, finalPrice) {
     document.getElementById('current-receipt-date').innerText = getFormattedDate();
     document.getElementById('receipt-id-display').innerText = `NR: ${receiptID}`;
     
-    let employeeText = `PRAC.: ${employeeName.toUpperCase()}`;
+    let employeeText = `PRACOWNIK: ${employeeName.toUpperCase()}`;
     if (currentCustomerSSN !== "") {
-        employeeText += `<br>KLI.: ${currentCustomerSSN}`;
+        employeeText += `<br>KLIENT (SSN): ${currentCustomerSSN}`;
     }
     document.getElementById('receipt-employee-display').innerHTML = employeeText;
     
