@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Kasa fiskalna</title>
-    <link rel="stylesheet" href="style.css?v=3.2.6">
+    <link rel="stylesheet" href="style.css?v=3.3.6">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -39,6 +39,7 @@
                     <i class="fas fa-user-circle"></i> <span class="nav-text" id="logged-user-name">---</span> <i class="fas fa-chevron-down nav-text" style="font-size: 0.8rem; margin-left: 5px;"></i>
                 </div>
                 <div id="user-dropdown" class="user-dropdown">
+                    <div class="dropdown-item" onclick="openIdCard()"><i class="fas fa-id-badge"></i> Identyfikator</div>
                     <div class="dropdown-item" onclick="openMyStats()"><i class="fas fa-chart-pie"></i> Moje statystyki</div>
                     <div class="dropdown-item" onclick="openSettings()"><i class="fas fa-cog"></i> Ustawienia</div>
                     <div class="dropdown-item text-danger" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Zakończ zmianę</div>
@@ -327,7 +328,62 @@
         </div>
     </div>
 
+    <div id="id-card-modal" class="modal">
+        <div class="modal-content id-modal-content">
+            <div class="id-card-horizontal">
+                <div class="id-card-header-hz">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div class="id-logo-hz"><i class="fas fa-gem"></i> EL CARTEL PAWN SHOP</div>
+                        <div class="id-title-hz">KARTA IDENTYFIKACYJNA</div>
+                    </div>
+                    <button onclick="closeIdCard()" class="settings-close-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="id-card-body-hz">
+                    <div class="id-photo-col">
+                        <div class="id-photo-box">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                    </div>
+                    <div class="id-details-col">
+                        <div class="id-field-hz">
+                            <span class="id-label-hz">Numer SSN</span>
+                            <strong class="id-value-hz" id="id-card-ssn" style="font-size: 1.1rem; letter-spacing: 1px;">---</strong>
+                        </div>
+                        <div class="id-field-hz">
+                            <span class="id-label-hz">Imię i Nazwisko</span>
+                            <strong class="id-value-hz" id="id-card-name">---</strong>
+                        </div>
+                        <div class="id-field-hz">
+                            <span class="id-label-hz">Data zatrudnienia</span>
+                            <strong class="id-value-hz" id="id-card-date-zatrudnienia" style="font-size: 1rem;">---</strong>
+                        </div>
+                        <div class="id-field-hz">
+                            <span class="id-label-hz">Miejsce Pracy</span>
+                            <strong class="id-value-hz" style="font-size: 1rem;">El Cartel Pawn Shop</strong>
+                        </div>
+                        <div class="id-field-hz">
+                            <span class="id-label-hz">Aktualny stopień</span>
+                            <div id="id-card-rank-container">
+                                </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="id-card-footer-hz">
+                    <div class="id-signature-box">
+                        <span class="id-signature-label">Podpis posiadacza</span>
+                        <span class="id-signature-font" id="id-card-signature">---</span>
+                    </div>
+                    <div class="id-status-hz">
+                        <i class="fas fa-circle" style="color: var(--success); font-size: 0.6rem;"></i> ZAAKCEPTOWANO
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="toast-container" class="toast-container"></div>
-    <script src="script.js?v=3.2.6"></script>
+    <script src="script.js?v=3.3.6"></script>
 </body>
 </html>

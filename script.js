@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI
 // ==========================================
-const APP_VERSION = "3.2.6";
+const APP_VERSION = "3.3.6";
 
 // ==========================================
 // KONFIGURACJA
@@ -50,7 +50,10 @@ let currentCategory = 'wszystkie';
 let currentMinTotal = 0; 
 let currentMaxTotal = 0; 
 let currentEmployeeName = ""; 
-let currentCustomerSSN = ""; 
+let currentEmployeeRank = "Pracownik"; 
+let currentEmployeeSsn = "---"; 
+let currentEmployeeDateZatrudnienia = "---"; 
+let currentEmployeePhoto = ""; // NOWA ZMIENNA GLOBALNA NA ZDJĘCIE
 // BLOKADA PODWÓJNEGO NALICZANIA UTARGU
 let isStatAddedForCurrentReceipt = false;
 
@@ -131,6 +134,11 @@ window.login = async function() {
 
         if (data.isValid) {
             currentEmployeeName = data.name;
+            currentEmployeeRank = data.rank || "Pracownik"; 
+            currentEmployeeSsn = data.ssn || "---"; 
+            currentEmployeeDateZatrudnienia = data.dateZatrudnienia || "Brak danych";
+            currentEmployeePhoto = data.photo || ""; // POBIERANIE ZDJĘCIA Z BAZY
+            
             document.getElementById('logged-user-name').innerText = currentEmployeeName.toUpperCase();
             document.getElementById('login-screen').classList.remove('active');
             
@@ -157,6 +165,10 @@ window.login = async function() {
 
 window.logout = function() {
     currentEmployeeName = "";
+    currentEmployeeRank = "Pracownik";
+    currentEmployeeSsn = "---";
+    currentEmployeeDateZatrudnienia = "---";
+    currentEmployeePhoto = ""; // CZYSZCZENIE ZDJĘCIA PRZY WYLOGOWANIU
     document.getElementById('employee-login-pin').value = "";
     document.getElementById('logged-user-name').innerText = "---";
     document.getElementById('login-screen').classList.add('active');
@@ -658,6 +670,40 @@ window.closeModal = function() {
     document.getElementById('quote-modal').classList.remove('active'); 
 }
 
+// OTWIERANIE I ZAMYKANIE IDENTYFIKATORA
+window.openIdCard = function() {
+    document.getElementById('user-dropdown').classList.remove('active');
+    
+    if (currentEmployeeName) {
+        document.getElementById('id-card-name').innerText = currentEmployeeName.toUpperCase();
+        document.getElementById('id-card-ssn').innerText = currentEmployeeSsn;
+        document.getElementById('id-card-date-zatrudnienia').innerText = currentEmployeeDateZatrudnienia;
+        
+        // --- LOGIKA DLA ZDJĘCIA ---
+        const photoContainer = document.querySelector('#id-card-modal .id-photo-box');
+        if (currentEmployeePhoto && currentEmployeePhoto !== "") {
+            // Jeśli jest link, wstawiamy obrazek
+            photoContainer.innerHTML = `<img src="${currentEmployeePhoto}" alt="Zdjęcie postaci" class="id-photo-img">`;
+        } else {
+            // Jeśli nie ma, wstawiamy domyślną ikonę
+            photoContainer.innerHTML = `<i class="fas fa-user-tie"></i>`;
+        }
+        // -------------------------
+
+        const signatureEl = document.getElementById('id-card-signature');
+        if (signatureEl) signatureEl.innerText = currentEmployeeName;
+
+        // Pojedyncze podświetlone stanowisko
+        document.getElementById('id-card-rank-container').innerHTML = `<span class="active-rank">${currentEmployeeRank}</span>`;
+    }
+    
+    document.getElementById('id-card-modal').classList.add('active');
+}
+
+window.closeIdCard = function() {
+    document.getElementById('id-card-modal').classList.remove('active');
+}
+
 window.showNotice = function(msg, type) {
     const t = document.createElement('div');
     t.className = `toast ${type}`;
@@ -876,7 +922,7 @@ window.changeStatsTimeRange = function(range) {
 }
 
 function renderMyStatsDisplay() {
-    const typeData = myStatsRawData.filter(row => row.type === currentStatsType);
+    const typeData = myStatsRawData.filter(row => row.employee === currentEmployeeName && row.type === currentStatsType);
     
     let periodTotal = 0;
     let allTimeTotal = 0;

@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "3.2.6";
+const APP_VERSION = "3.3.6";
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
@@ -672,10 +672,14 @@ async function loadEmployeesToTable() {
         if (data.employees && data.employees.length > 0) {
             tbody.innerHTML = data.employees.map(emp => {
                 const isBoss = emp.role && emp.role.toLowerCase() === 'szef';
+                // WYŚWIETLANIE STOPNIA ZAMIAST PINU
+                const rankDisplay = emp.rank ? emp.rank : "Pracownik";
                 return `
                     <tr>
                         <td><strong>${emp.name}</strong></td>
-                        <td style="text-align: center; color: var(--warning); letter-spacing: 5px;">****</td>
+                        <td style="text-align: center;">
+                            <span class="emp-rank-badge">${rankDisplay}</span>
+                        </td>
                         <td style="text-align: center;">
                             ${isBoss ? '<span class="is-boss-badge">Tak</span>' : '<span class="no-access-badge">Nie</span>'}
                         </td>
@@ -702,10 +706,12 @@ window.addNewEmployee = async function() {
     const btn = document.getElementById('add-emp-btn');
     const nameInput = document.getElementById('new-emp-name');
     const pinInput = document.getElementById('new-emp-pin');
+    const rankInput = document.getElementById('new-emp-rank'); // POBRANIE STOPNIA
     const isBoss = document.getElementById('new-emp-boss').checked;
     
     const name = nameInput.value.trim();
     const pin = pinInput.value.trim();
+    const rank = rankInput ? rankInput.value : "Pracownik";
     
     if (!name || !pin) return showNotice("Uzupełnij nick i PIN!", "danger");
     if (pin.length < 4) return showNotice("PIN musi mieć minimum 4 znaki!", "warning");
@@ -716,7 +722,13 @@ window.addNewEmployee = async function() {
     try {
         const res = await fetch(PIN_API_URL, {
             method: 'POST',
-            body: JSON.stringify({ action: 'add', name: name, pin: pin, role: isBoss ? 'szef' : '' })
+            body: JSON.stringify({ 
+                action: 'add', 
+                name: name, 
+                pin: pin, 
+                role: isBoss ? 'szef' : '',
+                rank: rank  // PRZESŁANIE STOPNIA DO SKRYPTU
+            })
         });
         
         showNotice("Przetwarzanie...", "info");
@@ -725,6 +737,7 @@ window.addNewEmployee = async function() {
         nameInput.value = '';
         pinInput.value = '';
         document.getElementById('new-emp-boss').checked = false;
+        if(rankInput) rankInput.value = "Pracownik"; // Reset stopnia na domyślny
     } catch (e) {
         showNotice("Nie udało się zapisać pracownika!", "danger");
     } finally {
