@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "3.2.5";
+const APP_VERSION = "3.2.6";
 
 const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1500573620605550725/VmpdLB3qN1FT6Jkf-U-Wo1cig-WEpVjleki4f-EA45G5QfSuBJeC3f1fqCKB_LTeXOQ5"; 
 const PIN_API_URL = "https://script.google.com/macros/s/AKfycbycnbsg8yC8Cqk0tF-6syzBTvTLvO-MyTgx-zqAPjgBXPR132MicKNtjNoq3WMQfmLR/exec"; 
@@ -44,6 +44,10 @@ let lastGeneratedReportID = "";
 let currentEmployeeName = ""; 
 let currentCustomerSSN = ""; // Nowa zmienna na SSN
 
+let myStatsRawData = [];
+let currentStatsType = 'sprzedaz';
+let currentStatsRange = 'today';
+
 function getFormattedDate() {
     const now = new Date();
     return `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
@@ -58,6 +62,24 @@ function getFormattedDateTime() {
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const seconds = String(now.getSeconds()).padStart(2, '0');
     return `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`;
+}
+
+function parseDate(dateStr) {
+    if (!dateStr) return new Date();
+    if (typeof dateStr === 'string' && dateStr.includes("T")) {
+        return new Date(dateStr); 
+    }
+    const parts = String(dateStr).split(" ");
+    const dateParts = parts[0].split(".");
+    if (dateParts.length !== 3) return new Date(dateStr);
+    const d = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
+    if (parts[1]) {
+        const timeParts = parts[1].split(":");
+        d.setHours(timeParts[0] || 0, timeParts[1] || 0, timeParts[2] || 0, 0);
+    } else {
+        d.setHours(0, 0, 0, 0);
+    }
+    return d;
 }
 
 // NASŁUCHIWANIE SCROLLA DLA NAVBARA
@@ -147,7 +169,7 @@ function init() {
         card.innerHTML = `
             <div class="item-info">
                 <span class="item-name">${item.name}</span>
-                <span class="item-price">Skup: ${item.price}$</span>
+                <span class="item-price">Sprzedaż: ${item.price}$</span>
             </div>
             <div class="controls">
                 <button class="btn-circle minus" onclick="updateCount(${index}, -1)">-</button>
@@ -357,7 +379,7 @@ async function sendToDiscord() {
     if (!area) return;
 
     btn.disabled = true;
-    btn.innerText = "PRZETWARZANIE...";
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PRZETWARZANIE...';
 
     const itemsToLog = [];
     inventory.forEach((item, i) => {
@@ -439,7 +461,7 @@ async function sendToDiscord() {
         showNotice("Błąd generatora!", "danger");
     } finally {
         btn.disabled = false;
-        btn.innerText = "Wyślij raport na Discord";
+        btn.innerHTML = '<i class="fab fa-discord"></i> Wyślij raport na Discord';
     }
 }
 
@@ -611,4 +633,150 @@ window.changeEmployeePin = async function() {
         btn.disabled = false;
         btn.innerHTML = originalHtml;
     }
+}
+
+// ==========================================
+// SYSTEM STATYSTYK PRACOWNIKA (MODAL)
+// ==========================================
+window.openMyStats = async function() {
+    document.getElementById('user-dropdown').classList.remove('active');
+    document.getElementById('my-stats-modal').classList.add('active');
+    
+    document.getElementById('my-stats-loader').classList.remove('hidden');
+    document.getElementById('my-stats-content').classList.add('hidden');
+    
+    try {
+        const response = await fetch(`${REPORTS_API_URL}?action=get_reports&t=${new Date().getTime()}`);
+        const rawData = await response.json();
+        
+        // Zapisujemy wszystkie dane przypisane do pracownika
+        myStatsRawData = rawData.filter(row => row.employee === currentEmployeeName);
+        
+        document.getElementById('my-stats-time-filter').value = 'today';
+        currentStatsType = 'sprzedaz';
+        currentStatsRange = 'today';
+        
+        document.getElementById('btn-stats-sprzedaz').classList.add('active');
+        document.getElementById('btn-stats-skup').classList.remove('active');
+
+        renderMyStatsDisplay();
+        
+        document.getElementById('my-stats-loader').classList.add('hidden');
+        document.getElementById('my-stats-content').classList.remove('hidden');
+        
+    } catch (err) {
+        console.error(err);
+        document.getElementById('my-stats-loader').innerHTML = '<p style="color:var(--danger);"><i class="fas fa-exclamation-triangle"></i> Błąd pobierania danych.</p>';
+    }
+}
+
+window.switchStatsView = function(type) {
+    currentStatsType = type;
+    document.getElementById('btn-stats-skup').classList.toggle('active', type === 'skup');
+    document.getElementById('btn-stats-sprzedaz').classList.toggle('active', type === 'sprzedaz');
+    renderMyStatsDisplay();
+}
+
+window.changeStatsTimeRange = function(range) {
+    currentStatsRange = range;
+    renderMyStatsDisplay();
+}
+
+window.renderMyStatsDisplay = function() {
+    const typeData = myStatsRawData.filter(row => row.type === currentStatsType);
+    
+    let periodTotal = 0;
+    let allTimeTotal = 0;
+    let txSet = new Set();
+    let itemCounts = {};
+    let periodItemsQty = 0;
+    
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const startOfYesterday = startOfToday - (24 * 60 * 60 * 1000);
+    const startOf7Days = startOfToday - (6 * 24 * 60 * 60 * 1000);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+
+    typeData.forEach(row => {
+        allTimeTotal += row.total; 
+        
+        let rowTime = 0;
+        const d = parseDate(row.date);
+        if(d) rowTime = d.getTime();
+
+        let isInRange = false;
+        
+        if (currentStatsRange === 'all') {
+            isInRange = true;
+        } else if (currentStatsRange === 'today') {
+            if (rowTime >= startOfToday) isInRange = true;
+        } else if (currentStatsRange === 'yesterday') {
+            if (rowTime >= startOfYesterday && rowTime < startOfToday) isInRange = true;
+        } else if (currentStatsRange === '7days') {
+            if (rowTime >= startOf7Days) isInRange = true;
+        } else if (currentStatsRange === 'month') {
+            if (rowTime >= startOfMonth) isInRange = true;
+        }
+        
+        if (isInRange) {
+            periodTotal += row.total;
+            periodItemsQty += row.qty;
+            if (row.report_id) txSet.add(row.report_id);
+            if (!itemCounts[row.name]) itemCounts[row.name] = 0;
+            itemCounts[row.name] += row.qty;
+        }
+    });
+
+    let displayPeriodTotal = periodTotal;
+    
+    let topItem = "Brak";
+    let maxQty = 0;
+    for (const [name, qty] of Object.entries(itemCounts)) {
+        if (qty > maxQty) {
+            maxQty = qty;
+            topItem = name;
+        }
+    }
+
+    let txCount = txSet.size;
+    if (txCount === 0 && displayPeriodTotal > 0) {
+        txCount = Object.keys(itemCounts).length > 0 ? 1 : 0; 
+    }
+
+    let avgTx = txCount > 0 ? Math.round(displayPeriodTotal / txCount) : 0;
+    
+    document.getElementById('ms-today').innerText = displayPeriodTotal + '$';
+    document.getElementById('ms-alltime').innerText = allTimeTotal + '$';
+    document.getElementById('ms-count').innerText = txCount;
+    document.getElementById('ms-avg').innerText = avgTx + '$';
+    document.getElementById('ms-items').innerText = periodItemsQty;
+    
+    if (topItem.length > 15) topItem = topItem.substring(0, 15) + '...';
+    document.getElementById('ms-topitem').innerText = topItem;
+
+    const labelAction = currentStatsType === 'skup' ? 'Skupione' : 'Sprzedane';
+    const labelEl = document.getElementById('ms-label-items');
+    if(labelEl) labelEl.innerText = `${labelAction} sztuki`;
+    
+    const descEl = document.getElementById('my-stats-desc');
+    if (descEl) {
+        descEl.innerText = currentStatsType === 'skup' ? 'Podsumowanie Twojej aktywności w firmie (skup).' : 'Podsumowanie Twojej aktywności w firmie (sprzedaż).';
+    }
+
+    const periodLabelEl = document.getElementById('ms-label-period');
+    if (periodLabelEl) {
+        if (currentStatsRange === 'today') periodLabelEl.innerText = 'Dzisiejszy obrót';
+        else if (currentStatsRange === 'yesterday') periodLabelEl.innerText = 'Wczorajszy obrót';
+        else if (currentStatsRange === '7days') periodLabelEl.innerText = 'Obrót (7 dni)';
+        else if (currentStatsRange === 'month') periodLabelEl.innerText = 'Obrót (Miesiąc)';
+        else periodLabelEl.innerText = 'Obrót (Całkowity)';
+    }
+}
+
+window.closeMyStats = function() {
+    document.getElementById('my-stats-modal').classList.remove('active');
+    document.getElementById('my-stats-loader').innerHTML = `
+        <i class="fas fa-circle-notch fa-spin fa-3x" style="color: var(--accent-color);"></i>
+        <p style="margin-top: 15px; color: var(--text-secondary); font-weight: 600;">Pobieranie danych z bazy...</p>
+    `;
 }

@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Panel eksportu</title>
-    <link rel="stylesheet" href="style-sprzedaz.css?v=3.2.5">
+    <link rel="stylesheet" href="style-sprzedaz.css?v=3.2.6">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -38,6 +38,7 @@
                     <i class="fas fa-user-circle"></i> <span class="nav-text" id="logged-user-name">---</span> <i class="fas fa-chevron-down nav-text" style="font-size: 0.8rem; margin-left: 5px;"></i>
                 </div>
                 <div id="user-dropdown" class="user-dropdown">
+                    <div class="dropdown-item" onclick="openMyStats()"><i class="fas fa-chart-pie"></i> Moje statystyki</div>
                     <div class="dropdown-item" onclick="openSettings()"><i class="fas fa-cog"></i> Ustawienia</div>
                     <div class="dropdown-item text-danger" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Zakończ zmianę</div>
                 </div>
@@ -124,14 +125,23 @@
         </div>
 
         <div id="quote-modal" class="modal">
-            <div class="modal-content">
-                <div id="receipt-preview-container"></div>
+            <div class="modal-content quote-modal-dark">
+                <div class="modal-header-custom">
+                    <div class="modal-title-custom">
+                        <i class="fas fa-file-invoice-dollar"></i> Wygenerowany paragon
+                    </div>
+                    <button onclick="closeModal()" class="close-modal-x">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
                 
-                <div class="modal-buttons">
-                    <button onclick="sendToDiscord()" id="send-discord-btn" class="discord-btn">
+                <div id="receipt-preview-container" class="receipt-wrapper"></div>
+                
+                <div class="modal-buttons-stack">
+                    <button onclick="sendToDiscord()" id="send-discord-btn" class="btn-blue-custom">
                         <i class="fab fa-discord"></i> Wyślij raport na Discord
                     </button>
-                    <button onclick="closeModal()" class="close-btn">
+                    <button onclick="closeModal()" class="btn-dark-custom">
                         <i class="fas fa-times"></i> Zamknij
                     </button>
                 </div>
@@ -185,9 +195,80 @@
         </div>
     </div>
 
+    <div id="my-stats-modal" class="modal">
+        <div class="modal-content settings-modal-content" style="max-width: 600px;">
+            <div class="settings-header">
+                <h2><i class="fas fa-chart-pie"></i> Twoje statystyki</h2>
+                <button onclick="closeMyStats()" class="settings-close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <p class="settings-desc" id="my-stats-desc">Podsumowanie Twojej aktywności w firmie (sprzedaż).</p>
+
+            <div id="my-stats-loader" style="text-align: center; padding: 40px 0;">
+                <i class="fas fa-circle-notch fa-spin fa-3x" style="color: var(--accent-color);"></i>
+                <p style="margin-top: 15px; color: var(--text-secondary); font-weight: 600;">Pobieranie danych z bazy...</p>
+            </div>
+
+            <div id="my-stats-content" class="hidden">
+                
+                <div class="my-stats-toggle-container">
+                    <button class="my-stats-toggle-btn active" id="btn-stats-sprzedaz" onclick="switchStatsView('sprzedaz')">
+                        <i class="fas fa-truck-loading"></i> Sprzedaż
+                    </button>
+                    <button class="my-stats-toggle-btn" id="btn-stats-skup" onclick="switchStatsView('skup')">
+                        <i class="fas fa-cart-arrow-down"></i> Skup
+                    </button>
+                </div>
+
+                <div class="my-stats-filter-container">
+                    <select id="my-stats-time-filter" onchange="changeStatsTimeRange(this.value)" class="my-stats-select">
+                        <option value="today">Dzisiaj</option>
+                        <option value="yesterday">Wczoraj</option>
+                        <option value="7days">Ostatnie 7 dni</option>
+                        <option value="month">Ten miesiąc</option>
+                        <option value="all">Od początku</option>
+                    </select>
+                </div>
+
+                <div class="my-stats-grid">
+                    <div class="my-stat-box">
+                        <i class="fas fa-calendar-day stat-box-icon text-success"></i>
+                        <span class="my-stat-label" id="ms-label-period">Dzisiejszy obrót</span>
+                        <span class="my-stat-value" id="ms-today">0$</span>
+                    </div>
+                    <div class="my-stat-box">
+                        <i class="fas fa-wallet stat-box-icon text-accent"></i>
+                        <span class="my-stat-label">Całkowity obrót</span>
+                        <span class="my-stat-value" id="ms-alltime">0$</span>
+                    </div>
+                    <div class="my-stat-box">
+                        <i class="fas fa-receipt stat-box-icon text-warning"></i>
+                        <span class="my-stat-label">Ilość transakcji</span>
+                        <span class="my-stat-value" id="ms-count">0</span>
+                    </div>
+                    <div class="my-stat-box">
+                        <i class="fas fa-star stat-box-icon text-danger"></i>
+                        <span class="my-stat-label">Top przedmiot</span>
+                        <span class="my-stat-value" id="ms-topitem" style="font-size: 1.1rem; word-break: break-word;">Brak</span>
+                    </div>
+                    <div class="my-stat-box">
+                        <i class="fas fa-calculator stat-box-icon text-info"></i>
+                        <span class="my-stat-label">Średni paragon</span>
+                        <span class="my-stat-value" id="ms-avg">0$</span>
+                    </div>
+                    <div class="my-stat-box">
+                        <i class="fas fa-boxes stat-box-icon text-purple"></i>
+                        <span class="my-stat-label" id="ms-label-items">Sprzedane sztuki</span>
+                        <span class="my-stat-value" id="ms-items">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="receipt-capture-area" style="position: absolute; left: -9999px; background: white; padding: 40px; width: 450px;"></div>
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="sprzedaz-script.js?v=3.2.5"></script>
+    <script src="sprzedaz-script.js?v=3.2.6"></script>
 </body>
 </html>
