@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "3.3.7";
+const APP_VERSION = "3.3.8"; // Podbito wersję (Formatowanie kasy ze spacjami)
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
@@ -20,16 +20,34 @@ window.currentGlobalGoal = 0;
 window.globalSortedTransactions = [];
 window.currentEmployeesList = []; // Lista pracowników do edycji
 let currentEmployeeName = "";
+let currentFeedLimit = 50; // LIMIT WYŚWIETLANIA DLA LIVE FEEDA
 
 // ==========================================
-// SCROLL NAVBAR LISTENER (Smart Navbar)
+// FUNKCJA FORMATOWANIA WALUTY (np. 150000 -> 150 000)
+// ==========================================
+window.formatMoney = function(amount) {
+    return Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+};
+
+// ==========================================
+// SCROLL NAVBAR LISTENER (Smart Navbar) & SCROLL TO TOP
 // ==========================================
 document.addEventListener('scroll', function() {
     const navbar = document.querySelector('.navbar');
+    const scrollBtn = document.getElementById('scrollToTopBtn');
+    
     if (window.scrollY > 50) {
         navbar.classList.add('scrolled');
     } else {
         navbar.classList.remove('scrolled');
+    }
+
+    if (scrollBtn) {
+        if (window.scrollY > 300) {
+            scrollBtn.classList.add('visible');
+        } else {
+            scrollBtn.classList.remove('visible');
+        }
     }
 });
 
@@ -96,6 +114,41 @@ document.addEventListener('click', function(event) {
 });
 
 // ==========================================
+// ANIMACJA NABIJANIA LICZNIKA (COUNTUP - GTA HEIST STYLE)
+// ==========================================
+window.animateCountUp = function(element, targetValue, duration = 1500) {
+    let startValue = 0;
+    const isNegative = targetValue < 0;
+    const absTarget = Math.abs(targetValue);
+    
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        
+        // easeOutQuart - szybki start, powolne hamowanie na końcu
+        const easeProgress = 1 - Math.pow(1 - progress, 5);
+        const currentVal = Math.floor(easeProgress * absTarget);
+        
+        const displayValue = isNegative ? -currentVal : currentVal;
+        
+        // Zabezpieczenie przed pokazaniem -0
+        if (displayValue === 0 && isNegative) {
+            element.innerText = `0$`;
+        } else {
+            element.innerText = `${window.formatMoney(displayValue)}$`;
+        }
+        
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        } else {
+            element.innerText = `${window.formatMoney(targetValue)}$`; 
+        }
+    };
+    window.requestAnimationFrame(step);
+};
+
+// ==========================================
 // ANALIZA I FILTROWANIE DANYCH
 // ==========================================
 
@@ -131,7 +184,6 @@ function getFormattedDateTime() {
 window.applyFilter = function() {
     const btn = document.getElementById('ok-filter-btn');
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-    showNotice("Filtrowanie bazy danych...", "info");
     
     loadRealData().then(() => {
         btn.innerHTML = 'OK';
@@ -142,7 +194,6 @@ window.applyFilter = function() {
 window.refreshPage = function() {
     const icon = document.getElementById('refresh-icon');
     if(icon) icon.classList.add('fa-spin');
-    showNotice("Odświeżanie statystyk...", "info");
     
     loadRealData().then(() => {
         if(icon) icon.classList.remove('fa-spin');
@@ -154,6 +205,40 @@ window.refreshPage = function() {
 }
 
 async function loadRealData() {
+    // ------------------------------------------------------------------
+    // WSTRZYKIWANIE SKELETONÓW PRZED POBRANIEM DANYCH
+    // ------------------------------------------------------------------
+    const kpiSkeleton = '<div class="skeleton" style="height: 30px; width: 60%; margin: 5px 0; border-radius: 6px;"></div>';
+    document.getElementById('total-buy').innerHTML = kpiSkeleton;
+    document.getElementById('total-sell').innerHTML = kpiSkeleton;
+    document.getElementById('total-balance').innerHTML = kpiSkeleton;
+    document.getElementById('total-profit').innerHTML = kpiSkeleton;
+
+    const tableSkeleton = Array(5).fill(`
+        <tr>
+            <td><div class="skeleton" style="height: 16px; width: 80%; border-radius: 4px;"></div></td>
+            <td style="text-align:center;"><div class="skeleton" style="height: 16px; width: 40%; margin: 0 auto; border-radius: 4px;"></div></td>
+            <td style="text-align:right;"><div class="skeleton" style="height: 16px; width: 60%; margin-left: auto; border-radius: 4px;"></div></td>
+        </tr>
+    `).join('');
+    
+    document.getElementById('buy-table-body').innerHTML = tableSkeleton;
+    document.getElementById('sell-table-body').innerHTML = tableSkeleton;
+    document.getElementById('ranking-buy-table-body').innerHTML = tableSkeleton;
+    document.getElementById('ranking-sell-table-body').innerHTML = tableSkeleton;
+
+    const feedSkeleton = Array(5).fill(`
+        <div class="feed-item" style="padding: 18px 30px; display: flex; align-items: center; gap: 15px;">
+            <div class="skeleton" style="width: 80px; height: 22px; border-radius: 6px;"></div>
+            <div class="skeleton" style="width: 130px; height: 16px; border-radius: 4px;"></div>
+            <div class="skeleton" style="width: 95px; height: 16px; border-radius: 4px;"></div>
+            <div class="skeleton" style="flex-grow: 1; height: 16px; border-radius: 4px;"></div>
+            <div class="skeleton" style="width: 80px; height: 20px; border-radius: 4px;"></div>
+        </div>
+    `).join('');
+    document.getElementById('activity-feed-container').innerHTML = feedSkeleton;
+    // ------------------------------------------------------------------
+
     const dateFromValue = document.getElementById('filter-date-from').value;
     const dateToValue = document.getElementById('filter-date-to').value;
     const empSelect = document.getElementById('filter-employee');
@@ -298,15 +383,17 @@ async function loadRealData() {
             }
         });
 
-        document.getElementById('total-buy').innerText = `${totalBuy}$`;
-        document.getElementById('total-sell').innerText = `${totalSell}$`;
+        animateCountUp(document.getElementById('total-buy'), totalBuy);
+        animateCountUp(document.getElementById('total-sell'), totalSell);
         
         let balance = totalSell - totalBuy;
-        document.getElementById('total-balance').innerText = `${balance}$`;
-        document.getElementById('total-balance').style.color = balance >= 0 ? 'var(--success)' : 'var(--danger)';
+        const balEl = document.getElementById('total-balance');
+        balEl.style.color = balance >= 0 ? 'var(--success)' : 'var(--danger)';
+        animateCountUp(balEl, balance);
         
-        document.getElementById('total-profit').innerText = `${Math.round(totalProfit)}$`;
-        document.getElementById('total-profit').style.color = totalProfit >= 0 ? 'var(--warning)' : 'var(--danger)';
+        const profEl = document.getElementById('total-profit');
+        profEl.style.color = totalProfit >= 0 ? 'var(--warning)' : 'var(--danger)';
+        animateCountUp(profEl, Math.round(totalProfit));
 
         updateGoalProgress(totalSell);
 
@@ -324,7 +411,7 @@ async function loadRealData() {
                     <td>${item.name}</td>
                     <td style="text-align: center;"><span class="qty-badge">x${item.qty}</span></td>
                     <td style="text-align: right;" class="price-val" style="color: ${isExpense ? 'var(--danger)' : 'var(--success)'}">
-                        ${isExpense ? '-' : '+'}${item.total}$
+                        ${isExpense ? '-' : '+'}${window.formatMoney(item.total)}$
                     </td>
                 </tr>
             `).join('');
@@ -347,7 +434,7 @@ async function loadRealData() {
                     <td style="width: 80px;"><span class="rank-badge">#${index + 1}</span></td>
                     <td><strong>${item.name}</strong></td>
                     <td style="text-align: right; color: var(--accent-color); font-weight: 800;">
-                        ${item.totalBuyVal}$
+                        ${window.formatMoney(item.totalBuyVal)}$
                     </td>
                 </tr>
             `).join('');
@@ -367,7 +454,7 @@ async function loadRealData() {
                     <td style="width: 80px;"><span class="rank-badge">#${index + 1}</span></td>
                     <td><strong>${item.name}</strong></td>
                     <td style="text-align: right; color: var(--success); font-weight: 800;">
-                        +${item.totalSellVal}$
+                        +${window.formatMoney(item.totalSellVal)}$
                     </td>
                 </tr>
             `).join('');
@@ -405,6 +492,7 @@ async function loadRealData() {
                 return b.sortIndex - a.sortIndex; 
             });
 
+            currentFeedLimit = 50; 
             window.renderLiveFeed();
         };
 
@@ -417,6 +505,9 @@ async function loadRealData() {
     }
 }
 
+// ------------------------------------------
+// LIVE FEED RENDER Z LIMITOWANIEM
+// ------------------------------------------
 window.renderLiveFeed = function() {
     const container = document.getElementById('activity-feed-container');
     if (!container) return;
@@ -437,11 +528,13 @@ window.renderLiveFeed = function() {
     }
 
     if (filtered.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-secondary);">Brak wyników wyszukiwania dla frazy: "${term}"</div></div>`;
+        container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-secondary);">Brak wyników wyszukiwania dla frazy: "${term}"</div>`;
         return;
     }
 
-    container.innerHTML = filtered.map((tx) => {
+    const itemsToRender = filtered.slice(0, currentFeedLimit);
+
+    let html = itemsToRender.map((tx) => {
         const isBuy = tx.type === "skup";
         const actionClass = isBuy ? "buy" : "sell";
         const actionText = isBuy ? "Skup" : "Sprzedaż";
@@ -461,7 +554,7 @@ window.renderLiveFeed = function() {
                     <span class="feed-action ${actionClass}">${actionText}</span>
                     <span class="feed-item-main-info">Transakcja (${tx.items.length} przedmiotów)</span>
                     <span class="feed-item-value ${actionClass}" style="color: ${isBuy ? 'var(--danger)' : 'var(--success)'}">
-                        ${sign}${tx.totalAmount}$
+                        ${sign}${window.formatMoney(tx.totalAmount)}$
                     </span>
                     <i class="fas fa-chevron-down feed-chevron"></i>
                 </div>
@@ -483,7 +576,7 @@ window.renderLiveFeed = function() {
                                 <tr>
                                     <td>${i.name}</td>
                                     <td style="text-align:center;">x${i.qty}</td>
-                                    <td style="text-align:right;">${i.total}$</td>
+                                    <td style="text-align:right;">${window.formatMoney(i.total)}$</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -492,6 +585,24 @@ window.renderLiveFeed = function() {
             </div>
         `;
     }).join('');
+
+    if (filtered.length > currentFeedLimit) {
+        const remaining = filtered.length - currentFeedLimit;
+        html += `
+            <div style="padding: 15px; border-top: 1px solid rgba(255, 255, 255, 0.05);">
+                <button onclick="loadMoreFeed()" class="load-more-btn">
+                    <i class="fas fa-chevron-down"></i> Pokaż starsze operacje (ukryte: ${remaining})
+                </button>
+            </div>
+        `;
+    }
+
+    container.innerHTML = html;
+};
+
+window.loadMoreFeed = function() {
+    currentFeedLimit += 50;
+    window.renderLiveFeed();
 };
 
 window.updateGoalValue = function(val) {
@@ -503,7 +614,7 @@ window.updateGoalValue = function(val) {
         body: JSON.stringify({ action: "set_goal", goal: goal })
     }).catch(e => console.error("Błąd zapisu celu do chmury:", e));
     
-    const currentSell = parseFloat(document.getElementById('total-sell').innerText.replace('$', '')) || 0;
+    const currentSell = parseFloat(document.getElementById('total-sell').innerText.replace(/\s|\$/g, '')) || 0;
     updateGoalProgress(currentSell);
     showNotice("Cel został zaktualizowany!", "info");
 }
@@ -516,14 +627,14 @@ function updateGoalProgress(currentSell) {
 
     if (goal <= 0) {
         fill.style.width = "0%";
-        statusText.innerText = `Realizacja: ${currentSell}$ / Cel nieustawiony`;
+        statusText.innerText = `Realizacja: ${window.formatMoney(currentSell)}$ / Cel nieustawiony`;
         pctText.innerText = "0%";
         return;
     }
 
     const percentage = Math.min(Math.round((currentSell / goal) * 100), 100);
     fill.style.width = percentage + "%";
-    statusText.innerText = `Realizacja: ${currentSell}$ / ${goal}$`;
+    statusText.innerText = `Realizacja: ${window.formatMoney(currentSell)}$ / ${window.formatMoney(goal)}$`;
     pctText.innerText = percentage + "%";
 
     if (percentage >= 100) {
@@ -606,7 +717,7 @@ function renderCharts(groupedSell, dailyData, hourlyData) {
                         label: function(context) {
                             let label = context.dataset.label || '';
                             if (label) label += ': ';
-                            if (context.parsed.y !== null) label += context.parsed.y + '$';
+                            if (context.parsed.y !== null) label += window.formatMoney(context.parsed.y) + '$';
                             return label;
                         }
                     }
@@ -664,14 +775,30 @@ window.closeEmployeeManager = function() {
 
 async function loadEmployeesToTable() {
     const tbody = document.getElementById('emp-manager-table-body');
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;"><i class="fas fa-spinner fa-spin"></i> Pobieranie danych z bazy...</td></tr>';
+    
+    // Wstrzyknięcie skeletonów do tabeli pracowników
+    const empSkeletonHTML = Array(4).fill(`
+        <tr>
+            <td><div class="skeleton" style="height: 16px; width: 120px; border-radius: 4px;"></div></td>
+            <td style="text-align:center;"><div class="skeleton" style="height: 22px; width: 80px; margin: 0 auto; border-radius: 6px;"></div></td>
+            <td style="text-align:center;"><div class="skeleton" style="height: 20px; width: 40px; margin: 0 auto; border-radius: 6px;"></div></td>
+            <td style="text-align:right;">
+                <div style="display: flex; justify-content: flex-end; gap: 5px;">
+                    <div class="skeleton" style="width: 34px; height: 34px; border-radius: 8px;"></div>
+                    <div class="skeleton" style="width: 34px; height: 34px; border-radius: 8px;"></div>
+                    <div class="skeleton" style="width: 34px; height: 34px; border-radius: 8px;"></div>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+    tbody.innerHTML = empSkeletonHTML;
     
     try {
         const response = await fetch(`${PIN_API_URL}?action=get_all`);
         const data = await response.json();
         
         if (data.employees && data.employees.length > 0) {
-            window.currentEmployeesList = data.employees; // Zapis do globalnej zmiennej dla edycji
+            window.currentEmployeesList = data.employees; 
 
             tbody.innerHTML = data.employees.map(emp => {
                 const isBoss = emp.role && emp.role.toLowerCase() === 'szef';
@@ -833,12 +960,14 @@ window.toggleEmployeeRole = async function(pin, newRole) {
 // ==========================================
 // GENEROWANIE RAPORTU GRAFICZNEGO I DISCORD
 // ==========================================
-async function sendReportToDiscord() {
+window.sendReportToDiscord = async function() {
     const btn = document.getElementById('send-report-btn');
     const area = document.getElementById('report-visual-card');
     
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generowanie...';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generowanie...';
+    }
 
     const totalBuyVal = document.getElementById('total-buy').innerText;
     const totalSellVal = document.getElementById('total-sell').innerText;
@@ -849,12 +978,12 @@ async function sendReportToDiscord() {
     document.getElementById('v-sell').innerText = totalSellVal;
     document.getElementById('v-bal').innerText = totalBalVal;
     
-    const dFrom = document.getElementById('filter-date-from').value || "POCZĄTEK";
-    const dTo = document.getElementById('filter-date-to').value || "DZIŚ";
+    const dFrom = document.getElementById('filter-date-from') ? document.getElementById('filter-date-from').value : "POCZĄTEK";
+    const dTo = document.getElementById('filter-date-to') ? document.getElementById('filter-date-to').value : "DZIŚ";
     
-    const empSelectValue = document.getElementById('filter-employee').value;
+    const empSelectValue = document.getElementById('filter-employee') ? document.getElementById('filter-employee').value : "ALL";
     const empDisplay = empSelectValue === "ALL" ? "WSZYSCY" : empSelectValue.toUpperCase();
-    document.getElementById('v-report-date').innerText = `ZAKRES: ${dFrom} — ${dTo} | ${empDisplay}`;
+    document.getElementById('v-report-date').innerText = `ZAKRES: ${dFrom || "POCZĄTEK"} — ${dTo || "DZIŚ"} | ${empDisplay}`;
     
     const reportID = Math.random().toString(36).substr(2, 8).toUpperCase();
     document.getElementById('v-footer-id').innerText = `REPORT_ID: ${reportID}`;
@@ -877,7 +1006,7 @@ async function sendReportToDiscord() {
         const rows = Array.from(document.querySelectorAll(`#${sourceId} tr`)).slice(0, 5);
         const container = document.getElementById(targetId);
         
-        if (rows.length === 0 || rows[0].innerText.includes("Brak danych")) {
+        if (rows.length === 0 || rows[0].innerText.includes("Brak danych") || rows[0].innerHTML.includes("skeleton")) {
             container.innerHTML = `<div class="v-row"><span>Brak danych</span><span>0$</span></div>`;
             return;
         }
@@ -907,7 +1036,7 @@ async function sendReportToDiscord() {
             const payload = {
                 embeds: [{
                     title: "🏛️ PROTOKÓŁ ANALITYCZNY ZARZĄDU EL CARTEL",
-                    description: `Dokładne zestawienie operacji finansowych dla okresu:\n📅 **${dFrom} — ${dTo}**\n👤 Pracownik: **${empSelectValue === "ALL" ? "Wszyscy pracownicy" : empSelectValue}**`,
+                    description: `Dokładne zestawienie operacji finansowych dla okresu:\n📅 **${dFrom || "Początek"} — ${dTo || "Dziś"}**\n👤 Pracownik: **${empSelectValue === "ALL" ? "Wszyscy pracownicy" : empSelectValue}**`,
                     color: 3447003, 
                     fields: [
                         { name: "📉 Wydatki (skup)", value: `\`${totalBuyVal}\``, inline: true },
@@ -935,28 +1064,25 @@ async function sendReportToDiscord() {
     } catch (e) { 
         showNotice("Błąd przy generowaniu obrazu!", "danger"); 
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fab fa-discord"></i> Wyślij raport na kanał';
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fab fa-discord"></i> Wyślij raport na kanał';
+        }
     }
 }
 
 // ==========================================
 // POWIADOMIENIA I EVENTY
 // ==========================================
-function showNotice(msg, type) {
-    let colorClass = type;
-    if(type === 'info') colorClass = 'info';
-
+window.showNotice = function(msg, type = 'info') {
     const t = document.createElement('div');
-    t.className = `toast ${colorClass}`;
-    if(type === 'info') t.style.borderLeftColor = 'var(--accent-color)';
-
+    t.className = `toast ${type}`;
     t.innerText = msg;
     document.getElementById('toast-container').appendChild(t);
     
     setTimeout(() => { 
         t.style.opacity = '0'; 
-        setTimeout(() => t.remove(), 500); 
+        setTimeout(() => t.remove(), 300); 
     }, 3000);
 }
 
@@ -971,9 +1097,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const feedSearchInput = document.getElementById('feed-search-input');
     if (feedSearchInput) {
         feedSearchInput.addEventListener('input', () => {
+            currentFeedLimit = 50; 
             if (window.renderLiveFeed) window.renderLiveFeed();
         });
     }
+
+    // ==========================================
+    // SCROLL TO TOP BUTTON WSTRZYKIWANIE
+    // ==========================================
+    const scrollBtnHTML = `
+        <button id="scrollToTopBtn" class="scroll-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" title="Wróć na górę">
+            <i class="fas fa-arrow-up"></i>
+        </button>
+    `;
+    document.body.insertAdjacentHTML('beforeend', scrollBtnHTML);
 });
 
 window.toggleTable = function(id, header) {

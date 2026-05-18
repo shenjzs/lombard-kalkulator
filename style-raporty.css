@@ -444,7 +444,7 @@ header h1 {
     outline: none;
 }
 
-/* USUWANIE STRZAŁEK Z INPUTÓW NUMBER (CEL + SSN) */
+/* USUWANIE STRZAŁEK Z INPUTÓW NUMBER */
 .goal-settings input::-webkit-inner-spin-button,
 .goal-settings input::-webkit-outer-spin-button,
 .emp-input[type="number"]::-webkit-inner-spin-button,
@@ -536,6 +536,7 @@ header h1 {
     display: flex;
     flex-direction: column;
     min-width: 0; 
+    width: 100%;
 }
 
 .kpi-value { 
@@ -543,7 +544,8 @@ header h1 {
     font-weight: 900; 
     color: #fff; 
     line-height: 1.2; 
-    word-wrap: break-word; 
+    white-space: nowrap; 
+    font-variant-numeric: tabular-nums; 
 }
 
 .kpi-card.danger { border-bottom: 5px solid var(--danger); }
@@ -576,7 +578,7 @@ header h1 {
 }
 
 /* ==========================================================================
-   TABELE Z ANIMACJĄ ZWIJANIA (CSS GRID TRICK)
+   TABELE Z ANIMACJĄ ZWIJANIA ORAZ SCROLLEM
    ========================================================================== */
 .tables-container {
     display: grid;
@@ -608,8 +610,29 @@ header h1 {
     opacity: 1;
 }
 
+/* WRAPPER TABELI Z PASKIEM PRZEWIJANIA */
 .inner-table {
-    overflow: hidden;
+    max-height: 380px; 
+    overflow-y: auto;
+    min-height: 0; 
+}
+
+/* Własny wygląd paska przewijania dla tabel */
+.inner-table::-webkit-scrollbar {
+    width: 6px;
+}
+.inner-table::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+.inner-table::-webkit-scrollbar-thumb {
+    background: rgba(56, 189, 248, 0.3);
+    border-radius: 4px;
+}
+.inner-table::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-color);
 }
 
 .table-wrapper.collapsed-table {
@@ -620,7 +643,9 @@ header h1 {
     pointer-events: none;
 }
 
-.modern-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+.modern-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+
+/* PRZYKLEJONY NAGŁÓWEK TABELI (Sticky Header) */
 .modern-table th {
     text-align: left;
     padding: 15px 12px;
@@ -628,7 +653,13 @@ header h1 {
     font-size: 0.8rem;
     text-transform: uppercase;
     border-bottom: 1px dashed var(--border-color);
+    position: sticky;
+    top: 0;
+    background: var(--card-bg); 
+    z-index: 10;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
+
 .modern-table td {
     padding: 18px 12px;
     color: white;
@@ -794,6 +825,29 @@ header h1 {
 
 .feed-details-table tr:last-child td { border-bottom: none; }
 
+/* PRZYCISK ZAŁADOWANIA STARSZYCH OPERACJI */
+.load-more-btn {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px dashed var(--border-color);
+    color: var(--text-secondary);
+    padding: 15px;
+    text-align: center;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+    margin-top: 10px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+}
+.load-more-btn:hover {
+    background: rgba(56, 189, 248, 0.1);
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
 /* ==========================================================================
    GRAFIKA RAPORTU (UKRYTA)
    ========================================================================== */
@@ -828,12 +882,64 @@ header h1 {
    ========================================================================== */
 .report-footer { margin-top: 40px; text-align: center; color: var(--text-secondary); font-size: 0.8rem; opacity: 0.6; }
 
-.toast-container { position: fixed; top: 120px; right: 30px; display: flex; flex-direction: column; gap: 15px; z-index: 10000; }
-.toast { background: var(--card-bg); padding: 20px 35px; border-radius: 16px; color: white; font-weight: 700; border-left: 6px solid var(--accent-color); box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6); animation: slideIn 0.3s ease-out; }
+/* ==========================================================================
+   SYSTEM POWIADOMIEŃ (TOASTS) Z PASKIEM POSTĘPU
+   ========================================================================== */
+.toast-container { 
+    position: fixed; 
+    top: 120px; 
+    right: 30px; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 15px; 
+    z-index: 10000; 
+}
+
+.toast { 
+    background: var(--card-bg); 
+    padding: 20px 35px; 
+    border-radius: 16px; 
+    color: white; 
+    font-weight: 700; 
+    border-left: 6px solid var(--accent-color); /* Domyślny kolor dla "info" */
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6); 
+    animation: slideIn 0.3s ease-out;
+    position: relative;
+    overflow: hidden;
+    transition: opacity 0.3s ease-out;
+}
+
+/* Kolory ramek zależne od typu */
+.toast.success { border-left-color: var(--success); }
+.toast.danger { border-left-color: var(--danger); }
+.toast.warning { border-left-color: var(--warning); }
+.toast.info { border-left-color: var(--accent-color); }
+
+/* Animowany pasek postępu na dole tosta */
+.toast::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    width: 100%;
+    animation: toastProgress 3s linear forwards;
+}
+
+/* Kolory paska zależne od typu */
+.toast.success::after { background: var(--success); }
+.toast.danger::after { background: var(--danger); }
+.toast.warning::after { background: var(--warning); }
+.toast.info::after { background: var(--accent-color); }
 
 @keyframes slideIn {
     from { transform: translateX(100%); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes toastProgress {
+    0% { width: 100%; }
+    100% { width: 0%; }
 }
 
 @media (max-width: 1100px) {
@@ -1009,7 +1115,6 @@ header h1 {
     padding: 15px;
 }
 
-/* POPRAWKA UKŁADU PRZYCISKÓW (Aby nie zawijały się jak na screenie) */
 .emp-table td:last-child {
     white-space: nowrap;
     text-align: right;
@@ -1050,7 +1155,6 @@ header h1 {
 .emp-btn-del:hover { background: var(--danger); color: white; }
 .emp-btn-role { color: var(--warning); border-color: rgba(245, 158, 11, 0.3); }
 .emp-btn-role:hover { background: var(--warning); color: white; }
-
 .is-boss-badge { background: var(--accent-color); color: #000; padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
 
 .no-access-badge { 
@@ -1240,4 +1344,80 @@ header h1 {
     transform: translateY(-3px);
     box-shadow: 0 8px 25px rgba(56, 189, 248, 0.5);
     filter: brightness(1.1);
+}
+
+/* ==========================================================================
+   SKELETON LOADERS (ANIMACJE ŁADOWANIA)
+   ========================================================================== */
+.skeleton {
+    background-color: rgba(255, 255, 255, 0.03);
+    background-image: linear-gradient(90deg, rgba(255, 255, 255, 0) 0, rgba(255, 255, 255, 0.05) 20%, rgba(255, 255, 255, 0) 40%);
+    background-size: 200px 100%;
+    background-repeat: no-repeat;
+    animation: shimmer 1.5s infinite linear;
+    border-radius: 8px;
+}
+
+@keyframes shimmer {
+    0% { background-position: -200px 0; }
+    100% { background-position: calc(200px + 100%) 0; }
+}
+
+/* ==========================================================================
+   SCROLL TO TOP BUTTON (POWRÓT NA GÓRĘ)
+   ========================================================================== */
+.scroll-to-top {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    color: #000;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 5px 20px rgba(56, 189, 248, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 9999;
+}
+
+.scroll-to-top.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.scroll-to-top:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(56, 189, 248, 0.6);
+    background: #fff;
+}
+
+@media (max-width: 600px) {
+    .scroll-to-top {
+        bottom: 20px;
+        right: 20px;
+        width: 45px;
+        height: 45px;
+    }
+}
+
+/* ==========================================================================
+   ANIMACJE WEJŚCIOWE (DASHBOARD SLIDE-UP)
+   ========================================================================== */
+@keyframes dashboardSlideUp {
+    0% { opacity: 0; transform: translateY(50px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+#dashboard-screen:not(.hidden) {
+    animation: dashboardSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
