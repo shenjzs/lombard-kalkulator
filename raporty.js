@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "3.3.6";
+const APP_VERSION = "3.3.7";
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
@@ -18,6 +18,7 @@ window.currentGlobalGoal = 0;
 
 // Globalna zmienna przechowująca przetworzone dane dla wyszukiwarki
 window.globalSortedTransactions = [];
+window.currentEmployeesList = []; // Lista pracowników do edycji
 let currentEmployeeName = "";
 
 // ==========================================
@@ -670,9 +671,10 @@ async function loadEmployeesToTable() {
         const data = await response.json();
         
         if (data.employees && data.employees.length > 0) {
+            window.currentEmployeesList = data.employees; // Zapis do globalnej zmiennej dla edycji
+
             tbody.innerHTML = data.employees.map(emp => {
                 const isBoss = emp.role && emp.role.toLowerCase() === 'szef';
-                // WYŚWIETLANIE STOPNIA ZAMIAST PINU
                 const rankDisplay = emp.rank ? emp.rank : "Pracownik";
                 return `
                     <tr>
@@ -684,6 +686,9 @@ async function loadEmployeesToTable() {
                             ${isBoss ? '<span class="is-boss-badge">Tak</span>' : '<span class="no-access-badge">Nie</span>'}
                         </td>
                         <td style="text-align: right;">
+                            <button onclick="openEditEmployee('${emp.pin}')" class="emp-action-btn" style="color: var(--accent-color); border-color: rgba(56, 189, 248, 0.3);" title="Edytuj dane">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
                             <button onclick="toggleEmployeeRole('${emp.pin}', '${isBoss ? '' : 'szef'}')" class="emp-action-btn emp-btn-role" title="Zmień uprawnienia">
                                 <i class="fas fa-user-shield"></i>
                             </button>
@@ -695,6 +700,7 @@ async function loadEmployeesToTable() {
                 `;
             }).join('');
         } else {
+            window.currentEmployeesList = [];
             tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Brak zapisanych pracowników w bazie.</td></tr>';
         }
     } catch (err) {
@@ -702,11 +708,70 @@ async function loadEmployeesToTable() {
     }
 }
 
+// ------------------------------------------
+// EDYCJA DANYCH PRACOWNIKA (MODAL)
+// ------------------------------------------
+window.openEditEmployee = function(pin) {
+    const emp = window.currentEmployeesList.find(e => e.pin === pin);
+    if (!emp) return showNotice("Błąd: Nie znaleziono pracownika!", "danger");
+
+    document.getElementById('edit-emp-pin').value = emp.pin;
+    document.getElementById('edit-emp-name').value = emp.name;
+    document.getElementById('edit-emp-rank').value = emp.rank || "Pracownik";
+    document.getElementById('edit-emp-ssn').value = emp.ssn || "";
+    document.getElementById('edit-emp-photo').value = emp.photo || "";
+
+    document.getElementById('edit-employee-modal').classList.remove('hidden');
+}
+
+window.closeEditEmployee = function() {
+    document.getElementById('edit-employee-modal').classList.add('hidden');
+}
+
+window.saveEmployeeEdit = async function() {
+    const btn = document.getElementById('save-edit-emp-btn');
+    const pin = document.getElementById('edit-emp-pin').value;
+    const rank = document.getElementById('edit-emp-rank').value;
+    const ssn = document.getElementById('edit-emp-ssn').value;
+    const photo = document.getElementById('edit-emp-photo').value;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Zapisywanie...';
+
+    try {
+        const res = await fetch(PIN_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ 
+                action: 'edit_employee', 
+                pin: pin, 
+                rank: rank, 
+                ssn: ssn, 
+                photo: photo 
+            })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            showNotice("Dane pracownika zostały zaktualizowane!", "success");
+            closeEditEmployee();
+            await loadEmployeesToTable();
+        } else {
+            showNotice("Błąd zapisywania danych!", "danger");
+        }
+    } catch (e) {
+        showNotice("Błąd połączenia z serwerem!", "danger");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> Zapisz zmiany';
+    }
+}
+// ------------------------------------------
+
 window.addNewEmployee = async function() {
     const btn = document.getElementById('add-emp-btn');
     const nameInput = document.getElementById('new-emp-name');
     const pinInput = document.getElementById('new-emp-pin');
-    const rankInput = document.getElementById('new-emp-rank'); // POBRANIE STOPNIA
+    const rankInput = document.getElementById('new-emp-rank'); 
     const isBoss = document.getElementById('new-emp-boss').checked;
     
     const name = nameInput.value.trim();
@@ -727,7 +792,7 @@ window.addNewEmployee = async function() {
                 name: name, 
                 pin: pin, 
                 role: isBoss ? 'szef' : '',
-                rank: rank  // PRZESŁANIE STOPNIA DO SKRYPTU
+                rank: rank  
             })
         });
         
@@ -737,7 +802,7 @@ window.addNewEmployee = async function() {
         nameInput.value = '';
         pinInput.value = '';
         document.getElementById('new-emp-boss').checked = false;
-        if(rankInput) rankInput.value = "Pracownik"; // Reset stopnia na domyślny
+        if(rankInput) rankInput.value = "Pracownik"; 
     } catch (e) {
         showNotice("Nie udało się zapisać pracownika!", "danger");
     } finally {

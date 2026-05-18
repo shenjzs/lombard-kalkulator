@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Statystyki</title>
-    <link rel="stylesheet" href="style-raporty.css?v=3.3.6">
+    <link rel="stylesheet" href="style-raporty.css?v=3.3.7">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -295,7 +295,7 @@
                     <input type="password" id="new-emp-pin" placeholder="PIN (4 cyfry)" maxlength="4" class="emp-input pin-input-small">
                     
                     <select id="new-emp-rank" class="emp-input emp-select-rank">
-						<option value="Właściciel">Właściciel</option>
+					    <option value="Właściciel">Właściciel</option>
 						<option value="Kierownik">Kierownik</option>
 						<option value="Pracownik">Pracownik</option>
                         <option value="Praktykant" selected>Praktykant</option>
@@ -322,6 +322,49 @@
                             <tr><td colspan="4" style="text-align:center;">Ładowanie danych...</td></tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-employee-modal" class="emp-modal-overlay hidden" style="z-index: 10000;">
+        <div class="emp-modal-content" style="max-width: 500px;">
+            <div class="emp-modal-header">
+                <h2><i class="fas fa-user-edit"></i> Edycja pracownika</h2>
+                <button onclick="closeEditEmployee()" class="emp-close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="emp-modal-body" style="padding-top: 15px;">
+                <div class="settings-form">
+                    <input type="hidden" id="edit-emp-pin">
+                    
+                    <div class="input-group">
+                        <label>Pracownik</label>
+                        <input type="text" id="edit-emp-name" class="emp-input" disabled style="opacity: 0.7; cursor: not-allowed;">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Stopień</label>
+                        <select id="edit-emp-rank" class="emp-input emp-select-rank">
+                            <option value="Właściciel">Właściciel</option>
+							<option value="Kierownik">Kierownik</option>
+							<option value="Pracownik">Pracownik</option>
+							<option value="Praktykant">Praktykant</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Numer SSN</label>
+                        <input type="number" id="edit-emp-ssn" placeholder="np. 12345" class="emp-input">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Link do zdjęcia profilowego (URL)</label>
+                        <input type="text" id="edit-emp-photo" placeholder="https://..." class="emp-input">
+                    </div>
+                    
+                    <button onclick="saveEmployeeEdit()" id="save-edit-emp-btn" class="settings-save-btn" style="margin-top: 20px;">
+                        <i class="fas fa-save"></i> Zapisz zmiany
+                    </button>
                 </div>
             </div>
         </div>
@@ -366,6 +409,6 @@
     </div>
 
     <div id="toast-container" class="toast-container"></div>
-    <script src="raporty.js?v=3.3.6"></script>
+    <script src="raporty.js?v=3.3.7"></script>
 </body>
 </html>

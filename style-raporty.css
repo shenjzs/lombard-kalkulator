@@ -444,13 +444,16 @@ header h1 {
     outline: none;
 }
 
-/* USUWANIE STRZAŁEK Z INPUTA CELU */
+/* USUWANIE STRZAŁEK Z INPUTÓW NUMBER (CEL + SSN) */
 .goal-settings input::-webkit-inner-spin-button,
-.goal-settings input::-webkit-outer-spin-button {
+.goal-settings input::-webkit-outer-spin-button,
+.emp-input[type="number"]::-webkit-inner-spin-button,
+.emp-input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
-.goal-settings input[type="number"] {
+.goal-settings input[type="number"],
+.emp-input[type="number"] {
     -moz-appearance: textfield;
 }
 
@@ -952,7 +955,6 @@ header h1 {
 .emp-input:focus { border-color: var(--accent-color); }
 .emp-input option { background: var(--card-bg); color: white; }
 
-/* FIX: Nadanie ładnego wyglądu rozwijanej liście stopni */
 .emp-select-rank {
     cursor: pointer;
     background-image: linear-gradient(45deg, transparent 50%, var(--text-secondary) 50%), linear-gradient(135deg, var(--text-secondary) 50%, transparent 50%);
@@ -967,7 +969,6 @@ header h1 {
 
 .pin-input-small { flex: 0.5; text-align: center; letter-spacing: 5px; }
 
-/* LIFTING CHECKBOXA (Żeby nie wyglądał płasko na screenie) */
 .emp-checkbox-label {
     display: inline-flex;
     align-items: center;
@@ -1008,7 +1009,12 @@ header h1 {
     padding: 15px;
 }
 
-/* NOWY STYL: Ładne odznaki (tagi) stopni w tabeli pracowników */
+/* POPRAWKA UKŁADU PRZYCISKÓW (Aby nie zawijały się jak na screenie) */
+.emp-table td:last-child {
+    white-space: nowrap;
+    text-align: right;
+}
+
 .emp-rank-badge {
     background: rgba(56, 189, 248, 0.1);
     color: var(--accent-color);
@@ -1030,15 +1036,21 @@ header h1 {
     padding: 8px 12px;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     transition: 0.3s;
-    margin-left: 5px;
+    margin-left: 6px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    vertical-align: middle;
+    height: 34px;
 }
 .emp-action-btn:hover { background: rgba(255, 255, 255, 0.1); }
 .emp-btn-del { color: var(--danger); border-color: rgba(239, 68, 68, 0.3); }
 .emp-btn-del:hover { background: var(--danger); color: white; }
 .emp-btn-role { color: var(--warning); border-color: rgba(245, 158, 11, 0.3); }
 .emp-btn-role:hover { background: var(--warning); color: white; }
+
 .is-boss-badge { background: var(--accent-color); color: #000; padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
 
 .no-access-badge { 
@@ -1175,4 +1187,57 @@ header h1 {
 
 .dropdown-item.text-danger:hover {
     background: rgba(239, 68, 68, 0.1);
+}
+
+/* ==========================================================================
+   FORMULARZ EDYCJI PRACOWNIKA (MODAL SETTINGS)
+   ========================================================================== */
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: 100%;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+}
+
+.input-group label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: var(--text-secondary);
+    letter-spacing: 1.5px;
+    padding-left: 5px;
+}
+
+.settings-save-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent-color), #0284c7);
+    color: #000;
+    border: none;
+    padding: 16px;
+    border-radius: 14px;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    transition: 0.3s;
+    margin-top: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+}
+
+.settings-save-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(56, 189, 248, 0.5);
+    filter: brightness(1.1);
 }
