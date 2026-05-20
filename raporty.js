@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "3.3.8"; // Podbito wersję (Formatowanie kasy ze spacjami)
+const APP_VERSION = "3.3.9"; // Połączenie reputacji z bazą w chmurze
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
@@ -19,6 +19,7 @@ window.currentGlobalGoal = 0;
 // Globalna zmienna przechowująca przetworzone dane dla wyszukiwarki
 window.globalSortedTransactions = [];
 window.currentEmployeesList = []; // Lista pracowników do edycji
+window.globalRawFeed = []; // Globalne logi do profili pracownika
 let currentEmployeeName = "";
 let currentFeedLimit = 50; // LIMIT WYŚWIETLANIA DLA LIVE FEEDA
 
@@ -26,6 +27,7 @@ let currentFeedLimit = 50; // LIMIT WYŚWIETLANIA DLA LIVE FEEDA
 // FUNKCJA FORMATOWANIA WALUTY (np. 150000 -> 150 000)
 // ==========================================
 window.formatMoney = function(amount) {
+    if (isNaN(amount)) return "0";
     return Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 };
 
@@ -75,6 +77,12 @@ async function loginBoss() {
                 document.getElementById('user-profile').classList.remove('hidden');
                 showNotice(`Zalogowano pomyślnie jako ${data.name}`, "success");
                 
+                // Od razu wczytujemy też bazę HR do wizytówek
+                fetch(`${PIN_API_URL}?action=get_all`)
+                    .then(res => res.json())
+                    .then(d => { if(d.employees) window.currentEmployeesList = d.employees; })
+                    .catch(() => {});
+
                 loadRealData(); 
             } else {
                 showNotice("Odmowa! Brak uprawnień zarządcy.", "danger");
@@ -170,17 +178,6 @@ function parseDate(dateStr) {
     return d;
 }
 
-function getFormattedDateTime() {
-    const now = new Date();
-    const day = String(now.getDate()).padStart(2, '0');
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const year = now.getFullYear();
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    return `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`;
-}
-
 window.applyFilter = function() {
     const btn = document.getElementById('ok-filter-btn');
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
@@ -262,6 +259,9 @@ async function loadRealData() {
     try {
         const response = await fetch(`${REPORTS_API_URL}?action=get_reports&t=${new Date().getTime()}`);
         const rawData = await response.json();
+        
+        // Zapis globalny do wyliczania statystyk pracownika na kliknięcie
+        window.globalRawFeed = rawData;
         
         // Filtrujemy tylko to co związane z kasą (skup i sprzedaż)
         const data = rawData.filter(row => row.type === "skup" || row.type === "sprzedaz");
@@ -432,7 +432,7 @@ async function loadRealData() {
             tbody.innerHTML = rankingItems.map((item, index) => `
                 <tr>
                     <td style="width: 80px;"><span class="rank-badge">#${index + 1}</span></td>
-                    <td><strong>${item.name}</strong></td>
+                    <td onclick="window.openEmployeeProfile('${item.name}')" title="Kliknij, aby zobaczyć profil"><strong class="clickable-emp"><i class="fas fa-user-circle"></i> ${item.name}</strong></td>
                     <td style="text-align: right; color: var(--accent-color); font-weight: 800;">
                         ${window.formatMoney(item.totalBuyVal)}$
                     </td>
@@ -452,7 +452,7 @@ async function loadRealData() {
             tbody.innerHTML = rankingItems.map((item, index) => `
                 <tr>
                     <td style="width: 80px;"><span class="rank-badge">#${index + 1}</span></td>
-                    <td><strong>${item.name}</strong></td>
+                    <td onclick="window.openEmployeeProfile('${item.name}')" title="Kliknij, aby zobaczyć profil"><strong class="clickable-emp"><i class="fas fa-user-circle"></i> ${item.name}</strong></td>
                     <td style="text-align: right; color: var(--success); font-weight: 800;">
                         +${window.formatMoney(item.totalSellVal)}$
                     </td>
@@ -539,6 +539,7 @@ window.renderLiveFeed = function() {
         const actionClass = isBuy ? "buy" : "sell";
         const actionText = isBuy ? "Skup" : "Sprzedaż";
         const sign = isBuy ? "-" : "+";
+        const empNameSafe = tx.employee || "Nieznany";
         
         let displayDate = tx.date;
         if (typeof displayDate === 'string' && displayDate.includes('T')) {
@@ -550,7 +551,7 @@ window.renderLiveFeed = function() {
             <div class="feed-item" onclick="this.classList.toggle('active-feed')">
                 <div class="feed-item-summary">
                     <span class="feed-id-badge">#${tx.id}</span>
-                    <span class="feed-emp">${tx.employee || "Nieznany"}</span>
+                    <span class="feed-emp clickable-emp" title="Pokaż profil" onclick="event.stopPropagation(); window.openEmployeeProfile('${empNameSafe}')"><i class="fas fa-user-circle"></i> ${empNameSafe}</span>
                     <span class="feed-action ${actionClass}">${actionText}</span>
                     <span class="feed-item-main-info">Transakcja (${tx.items.length} przedmiotów)</span>
                     <span class="feed-item-value ${actionClass}" style="color: ${isBuy ? 'var(--danger)' : 'var(--success)'}">
@@ -761,7 +762,7 @@ function renderCharts(groupedSell, dailyData, hourlyData) {
 }
 
 // ==========================================
-// ZARZĄDZANIE PRACOWNIKAMI
+// ZARZĄDZANIE PRACOWNIKAMI I PROFILE
 // ==========================================
 
 window.openEmployeeManager = async function() {
@@ -776,7 +777,6 @@ window.closeEmployeeManager = function() {
 async function loadEmployeesToTable() {
     const tbody = document.getElementById('emp-manager-table-body');
     
-    // Wstrzyknięcie skeletonów do tabeli pracowników
     const empSkeletonHTML = Array(4).fill(`
         <tr>
             <td><div class="skeleton" style="height: 16px; width: 120px; border-radius: 4px;"></div></td>
@@ -805,7 +805,7 @@ async function loadEmployeesToTable() {
                 const rankDisplay = emp.rank ? emp.rank : "Pracownik";
                 return `
                     <tr>
-                        <td><strong>${emp.name}</strong></td>
+                        <td onclick="window.openEmployeeProfile('${emp.name}')" title="Kliknij, aby zobaczyć profil"><strong class="clickable-emp"><i class="fas fa-user-circle"></i> ${emp.name}</strong></td>
                         <td style="text-align: center;">
                             <span class="emp-rank-badge">${rankDisplay}</span>
                         </td>
@@ -832,6 +832,200 @@ async function loadEmployeesToTable() {
         }
     } catch (err) {
         tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--danger);">Błąd połączenia z bazą!</td></tr>';
+    }
+}
+
+// ------------------------------------------
+// PROFIL PRACOWNIKA (WIZYTÓWKA) - ZAAWANSOWANA ANALIZA
+// ------------------------------------------
+window.openEmployeeProfile = function(name) {
+    if(!name || name === "Nieznany") return;
+    
+    // Zabezpieczenie: jeśli modal nie istnieje na stronie w momencie kliknięcia, dodaj go
+    if (!document.getElementById('employee-profile-modal')) {
+        const profileModalHTML = `
+            <div id="employee-profile-modal" class="emp-modal-overlay hidden">
+                <div class="emp-modal-content" style="max-width: 550px;">
+                    <div class="emp-modal-header">
+                        <h2><i class="fas fa-id-badge"></i> Akta pracownika</h2>
+                        <button class="emp-close-btn" onclick="window.closeEmployeeProfile()"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="emp-modal-body" id="emp-profile-body">
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', profileModalHTML);
+    }
+
+    let tBuy = 0;
+    let tSell = 0;
+    let ops = 0;
+    let maxDeal = 0;
+    let itemCounts = {};
+    let activeDays = new Set();
+    let firstFound = false;
+    let lastActive = "Brak aktywności";
+    
+    const feed = window.globalSortedTransactions || [];
+    
+    feed.forEach(tx => {
+        if (tx.employee === name) {
+            ops++;
+            activeDays.add(parseDate(tx.date).toLocaleDateString());
+            
+            // Ostatnia aktywność
+            if (!firstFound) {
+                let dDate = tx.date;
+                if (typeof dDate === 'string' && dDate.includes('T')) {
+                    dDate = new Date(dDate).toLocaleString('pl-PL');
+                }
+                lastActive = dDate;
+                firstFound = true;
+            }
+
+            if (tx.type === 'skup') tBuy += tx.totalAmount;
+            if (tx.type === 'sprzedaz') tSell += tx.totalAmount;
+            
+            if (tx.totalAmount > maxDeal) maxDeal = tx.totalAmount;
+            
+            tx.items.forEach(i => {
+                itemCounts[i.name] = (itemCounts[i.name] || 0) + i.qty;
+            });
+        }
+    });
+
+    const favItem = Object.entries(itemCounts)
+        .sort((a,b) => b[1] - a[1])[0] || ["Brak", 0];
+
+    const empData = window.currentEmployeesList.find(e => e.name === name) || {};
+    const rank = empData.rank || "Pracownik";
+    const ssn = empData.ssn || "Brak danych";
+    const pluses = empData.pluses || 0;
+    const minuses = empData.minuses || 0;
+    
+    const totalVolume = tBuy + tSell;
+    const avgOpsPerDay = activeDays.size > 0 ? (ops / activeDays.size).toFixed(1) : 0;
+
+    const body = document.getElementById('emp-profile-body');
+    if (body) {
+        body.innerHTML = `
+            <div class="profile-header-info">
+                <div class="profile-avatar">${name.charAt(0).toUpperCase()}</div>
+                <div class="profile-details">
+                    <h3>${name}</h3>
+                    <div style="display:flex; gap:10px; font-size:0.85rem; flex-wrap:wrap;">
+                        <span class="emp-rank-badge">${rank}</span>
+                        <span class="qty-badge" style="color:var(--text-secondary); border:1px dashed rgba(255,255,255,0.2);">SSN: ${ssn}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="profile-stats">
+                <div class="p-stat-box">
+                    <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">Suma Obrotu</div>
+                    <div class="p-stat-val" style="color:var(--accent-color)">${window.formatMoney(totalVolume)}$</div>
+                </div>
+                <div class="p-stat-box">
+                    <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">Operacji łącznie</div>
+                    <div class="p-stat-val" style="color:white">${ops}</div>
+                </div>
+            </div>
+
+            <div class="profile-insights">
+                <div class="insight-row">
+                    <span class="insight-label">Efektywność (śr. operacji/dzień)</span>
+                    <span class="insight-value" style="color:var(--success);">${avgOpsPerDay}</span>
+                </div>
+                <div class="insight-row">
+                    <span class="insight-label">Ostatnio widziany</span>
+                    <span class="insight-value" style="color:var(--accent-color);">${lastActive}</span>
+                </div>
+                <div class="insight-row">
+                    <span class="insight-label">Specjalizacja</span>
+                    <span class="insight-value" style="color:var(--warning);">${favItem[0]} (${favItem[1]} szt.)</span>
+                </div>
+                <div class="insight-row">
+                    <span class="insight-label">Rekordowy pojedynczy deal</span>
+                    <span class="insight-value"><i class="fas fa-dollar-sign"></i> ${window.formatMoney(maxDeal)}</span>
+                </div>
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.05);">
+                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">
+                        <span>Wkład w aktywność firmy</span>
+                        <span>${ops > 10 ? 'Aktywny' : 'Początkujący'}</span>
+                    </div>
+                    <div class="trust-bar-container">
+                        <div class="trust-bar-fill" style="width: ${Math.min(ops * 2, 100)}%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reputation-box">
+                <div class="rep-item">
+                    <span class="rep-title">Plusy</span>
+                    <span class="rep-score plus" id="prof-plus-val">${pluses}</span>
+                </div>
+                <div class="rep-actions">
+                    <button class="rep-btn add" onclick="window.updateReputation('${name}', 'plus')" title="Dodaj plusa"><i class="fas fa-plus"></i></button>
+                    <button class="rep-btn sub" onclick="window.updateReputation('${name}', 'minus')" title="Dodaj minusa"><i class="fas fa-minus"></i></button>
+                </div>
+                <div class="rep-item">
+                    <span class="rep-title">Minusy</span>
+                    <span class="rep-score minus" id="prof-minus-val">${minuses}</span>
+                </div>
+            </div>
+        `;
+    }
+    
+    const modal = document.getElementById('employee-profile-modal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+window.closeEmployeeProfile = function() {
+    const modal = document.getElementById('employee-profile-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+// Funkcja zapisująca oceny bezpośrednio w bazie Google Sheets
+window.updateReputation = async function(name, type) {
+    const pVal = document.getElementById('prof-plus-val');
+    const mVal = document.getElementById('prof-minus-val');
+    
+    // Wizualna aktualizacja natychmiastowa (dla wygody i odczucia prędkości)
+    if(type === 'plus') pVal.innerText = parseInt(pVal.innerText) + 1;
+    else mVal.innerText = parseInt(mVal.innerText) + 1;
+
+    try {
+        const res = await fetch(PIN_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'update_reputation', name: name, type: type })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            showNotice(type === 'plus' ? "Dodano pochwałę do bazy głównej!" : "Zapisano karę w bazie głównej!", type === 'plus' ? "success" : "danger");
+            
+            // Aktualizacja pamięci podręcznej przeglądarki
+            const emp = window.currentEmployeesList.find(e => e.name === name);
+            if(emp) {
+                emp.pluses = data.pluses;
+                emp.minuses = data.minuses;
+            }
+            
+            // Poprawka wizualna na 100% z bazy (gdyby ktoś np. kliknął 2 razy szybko)
+            pVal.innerText = data.pluses;
+            mVal.innerText = data.minuses;
+        } else {
+            // Cofnięcie zmiany w przypadku błędu
+            if(type === 'plus') pVal.innerText = parseInt(pVal.innerText) - 1;
+            else mVal.innerText = parseInt(mVal.innerText) - 1;
+            showNotice("Błąd zapisu w bazie danych!", "danger");
+        }
+    } catch (e) {
+        // Cofnięcie zmiany w przypadku błędu połączenia
+        if(type === 'plus') pVal.innerText = parseInt(pVal.innerText) - 1;
+        else mVal.innerText = parseInt(mVal.innerText) - 1;
+        showNotice("Błąd połączenia z serwerem!", "danger");
     }
 }
 
@@ -1111,6 +1305,23 @@ document.addEventListener('DOMContentLoaded', () => {
         </button>
     `;
     document.body.insertAdjacentHTML('beforeend', scrollBtnHTML);
+
+    // ==========================================
+    // MODAL PROFILU PRACOWNIKA (WSTRZYKIWANIE)
+    // ==========================================
+    const profileModalHTML = `
+        <div id="employee-profile-modal" class="emp-modal-overlay hidden">
+            <div class="emp-modal-content" style="max-width: 550px;">
+                <div class="emp-modal-header">
+                    <h2><i class="fas fa-id-badge"></i> Akta pracownika</h2>
+                    <button class="emp-close-btn" onclick="window.closeEmployeeProfile()"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="emp-modal-body" id="emp-profile-body">
+                    </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', profileModalHTML);
 });
 
 window.toggleTable = function(id, header) {

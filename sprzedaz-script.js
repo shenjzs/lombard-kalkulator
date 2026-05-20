@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "3.3.8";
+const APP_VERSION = "3.3.9";
 
 const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1500573620605550725/VmpdLB3qN1FT6Jkf-U-Wo1cig-WEpVjleki4f-EA45G5QfSuBJeC3f1fqCKB_LTeXOQ5"; 
 const PIN_API_URL = "https://script.google.com/macros/s/AKfycbycnbsg8yC8Cqk0tF-6syzBTvTLvO-MyTgx-zqAPjgBXPR132MicKNtjNoq3WMQfmLR/exec"; 
