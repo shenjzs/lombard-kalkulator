@@ -865,7 +865,7 @@ window.openEmployeeProfile = function(name) {
             <div id="employee-profile-modal" class="emp-modal-overlay hidden">
                 <div class="emp-modal-content" style="max-width: 550px;">
                     <div class="emp-modal-header">
-                        <h2><i class="fas fa-id-badge"></i> Akta Członka Cartelu</h2>
+                        <h2><i class="fas fa-id-badge"></i> Akta pracownika</h2>
                         <button class="emp-close-btn" onclick="window.closeEmployeeProfile()"><i class="fas fa-times"></i></button>
                     </div>
                     <div class="emp-modal-body" id="emp-profile-body">
