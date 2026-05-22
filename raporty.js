@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "3.3.9"; // Połączenie reputacji z bazą w chmurze
+const APP_VERSION = "3.4.0"; // Normalizacja nazw produktów
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
@@ -29,6 +29,17 @@ let currentFeedLimit = 50; // LIMIT WYŚWIETLANIA DLA LIVE FEEDA
 window.formatMoney = function(amount) {
     if (isNaN(amount)) return "0";
     return Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+};
+
+// ==========================================
+// FUNKCJA NORMALIZACJI NAZW (Naprawa wielkości liter)
+// ==========================================
+window.normalizeItemName = function(name) {
+    if (!name) return "Nieznany przedmiot";
+    let trimmed = name.trim();
+    if (trimmed.length === 0) return "Brak nazwy";
+    // Zamienia "zIeloNy PENDRIVE" na "Zielony pendrive"
+    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
 };
 
 // ==========================================
@@ -258,7 +269,14 @@ async function loadRealData() {
 
     try {
         const response = await fetch(`${REPORTS_API_URL}?action=get_reports&t=${new Date().getTime()}`);
-        const rawData = await response.json();
+        let rawData = await response.json();
+        
+        // NORMALIZACJA NAZW PRZEDMIOTÓW (likwidacja literówek i wielkich liter)
+        rawData.forEach(row => {
+            if (row.name) {
+                row.name = window.normalizeItemName(row.name);
+            }
+        });
         
         // Zapis globalny do wyliczania statystyk pracownika na kliknięcie
         window.globalRawFeed = rawData;
@@ -847,7 +865,7 @@ window.openEmployeeProfile = function(name) {
             <div id="employee-profile-modal" class="emp-modal-overlay hidden">
                 <div class="emp-modal-content" style="max-width: 550px;">
                     <div class="emp-modal-header">
-                        <h2><i class="fas fa-id-badge"></i> Akta pracownika</h2>
+                        <h2><i class="fas fa-id-badge"></i> Akta Członka Cartelu</h2>
                         <button class="emp-close-btn" onclick="window.closeEmployeeProfile()"><i class="fas fa-times"></i></button>
                     </div>
                     <div class="emp-modal-body" id="emp-profile-body">
@@ -962,7 +980,7 @@ window.openEmployeeProfile = function(name) {
 
             <div class="reputation-box">
                 <div class="rep-item">
-                    <span class="rep-title">Plusy</span>
+                    <span class="rep-title">Pochwały</span>
                     <span class="rep-score plus" id="prof-plus-val">${pluses}</span>
                 </div>
                 <div class="rep-actions">
@@ -970,7 +988,7 @@ window.openEmployeeProfile = function(name) {
                     <button class="rep-btn sub" onclick="window.updateReputation('${name}', 'minus')" title="Dodaj minusa"><i class="fas fa-minus"></i></button>
                 </div>
                 <div class="rep-item">
-                    <span class="rep-title">Minusy</span>
+                    <span class="rep-title">Kary</span>
                     <span class="rep-score minus" id="prof-minus-val">${minuses}</span>
                 </div>
             </div>
@@ -986,7 +1004,6 @@ window.closeEmployeeProfile = function() {
     if (modal) modal.classList.add('hidden');
 }
 
-// Funkcja zapisująca oceny bezpośrednio w bazie Google Sheets
 window.updateReputation = async function(name, type) {
     const pVal = document.getElementById('prof-plus-val');
     const mVal = document.getElementById('prof-minus-val');
@@ -1305,23 +1322,6 @@ document.addEventListener('DOMContentLoaded', () => {
         </button>
     `;
     document.body.insertAdjacentHTML('beforeend', scrollBtnHTML);
-
-    // ==========================================
-    // MODAL PROFILU PRACOWNIKA (WSTRZYKIWANIE)
-    // ==========================================
-    const profileModalHTML = `
-        <div id="employee-profile-modal" class="emp-modal-overlay hidden">
-            <div class="emp-modal-content" style="max-width: 550px;">
-                <div class="emp-modal-header">
-                    <h2><i class="fas fa-id-badge"></i> Akta pracownika</h2>
-                    <button class="emp-close-btn" onclick="window.closeEmployeeProfile()"><i class="fas fa-times"></i></button>
-                </div>
-                <div class="emp-modal-body" id="emp-profile-body">
-                    </div>
-            </div>
-        </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', profileModalHTML);
 });
 
 window.toggleTable = function(id, header) {
