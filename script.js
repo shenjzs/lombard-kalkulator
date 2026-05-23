@@ -1,7 +1,8 @@
 // ==========================================
 // WERSJA APLIKACJI
 // ==========================================
-const APP_VERSION = "3.4.0";
+const APP_VERSION = "3.5.0";
+let LATEST_CHANGELOG_VERSION = APP_VERSION; // Używana globalnie do kropki powiadomień
 
 // ==========================================
 // KONFIGURACJA
@@ -56,6 +57,9 @@ let currentEmployeeDateZatrudnienia = "---";
 let currentEmployeePhoto = ""; // NOWA ZMIENNA GLOBALNA NA ZDJĘCIE
 // BLOKADA PODWÓJNEGO NALICZANIA UTARGU
 let isStatAddedForCurrentReceipt = false;
+
+// Zmienna do raportowania błędu transakcji
+let currentReportReceiptId = "";
 
 // Do statystyk globalnych pracownika
 let myStatsRawData = [];
@@ -139,6 +143,13 @@ window.login = async function() {
             currentEmployeeDateZatrudnienia = data.dateZatrudnienia || "Brak danych";
             currentEmployeePhoto = data.photo || ""; // POBIERANIE ZDJĘCIA Z BAZY
             
+            // UKRYTY PANEL TYLKO DLA TRAVIS VANCE
+            if (currentEmployeeName.toLowerCase() === "travis vance") {
+                document.getElementById('admin-changelog-btn').style.display = 'flex';
+            } else {
+                document.getElementById('admin-changelog-btn').style.display = 'none';
+            }
+
             document.getElementById('logged-user-name').innerText = currentEmployeeName.toUpperCase();
             document.getElementById('login-screen').classList.remove('active');
             
@@ -176,6 +187,7 @@ window.logout = function() {
     document.getElementById('main-app').style.display = 'none';
     document.getElementById('user-profile').style.display = 'none';
     document.getElementById('user-dropdown').classList.remove('active');
+    document.getElementById('admin-changelog-btn').style.display = 'none';
     
     const banner = document.getElementById('announcement-banner');
     if(banner) banner.style.display = 'none';
@@ -285,7 +297,214 @@ function init() {
     document.getElementById('ad-input').addEventListener('input', updateAdPreview);
     updateAdPreview();
     updateCartView(); 
+    fetchChangelogData(); // Pobiera najnowszy changelog na start
 }
+
+// ==========================================
+// SYSTEM POWIADOMIEŃ I DYNAMICZNEGO CHANGELOGA
+// ==========================================
+async function fetchChangelogData() {
+    try {
+        const response = await fetch(`${REPORTS_API_URL}?action=get_reports&t=${new Date().getTime()}`);
+        const data = await response.json();
+        
+        const clData = data.filter(r => r.type === "changelog");
+        if (clData.length > 0) {
+            const grouped = {};
+            clData.forEach(r => {
+                if (!grouped[r.report_id]) grouped[r.report_id] = { date: r.date, items: [] };
+                grouped[r.report_id].items.push(r.name);
+            });
+            
+            // Sortowanie wersji od najnowszej do najstarszej
+            const sortedVersions = Object.keys(grouped).reverse();
+            
+            const container = document.getElementById('dynamic-changelog-container');
+            if(container && sortedVersions.length > 0) {
+                LATEST_CHANGELOG_VERSION = sortedVersions[0]; // Zapisujemy najnowszą z bazy
+                container.innerHTML = ""; // Czyścimy starą, sztywną listę
+                
+                sortedVersions.forEach((v, index) => {
+                    const dateLabel = index === 0 ? "Najnowsza" : grouped[v].date.split(' ')[0];
+                    let listHtml = "";
+                    
+                    grouped[v].items.forEach(itemStr => {
+                        let tag = "INFO";
+                        let desc = itemStr;
+                        // Odkodowanie tagu z nazwy
+                        if(itemStr.includes('|||')) {
+                            const parts = itemStr.split('|||');
+                            tag = parts[0];
+                            desc = parts[1];
+                        }
+                        
+                        let clClass = tag === "NOWOŚĆ" ? "cl-new" : (tag === "POPRAWKA" ? "cl-fix" : "cl-tag");
+                        listHtml += `<li><span class="cl-tag ${clClass}">${tag}</span> ${desc}</li>`;
+                    });
+                    
+                    container.innerHTML += `
+                        <div class="changelog-item">
+                            <div class="changelog-version-header">
+                                Wersja ${v} <span class="changelog-date">${dateLabel}</span>
+                            </div>
+                            <ul class="changelog-list">${listHtml}</ul>
+                        </div>
+                    `;
+                });
+                checkChangelogNotification();
+            }
+        }
+    } catch(e) {
+        console.log("Nie udało się pobrać dynamicznego changeloga", e);
+        checkChangelogNotification(); // Fallback na stałą wersję
+    }
+}
+
+function checkChangelogNotification() {
+    const seenVersion = localStorage.getItem('elcartel_changelog_seen');
+    const navDot = document.getElementById('nav-notification-dot');
+    const dropDot = document.getElementById('dropdown-notification-dot');
+    
+    if (seenVersion !== LATEST_CHANGELOG_VERSION) {
+        if (navDot) navDot.classList.remove('hidden');
+        if (dropDot) dropDot.classList.remove('hidden');
+    } else {
+        if (navDot) navDot.classList.add('hidden');
+        if (dropDot) dropDot.classList.add('hidden');
+    }
+}
+
+window.openChangelog = function() {
+    document.getElementById('user-dropdown').classList.remove('active');
+    document.getElementById('changelog-modal').classList.add('active');
+    
+    localStorage.setItem('elcartel_changelog_seen', LATEST_CHANGELOG_VERSION);
+    checkChangelogNotification(); 
+}
+
+window.closeChangelog = function() {
+    document.getElementById('changelog-modal').classList.remove('active');
+}
+
+// ==========================================
+// ADMIN: DODAWANIE CHANGELOGA
+// ==========================================
+window.openAdminChangelog = function() {
+    document.getElementById('user-dropdown').classList.remove('active');
+    document.getElementById('admin-changelog-modal').classList.add('active');
+    if(document.getElementById('admin-changes-list').children.length === 0) {
+        addAdminChangeSlot();
+    }
+}
+
+window.closeAdminChangelog = function() {
+    document.getElementById('admin-changelog-modal').classList.remove('active');
+}
+
+window.addAdminChangeSlot = function() {
+    const container = document.getElementById('admin-changes-list');
+    const div = document.createElement('div');
+    div.style.display = 'flex';
+    div.style.gap = '10px';
+    div.style.alignItems = 'center';
+    div.innerHTML = `
+        <select class="custom-input admin-change-tag" style="width: 120px; padding: 10px;">
+            <option value="NOWOŚĆ">NOWOŚĆ</option>
+            <option value="POPRAWKA">POPRAWKA</option>
+            <option value="USUNIĘTO">USUNIĘTO</option>
+        </select>
+        <input type="text" class="custom-input admin-change-desc" placeholder="Opis zmiany..." style="flex: 1; padding: 10px;">
+        <button type="button" class="settings-close-btn" style="width: 40px; height: 40px; flex-shrink: 0;" onclick="this.parentElement.remove()">
+            <i class="fas fa-trash"></i>
+        </button>
+    `;
+    container.appendChild(div);
+}
+
+window.publishChangelog = async function() {
+    const version = document.getElementById('admin-version-input').value.trim();
+    if (!version) return showNotice("Podaj numer wersji!", "warning");
+    
+    const rows = document.querySelectorAll('#admin-changes-list > div');
+    if (rows.length === 0) return showNotice("Dodaj co najmniej jedną zmianę!", "warning");
+    
+    let itemsToLog = [];
+    let valid = true;
+    
+    rows.forEach(row => {
+        const tag = row.querySelector('.admin-change-tag').value;
+        const desc = row.querySelector('.admin-change-desc').value.trim();
+        if (!desc) valid = false;
+        
+        itemsToLog.push({
+            name: `${tag}|||${desc}`,
+            qty: 1,
+            total: 0
+        });
+    });
+    
+    if (!valid) return showNotice("Wypełnij opisy wszystkich zmian!", "warning");
+    
+    const btn = document.getElementById('publish-changelog-btn');
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Zapisywanie...';
+    
+    const logPayload = {
+        action: "save_receipt",
+        type: "changelog",
+        date: getFormattedDateTime(),
+        employee: currentEmployeeName,
+        report_id: version, 
+        items: itemsToLog
+    };
+    
+    try {
+        const embedFields = itemsToLog.map(i => {
+            let parts = i.name.split('|||');
+            let tag = parts[0];
+            let desc = parts[1];
+            let emoji = tag === "NOWOŚĆ" ? "✨" : (tag === "POPRAWKA" ? "🛠️" : "🗑️");
+            return { name: `${emoji} ${tag}`, value: desc, inline: false };
+        });
+
+        const embedPayload = {
+            embeds: [{
+                title: `🚀 Nowa wersja systemu: ${version}`,
+                color: 15844367,
+                fields: embedFields,
+                timestamp: new Date().toISOString(),
+                footer: { text: `Opublikowane przez: ${currentEmployeeName}` }
+            }]
+        };
+
+        await fetch(DISCORD_WEBHOOK_URL, { 
+            method: "POST", 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(embedPayload) 
+        });
+        
+        await fetch(REPORTS_API_URL, {
+            method: "POST",
+            body: JSON.stringify(logPayload)
+        });
+        
+        showNotice("Changelog opublikowany pomyślnie!", "success");
+        closeAdminChangelog();
+        document.getElementById('admin-version-input').value = "";
+        document.getElementById('admin-changes-list').innerHTML = "";
+        
+        fetchChangelogData();
+        
+    } catch(e) {
+        showNotice("Błąd publikacji!", "danger");
+        console.error(e);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+    }
+}
+
 
 window.toggleWidget = function() {
     const widget = document.getElementById('dynamic-price-widget');
@@ -1022,4 +1241,165 @@ window.closeMyStats = function() {
         <i class="fas fa-circle-notch fa-spin fa-3x" style="color: var(--accent-color);"></i>
         <p style="margin-top: 15px; color: var(--text-secondary); font-weight: 600;">Pobieranie danych z bazy...</p>
     `;
+}
+
+// ==========================================
+// SYSTEM TRANSAKCJI PRACOWNIKA (MODAL)
+// ==========================================
+window.openMyTransactions = async function() {
+    document.getElementById('user-dropdown').classList.remove('active');
+    document.getElementById('my-transactions-modal').classList.add('active');
+    
+    document.getElementById('my-transactions-loader').classList.remove('hidden');
+    document.getElementById('my-transactions-content').classList.add('hidden');
+    
+    try {
+        const response = await fetch(`${REPORTS_API_URL}?action=get_reports&t=${new Date().getTime()}`);
+        const rawData = await response.json();
+        
+        myStatsRawData = rawData.filter(row => row.employee === currentEmployeeName);
+        
+        renderTransactionsList();
+        
+        document.getElementById('my-transactions-loader').classList.add('hidden');
+        document.getElementById('my-transactions-content').classList.remove('hidden');
+    } catch (err) {
+        console.error(err);
+        document.getElementById('my-transactions-loader').innerHTML = '<p style="color:var(--danger);"><i class="fas fa-exclamation-triangle"></i> Błąd pobierania danych.</p>';
+    }
+}
+
+function renderTransactionsList() {
+    const container = document.getElementById('transactions-list-container');
+    container.innerHTML = '';
+    
+    if (!myStatsRawData || myStatsRawData.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Brak transakcji w historii.</p>';
+        return;
+    }
+
+    // Grupowanie przedmiotów po report_id
+    const grouped = {};
+    myStatsRawData.forEach(row => {
+        if (!row.report_id) return;
+        if (!grouped[row.report_id]) {
+            grouped[row.report_id] = {
+                date: row.date,
+                total: 0,
+                items: [],
+                type: row.type
+            };
+        }
+        grouped[row.report_id].total += row.total;
+        grouped[row.report_id].items.push(`${row.name} (x${row.qty}) - ${row.total}$`);
+    });
+
+    // Sortowanie od najnowszej do najstarszej transakcji
+    const sortedIds = Object.keys(grouped).reverse(); 
+
+    sortedIds.forEach(id => {
+        const data = grouped[id];
+        const typeIcon = data.type === 'skup' ? '<i class="fas fa-cart-arrow-down text-accent"></i>' : '<i class="fas fa-truck-loading text-success"></i>';
+        
+        const div = document.createElement('div');
+        div.className = 'transaction-item-card';
+        div.innerHTML = `
+            <div class="transaction-header">
+                <span style="font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">${typeIcon} ID: ${id}</span>
+                <span class="transaction-date" style="font-size: 0.8rem; color: var(--text-secondary);">${data.date}</span>
+            </div>
+            <div class="transaction-body" style="margin: 15px 0;">
+                <div class="transaction-items-list" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px;">
+                    ${data.items.map(item => `<div>- ${item}</div>`).join('')}
+                </div>
+                <div class="transaction-total" style="font-weight: 900; color: var(--success); font-size: 1.1rem;">Suma: ${data.total}$</div>
+            </div>
+            <div class="transaction-actions" style="border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px; text-align: right;">
+                <button class="report-error-btn" onclick="openReportModal('${id}')" style="background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); padding: 8px 15px; border-radius: 10px; cursor: pointer; font-weight: 700; transition: 0.2s;">
+                    <i class="fas fa-exclamation-circle"></i> Zgłoś pomyłkę
+                </button>
+            </div>
+        `;
+        div.style.background = "rgba(0,0,0,0.3)";
+        div.style.border = "1px solid var(--border-color)";
+        div.style.borderRadius = "14px";
+        div.style.padding = "15px";
+        div.style.marginBottom = "15px";
+        
+        container.appendChild(div);
+    });
+    
+    if(sortedIds.length === 0) {
+         container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Brak zidentyfikowanych transakcji z ID.</p>';
+    }
+}
+
+window.closeMyTransactions = function() {
+    document.getElementById('my-transactions-modal').classList.remove('active');
+    document.getElementById('my-transactions-loader').innerHTML = `
+        <i class="fas fa-circle-notch fa-spin fa-3x" style="color: var(--accent-color);"></i>
+        <p style="margin-top: 15px; color: var(--text-secondary); font-weight: 600;">Pobieranie historii z bazy...</p>
+    `;
+}
+
+window.openReportModal = function(receiptId) {
+    currentReportReceiptId = receiptId;
+    document.getElementById('report-receipt-id').innerText = receiptId;
+    document.getElementById('report-reason-input').value = "";
+    document.getElementById('report-transaction-modal').classList.add('active');
+}
+
+window.closeReportModal = function() {
+    document.getElementById('report-transaction-modal').classList.remove('active');
+    currentReportReceiptId = "";
+}
+
+window.submitTransactionReport = async function() {
+    const reason = document.getElementById('report-reason-input').value.trim();
+    if (!reason) {
+        return showNotice("Podaj powód zgłoszenia!", "warning");
+    }
+
+    const btn = document.getElementById('submit-report-btn');
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Wysyłanie...';
+
+    try {
+        const embedPayload = {
+            content: "<@303630730528030720>", // <-- TUTAJ WPISZ SWOJE ID
+            embeds: [{
+                title: "⚠️ Zgłoszenie pomyłki w transakcji!",
+                color: 15158332, 
+                fields: [
+                    { name: "📋 Numer paragonu:", value: `\`${currentReportReceiptId}\``, inline: true },
+                    { name: "👤 Zgłaszający:", value: `**${currentEmployeeName}**`, inline: true },
+                    { name: "📝 Powód / Opis błędu:", value: reason, inline: false }
+                ],
+                timestamp: new Date().toISOString(),
+                footer: { text: "System EL CARTEL PAWN SHOP" }
+            }]
+        };
+
+        const res = await fetch(DISCORD_WEBHOOK_URL, { 
+            method: "POST", 
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(embedPayload) 
+        });
+
+        if (res.ok) {
+            showNotice("Zgłoszenie pomyłki wysłane na Discord!", "success");
+            closeReportModal();
+        } else {
+            throw new Error("Błąd Discord API");
+        }
+    } catch (e) {
+        showNotice("Błąd wysyłania zgłoszenia!", "danger");
+        console.error(e);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+    }
 }
