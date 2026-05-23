@@ -328,6 +328,12 @@ async function fetchChangelogData() {
                     const dateLabel = index === 0 ? "Najnowsza" : grouped[v].date.split(' ')[0];
                     let listHtml = "";
                     
+                    // Obcięcie literki 'v' używanej by chronić przed konwersją na datę w Google Sheets
+                    let displayVersion = v;
+                    if (v.startsWith('v')) {
+                        displayVersion = v.substring(1);
+                    }
+                    
                     grouped[v].items.forEach(itemStr => {
                         let tag = "INFO";
                         let desc = itemStr;
@@ -345,7 +351,7 @@ async function fetchChangelogData() {
                     container.innerHTML += `
                         <div class="changelog-item">
                             <div class="changelog-version-header">
-                                Wersja ${v} <span class="changelog-date">${dateLabel}</span>
+                                Wersja ${displayVersion} <span class="changelog-date">${dateLabel}</span>
                             </div>
                             <ul class="changelog-list">${listHtml}</ul>
                         </div>
@@ -450,39 +456,20 @@ window.publishChangelog = async function() {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Zapisywanie...';
     
+    // Dodajemy "v" na początku, żeby Google Sheets nie zmieniło wersji na datę (np. "3.4.0" -> "v3.4.0")
+    const safeVersion = "v" + version;
+    
     const logPayload = {
         action: "save_receipt",
         type: "changelog",
         date: getFormattedDateTime(),
         employee: currentEmployeeName,
-        report_id: version, 
+        report_id: safeVersion, 
         items: itemsToLog
     };
     
     try {
-        const embedFields = itemsToLog.map(i => {
-            let parts = i.name.split('|||');
-            let tag = parts[0];
-            let desc = parts[1];
-            let emoji = tag === "NOWOŚĆ" ? "✨" : (tag === "POPRAWKA" ? "🛠️" : "🗑️");
-            return { name: `${emoji} ${tag}`, value: desc, inline: false };
-        });
-
-        const embedPayload = {
-            embeds: [{
-                title: `🚀 Nowa wersja systemu: ${version}`,
-                color: 15844367,
-                fields: embedFields,
-                timestamp: new Date().toISOString(),
-                footer: { text: `Opublikowane przez: ${currentEmployeeName}` }
-            }]
-        };
-
-        await fetch(DISCORD_WEBHOOK_URL, { 
-            method: "POST", 
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(embedPayload) 
-        });
+        // Usunięto wysyłanie na Discord zgodnie z prośbą
         
         await fetch(REPORTS_API_URL, {
             method: "POST",
@@ -494,7 +481,7 @@ window.publishChangelog = async function() {
         document.getElementById('admin-version-input').value = "";
         document.getElementById('admin-changes-list').innerHTML = "";
         
-        fetchChangelogData();
+        fetchChangelogData(); // Odświeża listę od razu po dodaniu
         
     } catch(e) {
         showNotice("Błąd publikacji!", "danger");

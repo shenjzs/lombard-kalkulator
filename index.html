@@ -47,7 +47,6 @@
                         <span style="display: flex; align-items: center; gap: 12px;"><i class="fas fa-clipboard-list"></i> Dziennik zmian</span>
                         <span id="dropdown-notification-dot" class="notification-dot hidden" style="position: static; margin: 0;"></span>
                     </div>
-                    <!-- UKRYTY PRZYCISK DLA TRAVISA VANCE'A -->
                     <div class="dropdown-item" id="admin-changelog-btn" onclick="openAdminChangelog()" style="display: none; color: var(--ad-gold); font-weight: 800;">
                         <i class="fas fa-plus-circle"></i> Dodaj Changelog
                     </div>
@@ -267,7 +266,6 @@
         </div>
     </div>
 
-    <!-- MODAL - MOJE STATYSTYKI -->
     <div id="my-stats-modal" class="modal">
         <div class="modal-content settings-modal-content" style="max-width: 600px;">
             <div class="settings-header">
@@ -339,7 +337,6 @@
         </div>
     </div>
 
-    <!-- MODAL - MOJE TRANSAKCJE -->
     <div id="my-transactions-modal" class="modal">
         <div class="modal-content settings-modal-content" style="max-width: 600px;">
             <div class="settings-header">
@@ -356,36 +353,36 @@
 
             <div id="my-transactions-content" class="hidden" style="width: 100%;">
                 <div id="transactions-list-container" class="transactions-list">
-                    <!-- Lista transakcji generowana przez JS -->
-                </div>
+                    </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL - ZGŁOŚ BŁĄD W TRANSAKCJI -->
     <div id="report-transaction-modal" class="modal" style="z-index: 10000;">
-        <div class="modal-content settings-modal-content" style="max-width: 450px;">
+        <div class="modal-content settings-modal-content" style="max-width: 480px;">
             <div class="settings-header">
-                <h2><i class="fas fa-exclamation-triangle"></i> Zgłoś pomyłkę</h2>
+                <h2><i class="fas fa-exclamation-triangle" style="color: var(--danger); filter: drop-shadow(0 0 8px rgba(239,68,68,0.4));"></i> Zgłoś pomyłkę</h2>
                 <button onclick="closeReportModal()" class="settings-close-btn"><i class="fas fa-times"></i></button>
             </div>
             
-            <p class="settings-desc" id="report-modal-desc">Zgłaszasz transakcję o numerze: <strong id="report-receipt-id"></strong></p>
+            <p class="settings-desc" id="report-modal-desc" style="margin-bottom: 20px;">
+                Zgłaszasz transakcję o numerze:<br>
+                <strong id="report-receipt-id" style="font-size: 1.2rem; color: var(--text-primary); letter-spacing: 1px; display: inline-block; margin-top: 5px;"></strong>
+            </p>
 
             <div class="settings-form">
                 <div class="input-group">
                     <label>Powód zgłoszenia (wymagane)</label>
-                    <textarea id="report-reason-input" class="ad-textarea" style="height: 120px;" placeholder="Opisz dokładnie co poszło nie tak (np. wpisano złą kwotę, wybrany zły przedmiot itp.)..."></textarea>
+                    <textarea id="report-reason-input" class="custom-input report-textarea" placeholder="Opisz dokładnie co poszło nie tak (np. wpisano złą kwotę, wybrany zły przedmiot itp.)..."></textarea>
                 </div>
                 
-                <button onclick="submitTransactionReport()" id="submit-report-btn" class="settings-save-btn" style="background: linear-gradient(135deg, var(--danger), #b91c1c); color: white; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);">
-                    <i class="fas fa-paper-plane"></i> Wyślij zgłoszenie na Discord
+                <button onclick="submitTransactionReport()" id="submit-report-btn" class="danger-submit-btn">
+                    <i class="fab fa-discord"></i> Wyślij zgłoszenie
                 </button>
             </div>
         </div>
     </div>
     
-    <!-- MODAL - CHANGELOG -->
     <div id="changelog-modal" class="modal">
         <div class="modal-content settings-modal-content" style="max-width: 650px;">
             <div class="settings-header">
@@ -396,23 +393,14 @@
             <p class="settings-desc">Najnowsze funkcje, poprawki i ulepszenia w systemie El Cartel Pawn Shop.</p>
 
             <div id="dynamic-changelog-container" class="changelog-timeline-container">
-                <!-- Wersja 3.4.0 (Zapasowa jeśli API zawiedzie, skrypt ją nadpisze) -->
-                <div class="changelog-item">
-                    <div class="changelog-version-header">
-                        Wersja 3.4.0 <span class="changelog-date">Obecna</span>
-                    </div>
-                    <ul class="changelog-list">
-                        <li><span class="cl-tag cl-new">NOWOŚĆ</span> Dodano zakładkę <strong>Moje transakcje</strong>, która wyświetla historię transakcji z podziałem na skup i sprzedaż.</li>
-                        <li><span class="cl-tag cl-new">NOWOŚĆ</span> Wprowadzono możliwość zgłaszania błędnie wystawionych paragonów bezpośrednio do zarządu na kanale Discord.</li>
-                        <li><span class="cl-tag cl-new">NOWOŚĆ</span> Zaimplementowano wbudowany dziennik zmian (Changelog) z systemem powiadomień wizualnych.</li>
-                        <li><span class="cl-tag cl-fix">POPRAWKA</span> Optymalizacja wyświetlania obrazu identyfikatora pracownika.</li>
-                    </ul>
+                <div style="text-align: center; padding: 40px 0;">
+                    <i class="fas fa-circle-notch fa-spin fa-2x" style="color: var(--accent-color);"></i>
+                    <p style="margin-top: 10px; color: var(--text-secondary);">Ładowanie dziennika zmian...</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL - DODAJ CHANGELOG (TYLKO DLA TRAVIS VANCE) -->
     <div id="admin-changelog-modal" class="modal">
         <div class="modal-content settings-modal-content" style="max-width: 650px;">
             <div class="settings-header">
@@ -431,8 +419,7 @@
                 <div class="input-group">
                     <label>Lista zmian</label>
                     <div id="admin-changes-list" style="display: flex; flex-direction: column; gap: 10px;">
-                        <!-- Dynamiczne inputy wlatują tu przez JS -->
-                    </div>
+                        </div>
                     <button onclick="addAdminChangeSlot()" class="add-custom-slot-btn" style="width: fit-content; margin-top: 10px;">
                         <i class="fas fa-plus"></i> Dodaj kolejny punkt
                     </button>
