@@ -46,6 +46,37 @@ body:has(.login-container.active) .summary-bar {
 .hidden { display: none !important; }
 
 /* ==========================================================================
+   BANNER INFORMACYJNY
+   ========================================================================== */
+.announcement-banner {
+    width: 100%;
+    background: rgba(243, 156, 18, 0.1); /* Pomarańczowe tło z przezroczystością */
+    border-bottom: 1px solid var(--accent-color);
+    padding: 12px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    z-index: 1001;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.announcement-icon {
+    font-size: 1.2rem;
+}
+
+.announcement-text {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--accent-color);
+    text-align: center;
+}
+
+/* ==========================================================================
    PANEL NAWIGACYJNY (NAVBAR) Z ANIMACJĄ ZWIJANIA
    ========================================================================== */
 .navbar {
@@ -226,7 +257,7 @@ header h1 {
     position: relative;
 }
 
-#search-input {
+#search-input-export {
     width: 100%;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -238,7 +269,7 @@ header h1 {
     box-shadow: var(--shadow-lg);
 }
 
-#search-input:focus {
+#search-input-export:focus {
     outline: none;
     border-color: var(--accent-color);
     box-shadow: 0 0 0 4px rgba(243, 156, 18, 0.1);
@@ -354,13 +385,13 @@ header h1 {
 /* WYŁĄCZENIE STRZAŁEK W POLU CENY I SSN */
 .custom-price-input::-webkit-inner-spin-button,
 .custom-price-input::-webkit-outer-spin-button,
-#customer-ssn-input::-webkit-inner-spin-button,
-#customer-ssn-input::-webkit-outer-spin-button {
+#customer-ssn-input-export::-webkit-inner-spin-button,
+#customer-ssn-input-export::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
 .custom-price-input,
-#customer-ssn-input {
+#customer-ssn-input-export {
     -moz-appearance: textfield;
 }
 
@@ -579,7 +610,7 @@ header h1 {
     flex-direction: column;
 }
 
-#receipt-preview-container {
+#receipt-preview-container-export {
     flex: 1;
     overflow-y: auto;
     padding-right: 10px;
@@ -775,7 +806,7 @@ header h1 {
 }
 
 /* Ukryty kontener dla html2canvas */
-#receipt-capture-area {
+#receipt-capture-area-export {
     position: absolute;
     left: -9999px;
     top: 0;
@@ -1127,7 +1158,7 @@ body:has(.modal.active) .summary-bar {
     overflow-y: auto;
 }
 
-#receipt-capture-area {
+#receipt-capture-area-export {
     background: white; /* Zapobiega przezroczystości tła */
 }
 
@@ -1628,4 +1659,486 @@ body:has(.modal.active) .summary-bar {
     font-size: 1.6rem;
     font-weight: 900;
     color: white;
+}
+
+/* ==========================================================================
+   MODAL IDENTYFIKATORA (ID CARD - KARTA POZIOMA)
+   ========================================================================== */
+.id-modal-content {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    max-width: 600px !important;
+    position: relative;
+}
+
+.id-card-horizontal {
+    background: linear-gradient(135deg, var(--card-bg) 0%, #151e2e 100%);
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    width: 100%;
+    color: var(--text-primary);
+    position: relative;
+}
+
+.id-card-horizontal::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 4px;
+    background: linear-gradient(90deg, var(--accent-color), #2563eb);
+}
+
+.id-card-header-hz {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 25px;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.id-logo-hz {
+    font-weight: 900;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-primary);
+}
+
+.id-logo-hz i {
+    color: var(--accent-color);
+}
+
+.id-title-hz {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--text-secondary);
+    letter-spacing: 2px;
+}
+
+.id-card-body-hz {
+    display: flex;
+    padding: 25px;
+    gap: 25px;
+}
+
+.id-photo-col {
+    flex-shrink: 0;
+}
+
+.id-photo-box {
+    width: 110px;
+    height: 140px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 4rem;
+    color: var(--accent-color);
+    overflow: hidden;
+    box-shadow: inset 0 4px 10px rgba(0,0,0,0.5);
+}
+
+.id-photo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.id-details-col {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.id-field-hz {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.id-label-hz {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.id-value-hz {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: white;
+    text-transform: uppercase;
+}
+
+.active-rank {
+    color: #000;
+    background: var(--accent-color);
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-weight: 800;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+    display: inline-block;
+    width: fit-content;
+}
+
+.id-card-footer-hz {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 0 25px 25px 25px;
+}
+
+.id-signature-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 5px;
+    width: 140px;
+}
+
+.id-signature-label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+}
+
+.id-signature-font {
+    font-family: 'Dancing Script', cursive;
+    font-size: 1.8rem;
+    color: var(--accent-color);
+    transform: rotate(-5deg);
+    margin-top: 5px;
+}
+
+.id-status-hz {
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: var(--text-primary);
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    padding: 8px 15px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+@media (max-width: 600px) {
+    .id-card-body-hz {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .id-details-col {
+        align-items: center;
+    }
+    .id-card-footer-hz {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+}
+
+/* ==========================================================================
+   NOWE: MOJE TRANSAKCJE (LISTA I ZGŁASZANIE BŁĘDÓW)
+   ========================================================================== */
+.transactions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.transactions-list::-webkit-scrollbar {
+    width: 6px;
+}
+.transactions-list::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.1);
+}
+.transactions-list::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 10px;
+}
+
+.transaction-item-card:hover {
+    border-color: var(--accent-color) !important;
+    box-shadow: 0 4px 15px rgba(56, 189, 248, 0.15);
+}
+
+.report-error-btn:hover {
+    background: var(--danger) !important;
+    color: white !important;
+}
+
+/* ==========================================================================
+   NOWE: POWIADOMIENIA (KROPKA CHANGELOG)
+   ========================================================================== */
+.notification-dot {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 10px;
+    height: 10px;
+    background-color: var(--danger);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--danger);
+    animation: pulse-dot 1.5s infinite;
+}
+
+@keyframes pulse-dot {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+/* ==========================================================================
+   NOWE: CHANGELOG (DZIENNIK ZMIAN) OŚ CZASU
+   ========================================================================== */
+.changelog-timeline-container {
+    width: 100%;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.changelog-timeline-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.changelog-timeline-container::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.1);
+}
+
+.changelog-timeline-container::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 10px;
+}
+
+.changelog-item {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 20px;
+    position: relative;
+}
+
+.changelog-version-header {
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: var(--accent-color);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.changelog-date {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    background: rgba(255,255,255,0.05);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.changelog-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.changelog-list li {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    line-height: 1.5;
+}
+
+.cl-tag {
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.cl-new { 
+    background: rgba(34, 197, 94, 0.15); 
+    color: var(--success); 
+    border: 1px solid rgba(34, 197, 94, 0.3); 
+}
+
+.cl-fix { 
+    background: rgba(245, 158, 11, 0.15); 
+    color: #f59e0b; 
+    border: 1px solid rgba(245, 158, 11, 0.3); 
+}
+
+/* ==========================================================================
+   NOWE: ZGŁASZANIE BŁĘDÓW W TRANSAKCJI
+   ========================================================================== */
+.report-textarea {
+    width: 100%;
+    height: 120px;
+    resize: vertical;
+    font-family: 'Inter', sans-serif;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.danger-submit-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--danger), #b91c1c);
+    color: white;
+    border: none;
+    padding: 16px 20px;
+    border-radius: 14px;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    transition: var(--transition-normal);
+    margin-top: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+    word-break: break-word;
+    text-align: center;
+}
+
+.danger-submit-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5);
+    filter: brightness(1.1);
+}
+
+/* ==========================================
+   WSPÓLNE ELEMENTY MODALI (CHANGELOG, ZGŁOSZENIA)
+   ========================================== */
+
+.custom-input {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    padding: 12px 15px;
+    border-radius: 8px;
+    outline: none;
+    font-family: inherit;
+    transition: 0.2s;
+}
+
+.custom-input:focus {
+    border-color: var(--accent-color, #38bdf8);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+}
+
+.add-custom-slot-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.add-custom-slot-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #fff;
+}
+
+.settings-save-btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.3s;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.settings-save-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+}
+
+.settings-close-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.settings-close-btn:hover {
+    background: var(--danger, #ef4444);
+    color: #fff;
+}
+
+.danger-submit-btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: var(--danger, #ef4444);
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.3s;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.danger-submit-btn:hover {
+    background: var(--danger, #ef4444);
+    color: #fff;
+    transform: translateY(-2px);
 }

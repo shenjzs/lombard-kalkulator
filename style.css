@@ -2286,6 +2286,12 @@ body:has(.modal.active) .summary-bar {
     border: 1px solid rgba(245, 158, 11, 0.3); 
 }
 
+.cl-del { 
+    background: rgba(239, 68, 68, 0.15); 
+    color: var(--danger); 
+    border: 1px solid rgba(239, 68, 68, 0.3); 
+}
+
 /* ==========================================================================
    NOWE: ZGŁASZANIE BŁĘDÓW W TRANSAKCJI
    ========================================================================== */
