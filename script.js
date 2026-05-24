@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI
 // ==========================================
-const APP_VERSION = "3.6.0";
+const APP_VERSION = "3.6.1";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 // ==========================================
@@ -27,7 +27,7 @@ let myStatsRawData = [];
 let currentStatsType = 'skup';
 let currentStatsRange = 'today';
 
-let currentReportReceiptId = ""; // Do zgłaszania pomyłek
+let currentReportReceiptId = ""; 
 
 // ==========================================
 // FUNKCJA AUTORYZACJI SZEFA
@@ -165,7 +165,6 @@ function generateID() {
     return res;
 }
 
-// NASŁUCHIWANIE SCROLLA DLA NAVBARA
 document.addEventListener('scroll', function() {
     const navbar = document.querySelector('.navbar');
     if (window.scrollY > 50) {
@@ -176,7 +175,7 @@ document.addEventListener('scroll', function() {
 });
 
 // ==========================================
-// SYSTEM PRZEŁĄCZANIA WIDOKÓW (SPA) - KLASYCZNE
+// SYSTEM PRZEŁĄCZANIA WIDOKÓW (SPA)
 // ==========================================
 window.switchView = function(view) {
     if (!currentEmployeeName && document.getElementById('login-screen').classList.contains('active')) {
@@ -229,19 +228,37 @@ window.login = async function() {
             currentEmployeeDateZatrudnienia = data.dateZatrudnienia || "Brak danych";
             currentEmployeePhoto = data.photo || ""; 
             
-            // UKRYTY PANEL TYLKO DLA TRAVIS VANCE
             const adminChangelogBtn = document.getElementById('admin-changelog-btn');
-            if (adminChangelogBtn) {
-                if (isTravisVance()) {
-                    adminChangelogBtn.style.display = 'flex';
-                } else {
-                    adminChangelogBtn.style.display = 'none';
-                }
-            }
+            const adminReportsBtn = document.getElementById('admin-reports-btn');
+            if (adminChangelogBtn) adminChangelogBtn.style.display = isTravisVance() ? 'flex' : 'none';
+            if (adminReportsBtn) adminReportsBtn.style.display = isTravisVance() ? 'flex' : 'none';
 
             document.getElementById('logged-user-name').innerText = currentEmployeeName.toUpperCase();
-            document.getElementById('login-screen').classList.remove('active');
+            document.getElementById('dropdown-user-name').innerText = currentEmployeeName;
+            document.getElementById('dropdown-user-rank').innerText = currentEmployeeRank;
             
+            const navAvatar = document.getElementById('nav-user-avatar');
+            const navDefaultIcon = document.getElementById('nav-user-default-icon');
+            const dropAvatar = document.getElementById('dropdown-user-avatar');
+            const dropDefaultIcon = document.getElementById('dropdown-user-default-icon');
+
+            if (currentEmployeePhoto && currentEmployeePhoto !== "") {
+                navAvatar.src = currentEmployeePhoto;
+                navAvatar.style.display = 'block';
+                navDefaultIcon.style.display = 'none';
+                
+                dropAvatar.src = currentEmployeePhoto;
+                dropAvatar.style.display = 'block';
+                dropDefaultIcon.style.display = 'none';
+            } else {
+                navAvatar.style.display = 'none';
+                navDefaultIcon.style.display = 'block';
+                
+                dropAvatar.style.display = 'none';
+                dropDefaultIcon.style.display = 'block';
+            }
+
+            document.getElementById('login-screen').classList.remove('active');
             document.getElementById('main-app').style.display = 'block';
             document.getElementById('user-profile').style.display = 'block';
             
@@ -276,6 +293,19 @@ window.logout = function() {
     currentEmployeePhoto = ""; 
     document.getElementById('employee-login-pin').value = "";
     document.getElementById('logged-user-name').innerText = "---";
+    document.getElementById('dropdown-user-name').innerText = "---";
+    document.getElementById('dropdown-user-rank').innerText = "---";
+    
+    const navAvatar = document.getElementById('nav-user-avatar');
+    const navDefaultIcon = document.getElementById('nav-user-default-icon');
+    const dropAvatar = document.getElementById('dropdown-user-avatar');
+    const dropDefaultIcon = document.getElementById('dropdown-user-default-icon');
+    
+    if(navAvatar) navAvatar.style.display = 'none';
+    if(navDefaultIcon) navDefaultIcon.style.display = 'block';
+    if(dropAvatar) dropAvatar.style.display = 'none';
+    if(dropDefaultIcon) dropDefaultIcon.style.display = 'block';
+
     document.getElementById('login-screen').classList.add('active');
     
     document.getElementById('main-app').style.display = 'none';
@@ -283,12 +313,13 @@ window.logout = function() {
     document.getElementById('user-dropdown').classList.remove('active');
     
     const adminChangelogBtn = document.getElementById('admin-changelog-btn');
+    const adminReportsBtn = document.getElementById('admin-reports-btn');
     if(adminChangelogBtn) adminChangelogBtn.style.display = 'none';
+    if(adminReportsBtn) adminReportsBtn.style.display = 'none';
     
     const banner = document.getElementById('announcement-banner');
     if(banner) banner.style.display = 'none';
 
-    // Wyczyść zawartość changeloga po wylogowaniu, żeby nowa osoba go pobrała na nowo
     const clContainer = document.getElementById('dynamic-changelog-container');
     if (clContainer) clContainer.innerHTML = '';
 
@@ -312,7 +343,7 @@ document.addEventListener('click', function(event) {
 
 
 // ==========================================
-// LOKALNE STATYSTYKI SKUPU (Dla Live Update)
+// LOKALNE STATYSTYKI SKUPU
 // ==========================================
 function getDailyStat(employeeName) {
     const date = getFormattedDate();
@@ -1198,7 +1229,19 @@ async function fetchChangelogData() {
                 container.innerHTML = ""; 
                 
                 sortedVersions.forEach((v, index) => {
-                    const dateLabel = index === 0 ? "Najnowsza" : grouped[v].date.split(' ')[0];
+                    let displayDate = grouped[v].date;
+                    const d = parseDate(grouped[v].date);
+                    if (d && !isNaN(d.getTime())) {
+                        const day = String(d.getDate()).padStart(2, '0');
+                        const month = String(d.getMonth() + 1).padStart(2, '0');
+                        const year = d.getFullYear();
+                        const hours = String(d.getHours()).padStart(2, '0');
+                        const minutes = String(d.getMinutes()).padStart(2, '0');
+                        displayDate = `${day}.${month}.${year} ${hours}:${minutes}`;
+                    }
+                    
+                    const dateLabel = index === 0 ? "Najnowsza" : displayDate;
+                    
                     let listHtml = "";
                     
                     let displayVersion = v;
@@ -1223,7 +1266,6 @@ async function fetchChangelogData() {
                         listHtml += `<li><span class="cl-tag ${clClass}">${tag}</span> ${desc}</li>`;
                     });
 
-                    // Przyciski edycji i usunięcia - restrykcyjna kontrola dla Travis Vance
                     let adminControls = "";
                     if (isTravisVance()) {
                         const safeItems = encodeURIComponent(JSON.stringify(grouped[v].items));
@@ -1382,9 +1424,6 @@ window.publishChangelog = async function() {
     }
 }
 
-// ==========================================
-// ADMIN: EDYCJA I USUWANIE CHANGELOGA
-// ==========================================
 window.openEditChangelog = function(version, itemsJson) {
     if (!isTravisVance()) return showNotice("Brak uprawnień!", "danger");
 
@@ -1526,7 +1565,7 @@ window.deleteChangelog = async function(version) {
 }
 
 // ==========================================
-// SYSTEM USTAWIEŃ (ZMIANA PIN) - WSPÓLNY
+// SYSTEM USTAWIEŃ
 // ==========================================
 window.openSettings = function() {
     document.getElementById('user-dropdown').classList.remove('active');
@@ -1731,7 +1770,7 @@ window.closeMyStats = function() {
 }
 
 // ==========================================
-// MOJE TRANSAKCJE (WSPÓLNY)
+// MOJE TRANSAKCJE
 // ==========================================
 window.openMyTransactions = async function() {
     document.getElementById('user-dropdown').classList.remove('active');
@@ -1767,8 +1806,6 @@ function renderTransactionsList() {
     myStatsRawData.forEach(row => {
         if (!row.report_id) return;
         if (!grouped[row.report_id]) {
-            
-            // Konwersja surowego formatu daty (z "T" i "Z") na czytelną wersję
             let displayDate = row.date;
             const d = parseDate(row.date);
             if (d && !isNaN(d.getTime())) {
@@ -1838,6 +1875,9 @@ window.closeMyTransactions = function() {
     `;
 }
 
+// ==========================================
+// ZGŁASZANIE POMYŁEK
+// ==========================================
 window.openReportModal = function(receiptId) {
     currentReportReceiptId = receiptId;
     document.getElementById('report-receipt-id').innerText = receiptId;
@@ -1869,7 +1909,11 @@ window.submitTransactionReport = async function() {
                 color: 15158332, 
                 fields: [
                     { name: "📋 Numer paragonu:", value: `\`${currentReportReceiptId}\``, inline: true },
-                    { name: "👤 Zgłaszający:", value: `**${currentEmployeeName}**`, inline: true },
+                    { 
+                        name: "👤 Zgłaszający:", 
+                        value: `**${currentEmployeeName}**\nSSN: \`${currentEmployeeSsn}\`\nRanga: \`${currentEmployeeRank}\``, 
+                        inline: true 
+                    },
                     { name: "📝 Powód / Opis błędu:", value: reason, inline: false }
                 ],
                 timestamp: new Date().toISOString(),
@@ -1877,19 +1921,28 @@ window.submitTransactionReport = async function() {
             }]
         };
 
-        const res = await fetch(DISCORD_WEBHOOK_URL_SKUP, { 
+        const resDiscord = await fetch(DISCORD_WEBHOOK_URL_SKUP, { 
             method: "POST", 
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(embedPayload) 
         });
 
-        if (res.ok) {
-            showNotice("Zgłoszenie pomyłki wysłane na Discord!", "success");
+        const resSheet = await fetch(REPORTS_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'save_error_report',
+                date: getFormattedDateTime(),
+                employee: currentEmployeeName,
+                receipt_id: currentReportReceiptId,
+                reason: reason
+            })
+        });
+
+        if (resDiscord.ok && resSheet.ok) {
+            showNotice("Zgłoszenie pomyłki zapisane i wysłane na Discord!", "success");
             closeReportModal();
         } else {
-            throw new Error("Błąd Discord API");
+            throw new Error("Błąd podczas wysyłania.");
         }
     } catch (e) {
         showNotice("Błąd wysyłania zgłoszenia!", "danger");
@@ -1900,9 +1953,103 @@ window.submitTransactionReport = async function() {
 }
 
 // ==========================================
-// IDENTYFIKATOR (ID CARD) - WSPÓLNY
+// ZARZĄDZANIE ZGŁOSZENIAMI (ADMIN)
 // ==========================================
-window.openIdCard = function() {
+window.openAdminReports = async function() {
+    if (!isTravisVance()) return showNotice("Brak uprawnień!", "danger");
+
+    document.getElementById('user-dropdown').classList.remove('active');
+    document.getElementById('admin-reports-modal').classList.add('active');
+    
+    document.getElementById('admin-reports-loader').style.display = 'block';
+    document.getElementById('admin-reports-container').innerHTML = '';
+
+    try {
+        const response = await fetch(`${REPORTS_API_URL}?action=get_error_reports&t=${new Date().getTime()}`);
+        const data = await response.json();
+
+        const container = document.getElementById('admin-reports-container');
+        container.innerHTML = '';
+        
+        const pendingReports = data.filter(r => r.status === 'Oczekujące').reverse();
+        const resolvedReports = data.filter(r => r.status !== 'Oczekujące').reverse().slice(0, 10); 
+        
+        if (pendingReports.length === 0 && resolvedReports.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); width: 100%;">Brak zgłoszeń w systemie.</p>';
+        } else {
+            let html = '';
+            
+            if (pendingReports.length > 0) {
+                html += '<h3 style="color: var(--danger); margin-bottom: 10px; width: 100%; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Wymagają uwagi</h3>';
+                pendingReports.forEach(r => html += buildAdminReportCard(r));
+            }
+            
+            if (resolvedReports.length > 0) {
+                html += '<h3 style="color: var(--success); margin-top: 20px; margin-bottom: 10px; width: 100%; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Ostatnio Rozwiązane</h3>';
+                resolvedReports.forEach(r => html += buildAdminReportCard(r));
+            }
+            
+            container.innerHTML = html;
+        }
+    } catch (e) {
+        document.getElementById('admin-reports-container').innerHTML = '<p style="color: var(--danger); text-align: center;">Błąd pobierania danych.</p>';
+    } finally {
+        document.getElementById('admin-reports-loader').style.display = 'none';
+    }
+}
+
+function buildAdminReportCard(r) {
+    let statusColor = r.status === 'Oczekujące' ? 'var(--warning)' : (r.status === 'Zaakceptowane' ? 'var(--success)' : 'var(--danger)');
+    
+    let actionsHtml = r.status === 'Oczekujące' ? `
+        <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
+            <button onclick="updateReportStatus('${r.receipt_id}', 'Odrzucone')" style="background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s;">Odrzuć</button>
+            <button onclick="updateReportStatus('${r.receipt_id}', 'Zaakceptowane')" style="background: rgba(34, 197, 94, 0.15); color: var(--success); border: 1px solid rgba(34, 197, 94, 0.3); padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s;">Zaakceptuj pomyłkę</button>
+        </div>
+    ` : '';
+
+    return `
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; width: 100%;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <span style="font-weight: 800; color: var(--text-primary);"><i class="fas fa-hashtag"></i> ID: ${r.receipt_id}</span>
+                <span style="font-size: 0.8rem; color: var(--text-secondary);">${r.date}</span>
+            </div>
+            <div style="margin-bottom: 5px; font-size: 0.9rem;"><span style="color: var(--text-secondary);">Zgłasza:</span> <strong style="color: var(--text-primary);">${r.employee}</strong></div>
+            <div style="margin-bottom: 15px; font-size: 0.9rem; line-height: 1.4;"><span style="color: var(--text-secondary);">Powód:</span> <span style="color: #fff;">${r.reason}</span></div>
+            <div style="font-size: 0.9rem;"><span style="color: var(--text-secondary);">Status:</span> <strong style="color: ${statusColor};">${r.status}</strong></div>
+            ${actionsHtml}
+        </div>
+    `;
+}
+
+window.closeAdminReports = function() {
+    document.getElementById('admin-reports-modal').classList.remove('active');
+}
+
+window.updateReportStatus = async function(receiptId, newStatus) {
+    if (!isTravisVance()) return;
+    
+    try {
+        showNotice("Aktualizowanie...", "info");
+        await fetch(REPORTS_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'update_error_report',
+                receipt_id: receiptId,
+                new_status: newStatus
+            })
+        });
+        showNotice(`Zgłoszenie pomyłki zaktualizowane: ${newStatus}`, "success");
+        openAdminReports(); 
+    } catch(e) {
+        showNotice("Wystąpił błąd podczas aktualizacji!", "danger");
+    }
+}
+
+// ==========================================
+// IDENTYFIKATOR KARTY PROFILU + GAMIFIKACJA
+// ==========================================
+window.openIdCard = async function() {
     document.getElementById('user-dropdown').classList.remove('active');
     
     if (currentEmployeeName) {
@@ -1921,9 +2068,122 @@ window.openIdCard = function() {
         if (signatureEl) signatureEl.innerText = currentEmployeeName;
 
         document.getElementById('id-card-rank-container').innerHTML = `<span class="active-rank">${currentEmployeeRank}</span>`;
+        
+        // Reset Gamifikacji przed wczytaniem
+        document.getElementById('id-card-level-text').innerText = "Analiza danych...";
+        document.getElementById('id-card-xp-text').innerText = "Wczytywanie XP...";
+        document.getElementById('id-progress-bar-fill').style.width = "0%";
+        document.getElementById('id-badges-container').innerHTML = '<i class="fas fa-spinner fa-spin text-secondary"></i> Pobieranie osiągnięć...';
     }
     
     document.getElementById('id-card-modal').classList.add('active');
+
+    // Pobieranie danych do Leveli i Osiągnięć
+    try {
+        const response = await fetch(`${REPORTS_API_URL}?action=get_reports&t=${new Date().getTime()}`);
+        const rawData = await response.json();
+        
+        const myData = rawData.filter(row => row.employee === currentEmployeeName);
+        
+        let totalXP = 0;
+        let txSet = new Set();
+        
+        myData.forEach(row => {
+            totalXP += row.total;
+            if(row.report_id) txSet.add(row.report_id);
+        });
+        
+        let txCount = txSet.size || (myData.length > 0 ? 1 : 0);
+        
+        renderGamification(totalXP, txCount);
+        
+    } catch (e) {
+        console.error(e);
+        document.getElementById('id-card-level-text').innerText = "Błąd pobierania danych";
+        document.getElementById('id-card-xp-text').innerText = "Brak połączenia";
+        document.getElementById('id-badges-container').innerHTML = '';
+    }
+}
+
+function renderGamification(totalXP, txCount) {
+    const levels = [
+        { lvl: 1, max: 50000, name: "Rekrut" },
+        { lvl: 2, max: 250000, name: "Znawca" },
+        { lvl: 3, max: 500000, name: "Specjalista" },
+        { lvl: 4, max: 700000, name: "Ekspert" },
+        { lvl: 5, max: 1500000, name: "Weteran" },
+        { lvl: 6, max: 5000000, name: "Legenda lombardu" }
+    ];
+    
+    let currentLvl = 1;
+    let currentMax = 50000;
+    let prevMax = 0;
+    
+    for (let i = 0; i < levels.length; i++) {
+        if (totalXP < levels[i].max) {
+            currentLvl = levels[i].lvl;
+            currentMax = levels[i].max;
+            prevMax = i > 0 ? levels[i-1].max : 0;
+            break;
+        }
+    }
+    
+    let xpInCurrentLevel = totalXP - prevMax;
+    let xpNeededForNextLevel = currentMax - prevMax;
+    let progressPercent = (xpInCurrentLevel / xpNeededForNextLevel) * 100;
+    if (progressPercent > 100) progressPercent = 100;
+    if (currentLvl === 6) progressPercent = 100; 
+    
+    document.getElementById('id-card-level-text').innerText = `Poziom ${currentLvl} - ${levels[currentLvl-1].name}`;
+    
+    if (currentLvl === 6) {
+        document.getElementById('id-card-xp-text').innerText = `MAX LEVEL (${totalXP.toLocaleString()}$)`;
+    } else {
+        document.getElementById('id-card-xp-text').innerText = `${totalXP.toLocaleString()}$ / ${currentMax.toLocaleString()}$`;
+    }
+    
+    setTimeout(() => {
+        document.getElementById('id-progress-bar-fill').style.width = `${progressPercent}%`;
+    }, 100);
+    
+    // Lista osiągnięć do odblokowania
+    const badges = [
+        { icon: "fa-tint", name: "Pierwsza krew", desc: "Zrealizowano pierwszą transakcję w systemie.", color: "#ef4444", condition: txCount >= 1 },
+        { icon: "fa-handshake", name: "Solidna firma", desc: "Zrealizowano 150 transakcji.", color: "#a855f7", condition: txCount >= 150 },
+        { icon: "fa-fish", name: "Rekin biznesu", desc: "Wygenerowano 300,000$ obrotu całkowitego.", color: "#38bdf8", condition: totalXP >= 300000 },
+        { icon: "fa-medal", name: "Stary wyga", desc: "Zrealizowano 200 transakcji.", color: "#fbbf24", condition: txCount >= 200 },
+        { icon: "fa-crown", name: "Milioner", desc: "Przekroczono barierę 5,000,000$ obrotu. Jesteś elitą.", color: "#eab308", condition: totalXP >= 5000000 }
+    ];
+    
+    const container = document.getElementById('id-badges-container');
+    container.innerHTML = '';
+    
+    badges.forEach(b => {
+        const isUnlocked = b.condition;
+        const badgeEl = document.createElement('div');
+        badgeEl.title = b.desc;
+        badgeEl.style.cssText = `
+            background: rgba(255,255,255,0.05); 
+            border: 1px solid rgba(255,255,255,0.1); 
+            padding: 8px 12px; 
+            border-radius: 8px; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            font-size: 0.8rem; 
+            font-weight: 600; 
+            cursor: help;
+            transition: 0.2s;
+            opacity: ${isUnlocked ? '1' : '0.4'};
+            filter: ${isUnlocked ? 'none' : 'grayscale(100%)'};
+        `;
+        
+        badgeEl.onmouseover = () => badgeEl.style.transform = 'translateY(-2px)';
+        badgeEl.onmouseout = () => badgeEl.style.transform = 'translateY(0)';
+        
+        badgeEl.innerHTML = `<i class="fas ${b.icon}" style="color: ${b.color}; font-size: 1.1rem;"></i> <span style="color: #fff;">${b.name}</span>`;
+        container.appendChild(badgeEl);
+    });
 }
 
 window.closeIdCard = function() {
@@ -1996,8 +2256,6 @@ setTimeout(checkUpdates, 3000);
 // OBSŁUGA ZDARZEŃ DOM
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // Obsługa enter dla logowania
     const loginPinInput = document.getElementById('employee-login-pin');
     if (loginPinInput) {
         loginPinInput.addEventListener('keypress', function(e) {
@@ -2005,7 +2263,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Skup: Wyszukiwarka i Input
     const searchInput = document.getElementById('search-input');
     if(searchInput) searchInput.addEventListener('input', applyFilters);
 
@@ -2016,7 +2273,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Skup: Reset
     const resetBtnSkup = document.getElementById('reset-btn');
     if(resetBtnSkup) {
         resetBtnSkup.onclick = () => {
@@ -2025,11 +2281,9 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // Eksport: Wyszukiwarka
     const searchInputExport = document.getElementById('search-input-export');
     if (searchInputExport) searchInputExport.addEventListener('input', applyFiltersExport);
 
-    // Eksport: Reset
     const resetBtnExport = document.getElementById('reset-btn-export');
     if (resetBtnExport) {
         resetBtnExport.onclick = () => {
