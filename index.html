@@ -7,11 +7,11 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Kasa fiskalna</title>
-    <link rel="stylesheet" href="style.css?v=3.5.0">
+    <link id="theme-style" rel="stylesheet" href="style.css?v=3.6.0">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
@@ -25,12 +25,13 @@
     <nav class="navbar">
         <div class="nav-left">
             <div class="nav-logo">
-                <i class="fas fa-cash-register"></i> <span class="nav-text">EL CARTEL SYSTEM</span>
+                <i id="nav-logo-icon" class="fas fa-cash-register"></i> <span class="nav-text">EL CARTEL SYSTEM</span>
             </div>
         </div>
         
         <div class="nav-right">
-            <a href="sprzedaz.html" class="nav-link-btn" title="Sprzedaż"><i class="fas fa-truck-loading"></i> <span class="nav-text">Sprzedaj asortyment / NPC</span></a>
+            <a href="#" onclick="switchView('skup'); return false;" class="nav-link-btn" title="Kasa (skup)"><i class="fas fa-cash-register"></i> <span class="nav-text">Kasa (skup)</span></a>
+            <a href="#" onclick="switchView('export'); return false;" class="nav-link-btn" title="Panel eksportu"><i class="fas fa-truck-loading"></i> <span class="nav-text">Sprzedaj asortyment / NPC</span></a>
             <a href="zloto.html" class="nav-link-btn" title="Przetop złoto"><i class="fa-solid fa-temperature-half"></i> <span class="nav-text">Przetop złoto</span></a>
             <a href="raporty.html" class="nav-link-btn" title="Statystyki"><i class="fas fa-chart-line"></i> <span class="nav-text">Statystyki</span></a>
             
@@ -48,7 +49,7 @@
                         <span id="dropdown-notification-dot" class="notification-dot hidden" style="position: static; margin: 0;"></span>
                     </div>
                     <div class="dropdown-item" id="admin-changelog-btn" onclick="openAdminChangelog()" style="display: none; color: var(--ad-gold); font-weight: 800;">
-                        <i class="fas fa-plus-circle"></i> Dodaj Changelog
+                        <i class="fas fa-plus-circle"></i> Dodaj changelog
                     </div>
                     <div class="dropdown-item" onclick="openSettings()"><i class="fas fa-cog"></i> Ustawienia</div>
                     <div class="dropdown-item text-danger" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Zakończ zmianę</div>
@@ -70,172 +71,282 @@
     </div>
 
     <div id="main-app" style="display: none;">
-        <div class="container" style="padding-top: 40px;">
-            <header>
-                <h1>EL CARTEL PAWN SHOP</h1>
-                <div class="header-meta">
-                    <span><i class="fas fa-calculator"></i> WYCEŃ TOWARY / SYSTEM SKUPU PRZEDMIOTÓW</span>
-                    <span id="header-date"><i class="far fa-calendar-alt"></i> --.--.----</span>
-                </div>
-            </header>
-
-            <div class="search-container">
-                <i class="fas fa-search"></i>
-                <input type="text" id="search-input" placeholder="Wyszukaj przedmiot...">
-            </div>
-
-            <div class="categories-container">
-                <button class="cat-btn active" onclick="filterCategory('wszystkie', this)">
-                    <i class="fas fa-border-all"></i> Wszystko
-                </button>
-                <button class="cat-btn" onclick="filterCategory('elektronika', this)">
-                    <i class="fas fa-laptop"></i> Elektronika
-                </button>
-                <button class="cat-btn" onclick="filterCategory('biżuteria', this)">
-                    <i class="fas fa-gem"></i> Biżuteria
-                </button>
-                <button class="cat-btn" onclick="filterCategory('dom', this)">
-                    <i class="fas fa-home"></i> Dom
-                </button>
-                <button class="cat-btn" onclick="filterCategory('inne', this)">
-                    <i class="fas fa-box-open"></i> Inne
-                </button>
-                <button class="cat-btn btn-ad" onclick="filterCategory('reklama', this)">
-                    <i class="fas fa-bullhorn"></i> Reklama
-                </button>
-            </div>
-
-            <div id="ad-section" class="ad-card hidden">
-                <div class="ad-header">
-                    <i class="fas fa-bullhorn"></i>
-                    <span>Kreator ogłoszenia</span>
-                </div>
-                <div class="ad-content">
-                    <div class="ad-tags">
-                        <button type="button" class="tag-btn t-red" onclick="insertTag('~r~')">CZERWONY</button>
-                        <button type="button" class="tag-btn t-green" onclick="insertTag('~g~')">ZIELONY</button>
-                        <button type="button" class="tag-btn t-blue" onclick="insertTag('~b~')">NIEBIESKI</button>
-                        <button type="button" class="tag-btn t-yellow" onclick="insertTag('~y~')">ŻÓŁTY</button>
-                        <button type="button" class="tag-btn t-purple" onclick="insertTag('~p~')">FIOLETOWY</button>
-                        <button type="button" class="tag-btn t-orange" onclick="insertTag('~o~')">POMARAŃCZOWY</button>
-                        <button type="button" class="tag-btn t-white" onclick="insertTag('~w~')">BIAŁY</button>
-                        <button type="button" class="tag-btn t-bold" onclick="insertTag('~h~')">POGRUBIENIE</button>
-                        <button type="button" class="tag-btn t-reset" onclick="insertTag('~s~')">RESET</button>
+        
+        <div id="view-skup">
+            <div class="container" style="padding-top: 40px;">
+                <header>
+                    <h1>EL CARTEL PAWN SHOP</h1>
+                    <div class="header-meta">
+                        <span><i class="fas fa-calculator"></i> WYCEŃ TOWARY / SYSTEM SKUPU PRZEDMIOTÓW</span>
+                        <span id="header-date"><i class="far fa-calendar-alt"></i> --.--.----</span>
                     </div>
-                    <textarea id="ad-input" class="ad-textarea">/businessAd ~h~EL CARTEL PAWN SHOP ~y~OTWARTY!!! ~g~Drzwi są szeroko otwarte dla wszystkich klientów i osób szukających szybkiej gotówki! Zapraszamy.</textarea>
-                    <div class="preview-label">Podgląd w grze:</div>
-                    <div id="ad-preview" class="ad-preview-box"></div>
-                </div>
-                <button class="copy-ad-btn" onclick="copyAd()">
-                    <i class="fas fa-copy"></i> Skopiuj komendę
-                </button>
-            </div>
+                </header>
 
-            <div id="asortyment-header-wrapper" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 10px;">
-                <h3 style="color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-size: 1rem;">Asortyment</h3>
-                <button class="add-custom-slot-btn" onclick="addCustomItemSlot()">
-                    <i class="fas fa-plus"></i> Niestandardowy produkt
-                </button>
-            </div>
-
-            <div id="items-list" class="items-grid"></div>
-
-            <div id="summary-bar" class="summary-bar">
-                <div class="mobile-toggle-btn" onclick="toggleSummary()">
-                    <i id="toggle-icon" class="fas fa-chevron-up"></i>
+                <div class="search-container">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="search-input" placeholder="Wyszukaj przedmiot...">
                 </div>
 
-                <div class="summary-info">
-                    <div class="total-group">
-                        <span class="total-label">Suma:</span>
-                        <span id="total-price" class="total-amount" style="color: var(--success);">0$</span>
-                    </div>
-                </div>
-                
-                <div class="summary-actions">
-                    <button type="button" class="cart-toggle-btn" onclick="toggleCart()">
-                        <i class="fas fa-shopping-cart"></i> Koszyk <span id="cart-badge" class="cart-badge">0</span>
+                <div class="categories-container">
+                    <button class="cat-btn active" onclick="filterCategory('wszystkie', this)">
+                        <i class="fas fa-border-all"></i> Wszystko
                     </button>
-                    
-                    <div class="input-field-group">
-                        <span class="field-label"><i class="fas fa-id-card"></i> SSN KLIENTA:</span>
-                        <input type="number" id="customer-ssn-input" placeholder="Opcjonalne" class="custom-input">
+                    <button class="cat-btn" onclick="filterCategory('elektronika', this)">
+                        <i class="fas fa-laptop"></i> Elektronika
+                    </button>
+                    <button class="cat-btn" onclick="filterCategory('biżuteria', this)">
+                        <i class="fas fa-gem"></i> Biżuteria
+                    </button>
+                    <button class="cat-btn" onclick="filterCategory('dom', this)">
+                        <i class="fas fa-home"></i> Dom
+                    </button>
+                    <button class="cat-btn" onclick="filterCategory('inne', this)">
+                        <i class="fas fa-box-open"></i> Inne
+                    </button>
+                    <button class="cat-btn btn-ad" onclick="filterCategory('reklama', this)">
+                        <i class="fas fa-bullhorn"></i> Reklama
+                    </button>
+                </div>
+
+                <div id="ad-section" class="ad-card hidden">
+                    <div class="ad-header">
+                        <i class="fas fa-bullhorn"></i>
+                        <span>Kreator ogłoszenia</span>
+                    </div>
+                    <div class="ad-content">
+                        <div class="ad-tags">
+                            <button type="button" class="tag-btn t-red" onclick="insertTag('~r~')">CZERWONY</button>
+                            <button type="button" class="tag-btn t-green" onclick="insertTag('~g~')">ZIELONY</button>
+                            <button type="button" class="tag-btn t-blue" onclick="insertTag('~b~')">NIEBIESKI</button>
+                            <button type="button" class="tag-btn t-yellow" onclick="insertTag('~y~')">ŻÓŁTY</button>
+                            <button type="button" class="tag-btn t-purple" onclick="insertTag('~p~')">FIOLETOWY</button>
+                            <button type="button" class="tag-btn t-orange" onclick="insertTag('~o~')">POMARAŃCZOWY</button>
+                            <button type="button" class="tag-btn t-white" onclick="insertTag('~w~')">BIAŁY</button>
+                            <button type="button" class="tag-btn t-bold" onclick="insertTag('~h~')">POGRUBIENIE</button>
+                            <button type="button" class="tag-btn t-reset" onclick="insertTag('~s~')">RESET</button>
+                        </div>
+                        <textarea id="ad-input" class="ad-textarea">/businessAd ~h~EL CARTEL PAWN SHOP ~y~OTWARTY!!! ~g~Drzwi są szeroko otwarte dla wszystkich klientów i osób szukających szybkiej gotówki! Zapraszamy.</textarea>
+                        <div class="preview-label">Podgląd w grze:</div>
+                        <div id="ad-preview" class="ad-preview-box"></div>
+                    </div>
+                    <button class="copy-ad-btn" onclick="copyAd()">
+                        <i class="fas fa-copy"></i> Skopiuj komendę
+                    </button>
+                </div>
+
+                <div id="asortyment-header-wrapper" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 10px;">
+                    <h3 style="color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-size: 1rem;">Asortyment</h3>
+                    <button class="add-custom-slot-btn" onclick="addCustomItemSlot()">
+                        <i class="fas fa-plus"></i> Niestandardowy produkt
+                    </button>
+                </div>
+
+                <div id="items-list" class="items-grid"></div>
+
+                <div id="summary-bar" class="summary-bar">
+                    <div class="mobile-toggle-btn" onclick="toggleSummary()">
+                        <i id="toggle-icon" class="fas fa-chevron-up"></i>
                     </div>
 
-                    <div class="input-field-group">
-                        <span class="field-label"><i class="fas fa-hand-holding-usd"></i> KWOTA TRANSAKCJI:</span>
-                        <input type="number" id="final-price-input" min="0" placeholder="Kwota $" class="custom-input">
+                    <div class="summary-info">
+                        <div class="total-group">
+                            <span class="total-label">Suma:</span>
+                            <span id="total-price" class="total-amount" style="color: var(--success);">0$</span>
+                        </div>
                     </div>
                     
-                    <button id="quote-btn" class="quote-button" onclick="generateQuote()">
-                        <i class="fas fa-file-invoice-dollar"></i> Paragon
-                    </button>
-                    <button id="reset-btn" class="reset-button">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
+                    <div class="summary-actions">
+                        <button type="button" class="cart-toggle-btn" onclick="toggleCart()">
+                            <i class="fas fa-shopping-cart"></i> Koszyk <span id="cart-badge" class="cart-badge">0</span>
+                        </button>
+                        
+                        <div class="input-field-group">
+                            <span class="field-label"><i class="fas fa-id-card"></i> SSN KLIENTA:</span>
+                            <input type="number" id="customer-ssn-input" placeholder="Opcjonalne" class="custom-input">
+                        </div>
+
+                        <div class="input-field-group">
+                            <span class="field-label"><i class="fas fa-hand-holding-usd"></i> KWOTA TRANSAKCJI:</span>
+                            <input type="number" id="final-price-input" min="0" placeholder="Kwota $" class="custom-input">
+                        </div>
+                        
+                        <button id="quote-btn" class="quote-button" onclick="generateQuote()">
+                            <i class="fas fa-file-invoice-dollar"></i> Paragon
+                        </button>
+                        <button id="reset-btn" class="reset-button">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="cart-sidebar" class="cart-sidebar">
+                <div class="cart-header">
+                    <h2><i class="fas fa-shopping-cart"></i> Twój koszyk</h2>
+                    <button id="close-cart-btn" class="close-btn-cart" onclick="toggleCart()"><i class="fas fa-times"></i></button>
+                </div>
+                <div id="cart-items-container" class="cart-items-container">
+                    <div class="empty-cart-msg">Koszyk jest pusty</div>
+                </div>
+                <div class="cart-footer">
+                    <div class="cart-total-row">
+                        <span>Wartość:</span>
+                        <span id="cart-sidebar-total">0$</span>
+                    </div>
                 </div>
             </div>
         </div>
+        <div id="view-export" style="display: none;">
+            <div class="container" style="padding-top: 40px;">
+                <header>
+                    <h1>EL CARTEL EXPORT</h1>
+                    <div class="header-meta">
+                        <span><i class="fas fa-truck-loading"></i> SYSTEM RAPORTOWANIA O SPRZEDAŻY PRZEDMIOTÓW</span>
+                        <span id="header-date-export"><i class="far fa-calendar-alt"></i> --.--.----</span>
+                    </div>
+                </header>
 
-        <div id="quote-modal" class="modal">
-            <div class="modal-content settings-modal-content" style="max-width: 480px;">
-                <div class="settings-header">
-                    <h2><i class="fas fa-file-invoice-dollar"></i> Wygenerowany paragon</h2>
-                    <button onclick="closeModal()" class="settings-close-btn"><i class="fas fa-times"></i></button>
+                <div class="search-container">
+                    <i class="fas fa-search" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+                    <input type="text" id="search-input-export" placeholder="Szukaj przedmiotu po nazwie..." style="padding-left: 55px;">
                 </div>
 
-                <div class="receipt-scroll-wrapper" style="width: 100%; display: flex; justify-content: center;">
-                    <div id="receipt-capture-area" style="display: flex; justify-content: center; width: 100%;">
-                        <div id="receipt" class="receipt">
-                            <div class="receipt-header">
-                                <h2>EL CARTEL PAWN SHOP</h2>
-                                <p>Oficjalna wycena towaru</p>
-                                <p id="receipt-id-display" class="receipt-meta"></p>
-                                <p id="receipt-employee-display" class="receipt-meta"></p>
-                                <div class="receipt-divider"></div>
-                            </div>
-                            <div id="receipt-items" class="receipt-items"></div>
+                <div class="categories-container">
+                    <button class="cat-btn active" onclick="filterCategoryExport('wszystkie', this)"><i class="fas fa-border-all"></i> Wszystko</button>
+                    <button class="cat-btn" onclick="filterCategoryExport('elektronika', this)"><i class="fas fa-laptop"></i> Elektronika</button>
+                    <button class="cat-btn" onclick="filterCategoryExport('biżuteria', this)"><i class="fas fa-gem"></i> Biżuteria</button>
+                    <button class="cat-btn" onclick="filterCategoryExport('dom', this)"><i class="fas fa-home"></i> Dom</button>
+                    <button class="cat-btn" onclick="filterCategoryExport('inne', this)"><i class="fas fa-box-open"></i> Inne</button>
+                </div>
+
+                <div class="asortyment-header">
+                    <h3 class="asortyment-title">ASORTYMENT</h3>
+                    <button class="custom-product-btn" onclick="addCustomItemSlotExport()">
+                        + NIESTANDARDOWY PRODUKT
+                    </button>
+                </div>
+
+                <div id="items-list-export" class="items-grid"></div>
+            </div>
+
+            <div class="summary-bar" id="summary-bar-export">
+                <button class="summary-toggle" onclick="toggleSummaryExport()">
+                    <i class="fas fa-chevron-up" id="toggle-icon-export"></i>
+                </button>
+                
+                <div class="total-info">
+                    <span class="total-label">Suma skupu</span>
+                    <span id="total-price-export" class="total-amount">0$</span>
+                </div>
+
+                <div class="actions">
+                    <button type="button" class="cart-toggle-btn" onclick="toggleCartExport()">
+                        <i class="fas fa-shopping-cart"></i> Koszyk <span id="cart-badge-export" class="cart-badge">0</span>
+                    </button>
+
+                    <div class="input-field-group">
+                        <span class="field-label"><i class="fas fa-id-card"></i> SSN KLIENTA:</span>
+                        <input type="number" id="customer-ssn-input-export" placeholder="Opcjonalne" class="custom-input">
+                    </div>
+
+                    <div class="button-group" style="display: flex; gap: 10px;">
+                        <button id="reset-btn-export" class="close-btn" style="padding: 15px 20px;">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                        
+                        <button onclick="generateQuoteExport()" class="quote-button" id="quote-btn-export">
+                            <i class="fas fa-file-invoice-dollar"></i> GENERUJ
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="cart-sidebar-export" class="cart-sidebar">
+                <div class="cart-header">
+                    <h2><i class="fas fa-truck-loading"></i> Lista do eksportu</h2>
+                    <button id="close-cart-btn-export" class="close-btn-cart" onclick="toggleCartExport()"><i class="fas fa-times"></i></button>
+                </div>
+                <div id="cart-items-container-export" class="cart-items-container">
+                    <div class="empty-cart-msg">Brak przedmiotów</div>
+                </div>
+                <div class="cart-footer">
+                    <div class="cart-total-row">
+                        <span>Wartość:</span>
+                        <span id="cart-sidebar-total-export">0$</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="receipt-capture-area-export" style="position: absolute; left: -9999px; background: white; padding: 40px; width: 450px;"></div>
+        </div>
+        </div> 
+
+    <div id="quote-modal" class="modal">
+        <div class="modal-content settings-modal-content" style="max-width: 480px;">
+            <div class="settings-header">
+                <h2><i class="fas fa-file-invoice-dollar"></i> Wygenerowany paragon</h2>
+                <button onclick="closeModal()" class="settings-close-btn"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="receipt-scroll-wrapper" style="width: 100%; display: flex; justify-content: center;">
+                <div id="receipt-capture-area" style="display: flex; justify-content: center; width: 100%;">
+                    <div id="receipt" class="receipt">
+                        <div class="receipt-header">
+                            <h2>EL CARTEL PAWN SHOP</h2>
+                            <p>Oficjalna wycena towaru</p>
+                            <p id="receipt-id-display" class="receipt-meta"></p>
+                            <p id="receipt-employee-display" class="receipt-meta"></p>
                             <div class="receipt-divider"></div>
-                            <div class="receipt-footer">
-                                <div class="receipt-row total">
-                                    <span>KWOTA DO WYPŁATY:</span>
-                                    <span id="receipt-total">0$</span>
-                                </div>
-                                <p class="receipt-date">Data: <span id="current-receipt-date"></span></p>
-                                <div class="receipt-stamp">WYPŁACONO</div>
+                        </div>
+                        <div id="receipt-items" class="receipt-items"></div>
+                        <div class="receipt-divider"></div>
+                        <div class="receipt-footer">
+                            <div class="receipt-row total">
+                                <span>KWOTA DO WYPŁATY:</span>
+                                <span id="receipt-total">0$</span>
                             </div>
+                            <p class="receipt-date">Data: <span id="current-receipt-date"></span></p>
+                            <div class="receipt-stamp">WYPŁACONO</div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="modal-buttons" style="margin-top: 15px;">
-                    <button id="send-discord-btn" class="discord-btn">
-                        <i class="fab fa-discord"></i> Wyślij na Discord
-                    </button>
-                    <button id="copy-receipt-btn" class="copy-btn" onclick="copyReceiptToClipboard()">
-                        <i class="fas fa-copy"></i> Wydaj paragon klientowi
-                    </button>
-                </div>
+            <div class="modal-buttons" style="margin-top: 15px;">
+                <button id="send-discord-btn" class="discord-btn">
+                    <i class="fab fa-discord"></i> Wyślij na Discord
+                </button>
+                <button id="copy-receipt-btn" class="copy-btn" onclick="copyReceiptToClipboard()">
+                    <i class="fas fa-copy"></i> Wydaj paragon klientowi
+                </button>
             </div>
         </div>
+    </div>
 
-        <div id="cart-sidebar" class="cart-sidebar">
-            <div class="cart-header">
-                <h2><i class="fas fa-shopping-cart"></i> Twój koszyk</h2>
-                <button id="close-cart-btn" class="close-btn-cart" onclick="toggleCart()"><i class="fas fa-times"></i></button>
-            </div>
-            <div id="cart-items-container" class="cart-items-container">
-                <div class="empty-cart-msg">Koszyk jest pusty</div>
-            </div>
-            <div class="cart-footer">
-                <div class="cart-total-row">
-                    <span>Wartość:</span>
-                    <span id="cart-sidebar-total">0$</span>
+    <div id="quote-modal-export" class="modal">
+        <div class="modal-content quote-modal-dark">
+            <div class="modal-header-custom">
+                <div class="modal-title-custom">
+                    <i class="fas fa-file-invoice-dollar"></i> Wygenerowany paragon
                 </div>
+                <button onclick="closeModalExport()" class="close-modal-x">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div id="receipt-preview-container-export" class="receipt-wrapper"></div>
+            
+            <div class="modal-buttons-stack">
+                <button onclick="sendToDiscordExport()" id="send-discord-btn-export" class="btn-blue-custom">
+                    <i class="fab fa-discord"></i> Wyślij raport na Discord
+                </button>
+                <button onclick="closeModalExport()" class="btn-dark-custom">
+                    <i class="fas fa-times"></i> Zamknij
+                </button>
             </div>
         </div>
-    </div> 
-    
+    </div>
+
     <div id="settings-modal" class="modal">
         <div class="modal-content settings-modal-content">
             <div class="settings-header">
@@ -273,7 +384,7 @@
                 <button onclick="closeMyStats()" class="settings-close-btn"><i class="fas fa-times"></i></button>
             </div>
             
-            <p class="settings-desc" id="my-stats-desc">Podsumowanie Twojej aktywności w firmie (skup).</p>
+            <p class="settings-desc" id="my-stats-desc">Podsumowanie Twojej aktywności w firmie.</p>
 
             <div id="my-stats-loader" style="text-align: center; padding: 40px 0;">
                 <i class="fas fa-circle-notch fa-spin fa-3x" style="color: var(--accent-color);"></i>
@@ -281,7 +392,6 @@
             </div>
 
             <div id="my-stats-content" class="hidden">
-                
                 <div class="my-stats-toggle-container">
                     <button class="my-stats-toggle-btn active" id="btn-stats-skup" onclick="switchStatsView('skup')">
                         <i class="fas fa-cart-arrow-down"></i> Skup
@@ -353,7 +463,7 @@
 
             <div id="my-transactions-content" class="hidden" style="width: 100%;">
                 <div id="transactions-list-container" class="transactions-list">
-                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -390,7 +500,7 @@
                 <button onclick="closeChangelog()" class="settings-close-btn"><i class="fas fa-times"></i></button>
             </div>
             
-            <p class="settings-desc">Najnowsze funkcje, poprawki i ulepszenia w systemie El Cartel Pawn Shop.</p>
+            <p class="settings-desc">Najnowsze funkcje, poprawki i ulepszenia w systemie El Cartel.</p>
 
             <div id="dynamic-changelog-container" class="changelog-timeline-container">
                 <div style="text-align: center; padding: 40px 0;">
@@ -419,7 +529,7 @@
                 <div class="input-group">
                     <label>Lista zmian</label>
                     <div id="admin-changes-list" style="display: flex; flex-direction: column; gap: 10px;">
-                        </div>
+                    </div>
                     <button onclick="addAdminChangeSlot()" class="add-custom-slot-btn" style="width: fit-content; margin-top: 10px;">
                         <i class="fas fa-plus"></i> Dodaj kolejny punkt
                     </button>
@@ -427,6 +537,39 @@
                 
                 <button onclick="publishChangelog()" id="publish-changelog-btn" class="settings-save-btn" style="background: var(--ad-gold); color: #000; box-shadow: 0 4px 15px rgba(234, 179, 8, 0.3); margin-top: 20px;">
                     <i class="fas fa-upload"></i> Opublikuj wersję na stronę
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-changelog-modal" class="modal">
+        <div class="modal-content settings-modal-content" style="max-width: 650px;">
+            <div class="settings-header">
+                <h2><i class="fas fa-edit" style="color: var(--accent-color);"></i> Edytuj wersję</h2>
+                <button onclick="closeEditChangelog()" class="settings-close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <p class="settings-desc">Zmień wpisy dla wybranej wersji changelogu.</p>
+
+            <div class="settings-form">
+                <input type="hidden" id="edit-cl-original-version">
+                
+                <div class="input-group">
+                    <label>Numer wersji (np. 3.5.0)</label>
+                    <input type="text" id="edit-cl-version-input" class="custom-input" style="width: 100%;">
+                </div>
+                
+                <div class="input-group">
+                    <label>Lista zmian</label>
+                    <div id="edit-cl-changes-list" style="display: flex; flex-direction: column; gap: 10px;">
+                    </div>
+                    <button onclick="addEditChangeSlot()" class="add-custom-slot-btn" style="width: fit-content; margin-top: 10px;">
+                        <i class="fas fa-plus"></i> Dodaj kolejny punkt
+                    </button>
+                </div>
+                
+                <button onclick="saveEditedChangelog()" id="save-edit-cl-btn" class="settings-save-btn" style="background: var(--accent-color); color: #000; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3); margin-top: 20px;">
+                    <i class="fas fa-save"></i> Zapisz zmiany
                 </button>
             </div>
         </div>
@@ -470,7 +613,7 @@
                         <div class="id-field-hz">
                             <span class="id-label-hz">Aktualny stopień</span>
                             <div id="id-card-rank-container">
-                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -488,6 +631,7 @@
     </div>
 
     <div id="toast-container" class="toast-container"></div>
-    <script src="script.js?v=3.5.0"></script>
+    
+    <script src="script.js?v=3.6.0"></script>
 </body>
 </html>
