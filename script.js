@@ -1,44 +1,19 @@
 // ==========================================
 // WERSJA APLIKACJI
 // ==========================================
-const APP_VERSION = "3.6.1";
-let LATEST_CHANGELOG_VERSION = APP_VERSION; 
+const APP_VERSION = "3.5.0";
+let LATEST_CHANGELOG_VERSION = APP_VERSION; // Używana globalnie do kropki powiadomień
 
 // ==========================================
-// KONFIGURACJA I API
+// KONFIGURACJA
 // ==========================================
-const DISCORD_WEBHOOK_URL_SKUP = "https://discord.com/api/webhooks/1500540604827046078/_uzuOq6EK9Ip0XggKscXNsmPRZrl4EdmBSLcWcMRaavI0wimpqkxWIRn8TrELISJ6RZQ"; 
-const DISCORD_WEBHOOK_URL_EXPORT = "https://discord.com/api/webhooks/1500573620605550725/VmpdLB3qN1FT6Jkf-U-Wo1cig-WEpVjleki4f-EA45G5QfSuBJeC3f1fqCKB_LTeXOQ5";
-
+const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1500540604827046078/_uzuOq6EK9Ip0XggKscXNsmPRZrl4EdmBSLcWcMRaavI0wimpqkxWIRn8TrELISJ6RZQ"; 
+// Baza PIN:
 const PIN_API_URL = "https://script.google.com/macros/s/AKfycbycnbsg8yC8Cqk0tF-6syzBTvTLvO-MyTgx-zqAPjgBXPR132MicKNtjNoq3WMQfmLR/exec";
+// Baza Raportów:
 const REPORTS_API_URL = "https://script.google.com/macros/s/AKfycbwcbHTDSA5H0LO2hWYmBleL0z74CXyLYzm188cvhnQBLdbmrOw0r5OMj7QyPXivMZfzeg/exec";
 
-// ==========================================
-// ZMIENNE GLOBALNE (WSPÓLNE)
-// ==========================================
-let currentEmployeeName = ""; 
-let currentEmployeeRank = "Pracownik"; 
-let currentEmployeeSsn = "---"; 
-let currentEmployeeDateZatrudnienia = "---"; 
-let currentEmployeePhoto = ""; 
-let currentActiveView = 'skup';
-
-let myStatsRawData = [];
-let currentStatsType = 'skup';
-let currentStatsRange = 'today';
-
-let currentReportReceiptId = ""; 
-
-// ==========================================
-// FUNKCJA AUTORYZACJI SZEFA
-// ==========================================
-function isTravisVance() {
-    return currentEmployeeName && currentEmployeeName.trim().toLowerCase() === "travis vance";
-}
-
-// ==========================================
-// BAZA DANYCH - SKUP (KASA)
-// ==========================================
+// Główna, domyślna baza przedmiotów
 const defaultInventory = [
     { name: "Zdobiona książka", min: 120, max: 120, category: "inne" },
     { name: "Dywan", min: 240, max: 240, category: "dom" },
@@ -64,7 +39,7 @@ const defaultInventory = [
     { name: "Telewizor", min: 600, max: 600, category: "elektronika" },
     { name: "Zegarek", min: 160, max: 160, category: "biżuteria" },
     { name: "Złota bransoletka", min: 200, max: 200, category: "biżuteria" },
-    { name: "Złota moneta", min: 200, max: 200, category: "inne" },
+	{ name: "Złota moneta", min: 200, max: 200, category: "inne" },
     { name: "Złota moneta z prezydentem", min: 200, max: 200, category: "inne" },
     { name: "Złote kolczyki", min: 200, max: 200, category: "biżuteria" },
     { name: "Popsuty telefon", min: 95, max: 95, category: "elektronika" }
@@ -75,52 +50,22 @@ let counts = {};
 let currentCategory = 'wszystkie';
 let currentMinTotal = 0; 
 let currentMaxTotal = 0; 
+let currentEmployeeName = ""; 
+let currentEmployeeRank = "Pracownik"; 
+let currentEmployeeSsn = "---"; 
+let currentEmployeeDateZatrudnienia = "---"; 
+let currentEmployeePhoto = ""; // NOWA ZMIENNA GLOBALNA NA ZDJĘCIE
+// BLOKADA PODWÓJNEGO NALICZANIA UTARGU
 let isStatAddedForCurrentReceipt = false;
-let currentCustomerSSN = "";
 
-// ==========================================
-// BAZA DANYCH - EKSPORT (SPRZEDAŻ)
-// ==========================================
-const defaultExportInventory = [
-    { name: "Zdobiona książka", price: 150, category: "inne" },
-    { name: "Dywan", price: 300, category: "dom" },
-    { name: "Komputer (laptop)", price: 750, category: "elektronika" },
-    { name: "Komputer (stacjonarny)", price: 850, category: "elektronika" },
-    { name: "Konsola", price: 500, category: "elektronika" },
-    { name: "Konsola DJ", price: 800, category: "elektronika" },
-    { name: "Kobieca plastikowa figurka", price: 120, category: "inne" },
-    { name: "Stara zapalniczka", price: 22, category: "inne" },
-    { name: "Plastikowa figurka małpki", price: 100, category: "inne" },
-    { name: "Kwiat", price: 80, category: "dom" },
-    { name: "Gitara elektryczna", price: 600, category: "elektronika" },
-    { name: "Dziwna substancja", price: 120, category: "inne" },
-    { name: "Dziwna szara substancja", price: 200, category: "inne" },
-    { name: "Biżuteria", price: 300, category: "biżuteria" },
-    { name: "Brudna biżuteria", price: 180, category: "biżuteria" },
-    { name: "Katana", price: 600, category: "inne" },
-    { name: "Mikrofala", price: 350, category: "dom" },
-    { name: "Mikser", price: 200, category: "dom" },
-    { name: "Monitor", price: 180, category: "elektronika" },
-    { name: "Obraz", price: 140, category: "dom" },
-    { name: "Obraz ścienny", price: 220, category: "dom" },
-    { name: "Głośnik", price: 180, category: "elektronika" },
-    { name: "Telewizor", price: 750, category: "elektronika" },
-    { name: "Zegarek", price: 200, category: "biżuteria" },
-    { name: "Stary popsuty telefon", price: 110, category: "elektronika" },
-    { name: "Sztabka złota", price: 15000, category: "inne" },
-    { name: "Złota moneta z prezydentem", price: 250, category: "inne" }
-];
+// Zmienna do raportowania błędu transakcji
+let currentReportReceiptId = "";
 
-let exportInventory = [];
-let countsExport = {};
-let currentCategoryExport = 'wszystkie';
-let currentTotalExport = 0;
-let lastGeneratedReportID = ""; 
-let currentCustomerSSNExport = "";
+// Do statystyk globalnych pracownika
+let myStatsRawData = [];
+let currentStatsType = 'skup';
+let currentStatsRange = 'today';
 
-// ==========================================
-// FUNKCJE POMOCNICZE (DATY, ID)
-// ==========================================
 function getFormattedDate() {
     const now = new Date();
     const day = String(now.getDate()).padStart(2, '0');
@@ -140,6 +85,7 @@ function getFormattedDateTime() {
     return `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`;
 }
 
+// Funkcja parsująca daty przychodzące z Google Sheets
 function parseDate(dateStr) {
     if (!dateStr) return new Date();
     if (typeof dateStr === 'string' && dateStr.includes("T")) {
@@ -165,6 +111,7 @@ function generateID() {
     return res;
 }
 
+// NASŁUCHIWANIE SCROLLA DLA NAVBARA
 document.addEventListener('scroll', function() {
     const navbar = document.querySelector('.navbar');
     if (window.scrollY > 50) {
@@ -173,38 +120,6 @@ document.addEventListener('scroll', function() {
         navbar.classList.remove('scrolled');
     }
 });
-
-// ==========================================
-// SYSTEM PRZEŁĄCZANIA WIDOKÓW (SPA)
-// ==========================================
-window.switchView = function(view) {
-    if (!currentEmployeeName && document.getElementById('login-screen').classList.contains('active')) {
-        return; 
-    }
-
-    currentActiveView = view;
-    const themeStyle = document.getElementById('theme-style');
-    
-    const viewSkup = document.getElementById('view-skup');
-    const viewExport = document.getElementById('view-export');
-    const navLogoIcon = document.getElementById('nav-logo-icon');
-
-    if (view === 'skup') {
-        if(themeStyle) themeStyle.href = `style.css?v=${APP_VERSION}`;
-        viewSkup.style.display = 'block';
-        viewExport.style.display = 'none';
-        navLogoIcon.className = 'fas fa-cash-register';
-        document.querySelector('.navbar').classList.remove('scrolled'); 
-    } else if (view === 'export') {
-        if(themeStyle) themeStyle.href = `style-sprzedaz.css?v=${APP_VERSION}`;
-        viewSkup.style.display = 'none';
-        viewExport.style.display = 'block';
-        navLogoIcon.className = 'fas fa-box-open';
-        document.querySelector('.navbar').classList.remove('scrolled'); 
-    }
-    
-    document.getElementById('user-dropdown').classList.remove('active');
-}
 
 // ==========================================
 // SYSTEM LOGOWANIA
@@ -226,39 +141,18 @@ window.login = async function() {
             currentEmployeeRank = data.rank || "Pracownik"; 
             currentEmployeeSsn = data.ssn || "---"; 
             currentEmployeeDateZatrudnienia = data.dateZatrudnienia || "Brak danych";
-            currentEmployeePhoto = data.photo || ""; 
+            currentEmployeePhoto = data.photo || ""; // POBIERANIE ZDJĘCIA Z BAZY
             
-            const adminChangelogBtn = document.getElementById('admin-changelog-btn');
-            const adminReportsBtn = document.getElementById('admin-reports-btn');
-            if (adminChangelogBtn) adminChangelogBtn.style.display = isTravisVance() ? 'flex' : 'none';
-            if (adminReportsBtn) adminReportsBtn.style.display = isTravisVance() ? 'flex' : 'none';
-
-            document.getElementById('logged-user-name').innerText = currentEmployeeName.toUpperCase();
-            document.getElementById('dropdown-user-name').innerText = currentEmployeeName;
-            document.getElementById('dropdown-user-rank').innerText = currentEmployeeRank;
-            
-            const navAvatar = document.getElementById('nav-user-avatar');
-            const navDefaultIcon = document.getElementById('nav-user-default-icon');
-            const dropAvatar = document.getElementById('dropdown-user-avatar');
-            const dropDefaultIcon = document.getElementById('dropdown-user-default-icon');
-
-            if (currentEmployeePhoto && currentEmployeePhoto !== "") {
-                navAvatar.src = currentEmployeePhoto;
-                navAvatar.style.display = 'block';
-                navDefaultIcon.style.display = 'none';
-                
-                dropAvatar.src = currentEmployeePhoto;
-                dropAvatar.style.display = 'block';
-                dropDefaultIcon.style.display = 'none';
+            // UKRYTY PANEL TYLKO DLA TRAVIS VANCE
+            if (currentEmployeeName.toLowerCase() === "travis vance") {
+                document.getElementById('admin-changelog-btn').style.display = 'flex';
             } else {
-                navAvatar.style.display = 'none';
-                navDefaultIcon.style.display = 'block';
-                
-                dropAvatar.style.display = 'none';
-                dropDefaultIcon.style.display = 'block';
+                document.getElementById('admin-changelog-btn').style.display = 'none';
             }
 
+            document.getElementById('logged-user-name').innerText = currentEmployeeName.toUpperCase();
             document.getElementById('login-screen').classList.remove('active');
+            
             document.getElementById('main-app').style.display = 'block';
             document.getElementById('user-profile').style.display = 'block';
             
@@ -267,12 +161,7 @@ window.login = async function() {
 
             showNotice(`Rozpoczęto zmianę: ${data.name}`, "success");
             
-            initSkup();
-            initExport();
-            fetchChangelogData();
-            
-            switchView('skup');
-
+            init();
         } else {
             showNotice("Nieprawidłowy PIN!", "danger");
         }
@@ -290,42 +179,20 @@ window.logout = function() {
     currentEmployeeRank = "Pracownik";
     currentEmployeeSsn = "---";
     currentEmployeeDateZatrudnienia = "---";
-    currentEmployeePhoto = ""; 
+    currentEmployeePhoto = ""; // CZYSZCZENIE ZDJĘCIA PRZY WYLOGOWANIU
     document.getElementById('employee-login-pin').value = "";
     document.getElementById('logged-user-name').innerText = "---";
-    document.getElementById('dropdown-user-name').innerText = "---";
-    document.getElementById('dropdown-user-rank').innerText = "---";
-    
-    const navAvatar = document.getElementById('nav-user-avatar');
-    const navDefaultIcon = document.getElementById('nav-user-default-icon');
-    const dropAvatar = document.getElementById('dropdown-user-avatar');
-    const dropDefaultIcon = document.getElementById('dropdown-user-default-icon');
-    
-    if(navAvatar) navAvatar.style.display = 'none';
-    if(navDefaultIcon) navDefaultIcon.style.display = 'block';
-    if(dropAvatar) dropAvatar.style.display = 'none';
-    if(dropDefaultIcon) dropDefaultIcon.style.display = 'block';
-
     document.getElementById('login-screen').classList.add('active');
     
     document.getElementById('main-app').style.display = 'none';
     document.getElementById('user-profile').style.display = 'none';
     document.getElementById('user-dropdown').classList.remove('active');
-    
-    const adminChangelogBtn = document.getElementById('admin-changelog-btn');
-    const adminReportsBtn = document.getElementById('admin-reports-btn');
-    if(adminChangelogBtn) adminChangelogBtn.style.display = 'none';
-    if(adminReportsBtn) adminReportsBtn.style.display = 'none';
+    document.getElementById('admin-changelog-btn').style.display = 'none';
     
     const banner = document.getElementById('announcement-banner');
     if(banner) banner.style.display = 'none';
 
-    const clContainer = document.getElementById('dynamic-changelog-container');
-    if (clContainer) clContainer.innerHTML = '';
-
     resetCartAndInventory();
-    resetCartAndInventoryExport();
-    
     showNotice("Zakończono zmianę. Wylogowano.", "info");
 }
 
@@ -333,6 +200,7 @@ window.toggleUserMenu = function() {
     document.getElementById('user-dropdown').classList.toggle('active');
 }
 
+// Zamykanie dropdowna kliknięciem poza nim
 document.addEventListener('click', function(event) {
     const profile = document.getElementById('user-profile');
     const dropdown = document.getElementById('user-dropdown');
@@ -341,10 +209,7 @@ document.addEventListener('click', function(event) {
     }
 });
 
-
-// ==========================================
-// LOKALNE STATYSTYKI SKUPU
-// ==========================================
+// STATYSTYKI PRACOWNIKA (Lokale Storage - tylko w tle do zliczania live)
 function getDailyStat(employeeName) {
     const date = getFormattedDate();
     const key = `elcartel_stats_${employeeName}_${date}`;
@@ -358,21 +223,6 @@ function addDailyStat(employeeName, amount) {
     localStorage.setItem(key, current + amount);
 }
 
-// ==========================================
-// LOGIKA - SKUP (KASA)
-// ==========================================
-function initSkup() {
-    document.getElementById('header-date').innerText = getFormattedDate();
-    resetCartAndInventory();
-    
-    const adInput = document.getElementById('ad-input');
-    if(adInput) {
-        adInput.addEventListener('input', updateAdPreview);
-        updateAdPreview();
-    }
-    updateCartView(); 
-}
-
 function resetCartAndInventory() {
     inventory = JSON.parse(JSON.stringify(defaultInventory));
     counts = {};
@@ -384,7 +234,6 @@ function resetCartAndInventory() {
     
     const ssnInput = document.getElementById('customer-ssn-input');
     if (ssnInput) ssnInput.value = "";
-    currentCustomerSSN = "";
 
     renderInventory();
     calculateTotal();
@@ -392,7 +241,6 @@ function resetCartAndInventory() {
 
 function renderInventory() {
     const list = document.getElementById('items-list');
-    if(!list) return;
     list.innerHTML = ''; 
     
     const customCards = [];
@@ -442,13 +290,229 @@ function renderInventory() {
     applyFilters();
 }
 
+function init() {
+    document.getElementById('header-date').innerText = getFormattedDate();
+    resetCartAndInventory();
+    
+    document.getElementById('ad-input').addEventListener('input', updateAdPreview);
+    updateAdPreview();
+    updateCartView(); 
+    fetchChangelogData(); // Pobiera najnowszy changelog na start
+}
+
+// ==========================================
+// SYSTEM POWIADOMIEŃ I DYNAMICZNEGO CHANGELOGA
+// ==========================================
+async function fetchChangelogData() {
+    try {
+        const response = await fetch(`${REPORTS_API_URL}?action=get_reports&t=${new Date().getTime()}`);
+        const data = await response.json();
+        
+        const clData = data.filter(r => r.type === "changelog");
+        if (clData.length > 0) {
+            const grouped = {};
+            clData.forEach(r => {
+                if (!grouped[r.report_id]) grouped[r.report_id] = { date: r.date, items: [] };
+                grouped[r.report_id].items.push(r.name);
+            });
+            
+            // Sortowanie wersji od najnowszej do najstarszej
+            const sortedVersions = Object.keys(grouped).reverse();
+            
+            const container = document.getElementById('dynamic-changelog-container');
+            if(container && sortedVersions.length > 0) {
+                LATEST_CHANGELOG_VERSION = sortedVersions[0]; // Zapisujemy najnowszą z bazy
+                container.innerHTML = ""; // Czyścimy starą, sztywną listę
+                
+                sortedVersions.forEach((v, index) => {
+                    const dateLabel = index === 0 ? "Najnowsza" : grouped[v].date.split(' ')[0];
+                    let listHtml = "";
+                    
+                    // Obcięcie literki 'v' używanej by chronić przed konwersją na datę w Google Sheets
+                    let displayVersion = v;
+                    if (v.startsWith('v')) {
+                        displayVersion = v.substring(1);
+                    }
+                    
+                    grouped[v].items.forEach(itemStr => {
+                        let tag = "INFO";
+                        let desc = itemStr;
+                        // Odkodowanie tagu z nazwy
+                        if(itemStr.includes('|||')) {
+                            const parts = itemStr.split('|||');
+                            tag = parts[0];
+                            desc = parts[1];
+                        }
+                        
+                        let clClass = tag === "NOWOŚĆ" ? "cl-new" : (tag === "POPRAWKA" ? "cl-fix" : "cl-tag");
+                        listHtml += `<li><span class="cl-tag ${clClass}">${tag}</span> ${desc}</li>`;
+                    });
+                    
+                    container.innerHTML += `
+                        <div class="changelog-item">
+                            <div class="changelog-version-header">
+                                Wersja ${displayVersion} <span class="changelog-date">${dateLabel}</span>
+                            </div>
+                            <ul class="changelog-list">${listHtml}</ul>
+                        </div>
+                    `;
+                });
+                checkChangelogNotification();
+            }
+        }
+    } catch(e) {
+        console.log("Nie udało się pobrać dynamicznego changeloga", e);
+        checkChangelogNotification(); // Fallback na stałą wersję
+    }
+}
+
+function checkChangelogNotification() {
+    const seenVersion = localStorage.getItem('elcartel_changelog_seen');
+    const navDot = document.getElementById('nav-notification-dot');
+    const dropDot = document.getElementById('dropdown-notification-dot');
+    
+    if (seenVersion !== LATEST_CHANGELOG_VERSION) {
+        if (navDot) navDot.classList.remove('hidden');
+        if (dropDot) dropDot.classList.remove('hidden');
+    } else {
+        if (navDot) navDot.classList.add('hidden');
+        if (dropDot) dropDot.classList.add('hidden');
+    }
+}
+
+window.openChangelog = function() {
+    document.getElementById('user-dropdown').classList.remove('active');
+    document.getElementById('changelog-modal').classList.add('active');
+    
+    localStorage.setItem('elcartel_changelog_seen', LATEST_CHANGELOG_VERSION);
+    checkChangelogNotification(); 
+}
+
+window.closeChangelog = function() {
+    document.getElementById('changelog-modal').classList.remove('active');
+}
+
+// ==========================================
+// ADMIN: DODAWANIE CHANGELOGA
+// ==========================================
+window.openAdminChangelog = function() {
+    document.getElementById('user-dropdown').classList.remove('active');
+    document.getElementById('admin-changelog-modal').classList.add('active');
+    if(document.getElementById('admin-changes-list').children.length === 0) {
+        addAdminChangeSlot();
+    }
+}
+
+window.closeAdminChangelog = function() {
+    document.getElementById('admin-changelog-modal').classList.remove('active');
+}
+
+window.addAdminChangeSlot = function() {
+    const container = document.getElementById('admin-changes-list');
+    const div = document.createElement('div');
+    div.style.display = 'flex';
+    div.style.gap = '10px';
+    div.style.alignItems = 'center';
+    div.innerHTML = `
+        <select class="custom-input admin-change-tag" style="width: 120px; padding: 10px;">
+            <option value="NOWOŚĆ">NOWOŚĆ</option>
+            <option value="POPRAWKA">POPRAWKA</option>
+            <option value="USUNIĘTO">USUNIĘTO</option>
+        </select>
+        <input type="text" class="custom-input admin-change-desc" placeholder="Opis zmiany..." style="flex: 1; padding: 10px;">
+        <button type="button" class="settings-close-btn" style="width: 40px; height: 40px; flex-shrink: 0;" onclick="this.parentElement.remove()">
+            <i class="fas fa-trash"></i>
+        </button>
+    `;
+    container.appendChild(div);
+}
+
+window.publishChangelog = async function() {
+    const version = document.getElementById('admin-version-input').value.trim();
+    if (!version) return showNotice("Podaj numer wersji!", "warning");
+    
+    const rows = document.querySelectorAll('#admin-changes-list > div');
+    if (rows.length === 0) return showNotice("Dodaj co najmniej jedną zmianę!", "warning");
+    
+    let itemsToLog = [];
+    let valid = true;
+    
+    rows.forEach(row => {
+        const tag = row.querySelector('.admin-change-tag').value;
+        const desc = row.querySelector('.admin-change-desc').value.trim();
+        if (!desc) valid = false;
+        
+        itemsToLog.push({
+            name: `${tag}|||${desc}`,
+            qty: 1,
+            total: 0
+        });
+    });
+    
+    if (!valid) return showNotice("Wypełnij opisy wszystkich zmian!", "warning");
+    
+    const btn = document.getElementById('publish-changelog-btn');
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Zapisywanie...';
+    
+    // Dodajemy "v" na początku, żeby Google Sheets nie zmieniło wersji na datę (np. "3.4.0" -> "v3.4.0")
+    const safeVersion = "v" + version;
+    
+    const logPayload = {
+        action: "save_receipt",
+        type: "changelog",
+        date: getFormattedDateTime(),
+        employee: currentEmployeeName,
+        report_id: safeVersion, 
+        items: itemsToLog
+    };
+    
+    try {
+        // Usunięto wysyłanie na Discord zgodnie z prośbą
+        
+        await fetch(REPORTS_API_URL, {
+            method: "POST",
+            body: JSON.stringify(logPayload)
+        });
+        
+        showNotice("Changelog opublikowany pomyślnie!", "success");
+        closeAdminChangelog();
+        document.getElementById('admin-version-input').value = "";
+        document.getElementById('admin-changes-list').innerHTML = "";
+        
+        fetchChangelogData(); // Odświeża listę od razu po dodaniu
+        
+    } catch(e) {
+        showNotice("Błąd publikacji!", "danger");
+        console.error(e);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+    }
+}
+
+
+window.toggleWidget = function() {
+    const widget = document.getElementById('dynamic-price-widget');
+    const icon = document.getElementById('widget-toggle-icon');
+    if (widget && icon) {
+        widget.classList.toggle('collapsed');
+        if (widget.classList.contains('collapsed')) {
+            icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+        } else {
+            icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+        }
+    }
+}
+
 window.addCustomItemSlot = function() {
     const index = inventory.length;
     inventory.push({ name: "Własny przedmiot", min: 0, max: 0, category: "inne", isCustom: true });
     counts[index] = 0;
 
     renderInventory();
-    showNotice("Dodano nowe pole na własny przedmiot (Skup)!", "success");
+    showNotice("Dodano nowe pole na własny przedmiot!", "success");
 }
 
 window.updateCustomName = function(index, value) {
@@ -488,8 +552,7 @@ function calculateTotal() {
     });
     currentMinTotal = min; 
     currentMaxTotal = max; 
-    const totalPriceEl = document.getElementById('total-price');
-    if(totalPriceEl) totalPriceEl.innerText = min + '$';
+    document.getElementById('total-price').innerText = min + '$';
     
     const bonusEl = document.getElementById('bonus-range');
     if (bonusEl) {
@@ -546,17 +609,13 @@ function updateCartView() {
 
 window.filterCategory = function(cat, btn) {
     currentCategory = cat;
-    const viewSkup = document.getElementById('view-skup');
-    if(viewSkup) {
-        viewSkup.querySelectorAll('.categories-container .cat-btn').forEach(b => b.classList.remove('active'));
-    }
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
     if(btn) btn.classList.add('active');
     applyFilters();
 }
 
 function applyFilters() {
-    const searchInputEl = document.getElementById('search-input');
-    const term = searchInputEl ? searchInputEl.value.toLowerCase() : "";
+    const term = document.getElementById('search-input').value.toLowerCase();
     const adSection = document.getElementById('ad-section');
     const itemsList = document.getElementById('items-list');
     const asortymentHeader = document.getElementById('asortyment-header-wrapper');
@@ -569,25 +628,23 @@ function applyFilters() {
         if(adSection) adSection.classList.add('hidden');
         if(itemsList) itemsList.classList.remove('hidden');
         if(asortymentHeader) asortymentHeader.classList.remove('hidden');
-        if(itemsList) {
-            itemsList.querySelectorAll('.item-card').forEach(card => {
-                const name = card.getAttribute('data-name') || '';
-                const cat = card.getAttribute('data-category') || '';
-                const match = name.includes(term) && (currentCategory === 'wszystkie' || cat === currentCategory);
-                card.classList.toggle('hidden', !match);
-            });
-        }
+        document.querySelectorAll('.item-card').forEach(card => {
+            const name = card.getAttribute('data-name') || '';
+            const cat = card.getAttribute('data-category') || '';
+            const match = name.includes(term) && (currentCategory === 'wszystkie' || cat === currentCategory);
+            card.classList.toggle('hidden', !match);
+        });
     }
 }
 
 window.generateQuote = async function() {
     const hasItems = Object.values(counts).some(c => c > 0);
     const finalPriceInput = document.getElementById('final-price-input');
-    const finalPrice = finalPriceInput ? parseFloat(finalPriceInput.value) : NaN;
+    const finalPrice = parseFloat(finalPriceInput.value);
     const ssnInput = document.getElementById('customer-ssn-input');
     currentCustomerSSN = ssnInput ? ssnInput.value.trim() : "";
 
-    if (!hasItems) return showNotice("Koszyk skupu jest pusty!", "warning");
+    if (!hasItems) return showNotice("Koszyk jest pusty!", "warning");
     
     if (isNaN(finalPrice)) {
         return showNotice("Wpisz kwotę transakcji!", "danger");
@@ -602,7 +659,6 @@ window.generateQuote = async function() {
     }
 
     const btn = document.getElementById('quote-btn');
-    if(!btn) return;
     const originalBtnHtml = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Przetwarzanie...';
@@ -618,66 +674,57 @@ function finalizeQuote(employeeName, finalPrice) {
     isStatAddedForCurrentReceipt = false;
     
     const receiptID = generateID();
-    const currentReceiptDateEl = document.getElementById('current-receipt-date');
-    if(currentReceiptDateEl) currentReceiptDateEl.innerText = getFormattedDate();
-    
-    const receiptIdDisplay = document.getElementById('receipt-id-display');
-    if(receiptIdDisplay) receiptIdDisplay.innerText = `NR: ${receiptID}`;
+    document.getElementById('current-receipt-date').innerText = getFormattedDate();
+    document.getElementById('receipt-id-display').innerText = `NR: ${receiptID}`;
     
     let employeeText = `PRACOWNIK: ${employeeName.toUpperCase()}`;
     if (currentCustomerSSN !== "") {
         employeeText += `<br>KLIENT (SSN): ${currentCustomerSSN}`;
     }
-    const receiptEmployeeDisplay = document.getElementById('receipt-employee-display');
-    if(receiptEmployeeDisplay) receiptEmployeeDisplay.innerHTML = employeeText;
+    document.getElementById('receipt-employee-display').innerHTML = employeeText;
     
-    const receiptTotal = document.getElementById('receipt-total');
-    if(receiptTotal) receiptTotal.innerText = finalPrice + '$';
+    document.getElementById('receipt-total').innerText = finalPrice + '$';
 
     const itemsDiv = document.getElementById('receipt-items');
-    if(itemsDiv) {
-        itemsDiv.innerHTML = '';
-        const ratio = finalPrice / currentMinTotal;
+    itemsDiv.innerHTML = '';
+    
+    const ratio = finalPrice / currentMinTotal;
 
-        inventory.forEach((item, i) => {
-            if (counts[i] > 0) {
-                const row = document.createElement('div');
-                row.className = 'receipt-row';
-                const calculatedItemTotal = Math.round(item.min * counts[i] * ratio);
-                row.innerHTML = `<span>${item.name} [x${counts[i]}]</span><span>${calculatedItemTotal}$</span>`;
-                itemsDiv.appendChild(row);
-            }
-        });
-
-        let sigDiv = document.querySelector('.receipt-signature');
-        if (!sigDiv) {
-            sigDiv = document.createElement('div');
-            sigDiv.className = 'receipt-signature';
-            itemsDiv.parentNode.insertBefore(sigDiv, document.querySelector('.receipt-footer'));
+    inventory.forEach((item, i) => {
+        if (counts[i] > 0) {
+            const row = document.createElement('div');
+            row.className = 'receipt-row';
+            const calculatedItemTotal = Math.round(item.min * counts[i] * ratio);
+            row.innerHTML = `<span>${item.name} [x${counts[i]}]</span><span>${calculatedItemTotal}$</span>`;
+            itemsDiv.appendChild(row);
         }
-        sigDiv.innerHTML = `<span class="signature-label">Podpis pracownika</span><span class="signature-text">${employeeName}</span>`;
-    }
+    });
 
-    const quoteModal = document.getElementById('quote-modal');
-    if(quoteModal) quoteModal.classList.add('active');
+    let sigDiv = document.querySelector('.receipt-signature');
+    if (!sigDiv) {
+        sigDiv = document.createElement('div');
+        sigDiv.className = 'receipt-signature';
+        itemsDiv.parentNode.insertBefore(sigDiv, document.querySelector('.receipt-footer'));
+    }
+    sigDiv.innerHTML = `<span class="signature-label">Podpis pracownika</span><span class="signature-text">${employeeName}</span>`;
+
+    document.getElementById('quote-modal').classList.add('active');
 }
 
 async function sendToDiscord() {
     const btn = document.getElementById('send-discord-btn');
     const area = document.getElementById('receipt-capture-area');
-    if(!area || !btn) return;
     
-    const receiptIDDisplay = document.getElementById('receipt-id-display');
-    const receiptID = receiptIDDisplay ? receiptIDDisplay.innerText.replace('NR: ', '') : '';
+    const receiptID = document.getElementById('receipt-id-display').innerText.replace('NR: ', '');
     const employee = currentEmployeeName; 
-    const finalPriceTextEl = document.getElementById('receipt-total');
-    const finalPriceText = finalPriceTextEl ? finalPriceTextEl.innerText : '0$';
+    const finalPriceText = document.getElementById('receipt-total').innerText;
     const finalPriceNumeric = parseFloat(finalPriceText.replace('$', ''));
 
     btn.disabled = true;
     btn.innerText = "Wysyłanie...";
 
     const itemsToLog = [];
+    
     let remainingAmount = finalPriceNumeric;
     const ratio = finalPriceNumeric / currentMinTotal;
     
@@ -739,7 +786,7 @@ async function sendToDiscord() {
 
             formData.append("payload_json", JSON.stringify(embedPayload));
             
-            const res = await fetch(DISCORD_WEBHOOK_URL_SKUP, { method: "POST", body: formData });
+            const res = await fetch(DISCORD_WEBHOOK_URL, { method: "POST", body: formData });
             if (res.ok) {
                 fetch(REPORTS_API_URL, {
                     method: "POST",
@@ -768,7 +815,6 @@ async function sendToDiscord() {
 window.copyReceiptToClipboard = async function() {
     const btn = document.getElementById('copy-receipt-btn');
     const area = document.getElementById('receipt-capture-area');
-    if(!area || !btn) return;
     
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generowanie...';
@@ -816,24 +862,89 @@ window.updateAdPreview = function() {
 
 window.insertTag = function(tag) {
     const area = document.getElementById('ad-input');
-    if(!area) return;
     const s = area.selectionStart, e = area.selectionEnd;
     area.value = area.value.substring(0, s) + tag + area.value.substring(e);
     updateAdPreview();
 }
 
 window.copyAd = function() {
-    const adInput = document.getElementById('ad-input');
-    if(adInput) {
-        navigator.clipboard.writeText(adInput.value);
-        showNotice("Skopiowano reklamę!", "success");
-    }
+    navigator.clipboard.writeText(document.getElementById('ad-input').value);
+    showNotice("Skopiowano reklamę!", "success");
 }
 
 window.closeModal = function() { 
-    const quoteModal = document.getElementById('quote-modal');
-    if(quoteModal) quoteModal.classList.remove('active'); 
+    document.getElementById('quote-modal').classList.remove('active'); 
 }
+
+// OTWIERANIE I ZAMYKANIE IDENTYFIKATORA
+window.openIdCard = function() {
+    document.getElementById('user-dropdown').classList.remove('active');
+    
+    if (currentEmployeeName) {
+        document.getElementById('id-card-name').innerText = currentEmployeeName.toUpperCase();
+        document.getElementById('id-card-ssn').innerText = currentEmployeeSsn;
+        document.getElementById('id-card-date-zatrudnienia').innerText = currentEmployeeDateZatrudnienia;
+        
+        // --- LOGIKA DLA ZDJĘCIA ---
+        const photoContainer = document.querySelector('#id-card-modal .id-photo-box');
+        if (currentEmployeePhoto && currentEmployeePhoto !== "") {
+            // Jeśli jest link, wstawiamy obrazek
+            photoContainer.innerHTML = `<img src="${currentEmployeePhoto}" alt="Zdjęcie postaci" class="id-photo-img">`;
+        } else {
+            // Jeśli nie ma, wstawiamy domyślną ikonę
+            photoContainer.innerHTML = `<i class="fas fa-user-tie"></i>`;
+        }
+        // -------------------------
+
+        const signatureEl = document.getElementById('id-card-signature');
+        if (signatureEl) signatureEl.innerText = currentEmployeeName;
+
+        // Pojedyncze podświetlone stanowisko
+        document.getElementById('id-card-rank-container').innerHTML = `<span class="active-rank">${currentEmployeeRank}</span>`;
+    }
+    
+    document.getElementById('id-card-modal').classList.add('active');
+}
+
+window.closeIdCard = function() {
+    document.getElementById('id-card-modal').classList.remove('active');
+}
+
+window.showNotice = function(msg, type) {
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerText = msg;
+    document.getElementById('toast-container').appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, 3000);
+}
+
+document.getElementById('reset-btn').onclick = () => {
+    resetCartAndInventory();
+    showNotice("Wyczyszczono koszyk!", "warning");
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    
+    const sendBtn = document.getElementById('send-discord-btn');
+    if(sendBtn) sendBtn.onclick = sendToDiscord;
+    
+    const searchInput = document.getElementById('search-input');
+    if(searchInput) searchInput.addEventListener('input', applyFilters);
+
+    const triggerGenerateQuote = function(e) {
+        if (e.key === 'Enter') generateQuote();
+    };
+    
+    const finalPriceInput = document.getElementById('final-price-input');
+    if(finalPriceInput) finalPriceInput.addEventListener('keypress', triggerGenerateQuote);
+
+    const loginPinInput = document.getElementById('employee-login-pin');
+    if (loginPinInput) {
+        loginPinInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') login();
+        });
+    }
+});
 
 window.toggleSummary = function() {
     const bar = document.getElementById('summary-bar');
@@ -850,722 +961,60 @@ window.toggleSummary = function() {
     }
 }
 
-// ==========================================
-// LOGIKA - EKSPORT (SPRZEDAŻ)
-// ==========================================
-function initExport() {
-    const list = document.getElementById('items-list-export');
-    if (!list) return;
-    
-    list.innerHTML = '';
-    const headerDateExport = document.getElementById('header-date-export');
-    if(headerDateExport) headerDateExport.innerText = getFormattedDate();
-    
-    resetCartAndInventoryExport();
-}
-
-function resetCartAndInventoryExport() {
-    exportInventory = JSON.parse(JSON.stringify(defaultExportInventory));
-    countsExport = {};
-    
-    exportInventory.forEach((_, index) => { countsExport[index] = 0; });
-
-    const ssnInput = document.getElementById('customer-ssn-input-export');
-    if (ssnInput) ssnInput.value = "";
-    currentCustomerSSNExport = "";
-
-    renderInventoryExport();
-    calculateTotalExport();
-}
-
-function renderInventoryExport() {
-    const list = document.getElementById('items-list-export');
-    if(!list) return;
-    list.innerHTML = ''; 
-    
-    exportInventory.forEach((item, index) => {
-        if(countsExport[index] === undefined) countsExport[index] = 0;
-        const card = document.createElement('div');
-        card.className = 'item-card';
-        card.setAttribute('data-category', item.category);
-        card.setAttribute('data-name', item.name.toLowerCase());
-        
-        if(item.isCustom) {
-            card.classList.add('custom-item');
-            card.id = `custom-card-export-${index}`;
-            card.innerHTML = `
-                <div class="custom-inputs-wrapper">
-                    <input type="text" class="custom-name-input" placeholder="Wpisz nazwę..." value="${item.name === 'Własny przedmiot' ? '' : item.name}" oninput="updateCustomNameExport(${index}, this.value)">
-                    <input type="number" class="custom-price-input" placeholder="Cena $" min="0" value="${item.price > 0 ? item.price : ''}" oninput="updateCustomPriceExport(${index}, this.value)">
-                </div>
-                <div class="controls">
-                    <button class="btn-circle minus" onclick="updateCountExport(${index}, -1)">-</button>
-                    <input type="number" id="count-export-${index}" class="quantity-input" value="${countsExport[index]}" min="0" oninput="handleInputExport(${index}, this.value)">
-                    <button class="btn-circle plus" onclick="updateCountExport(${index}, 1)">+</button>
-                </div>
-            `;
-            list.insertBefore(card, list.firstChild);
-        } else {
-            card.innerHTML = `
-                <div class="item-info">
-                    <span class="item-name">${item.name}</span>
-                    <span class="item-price">Sprzedaż: ${item.price}$</span>
-                </div>
-                <div class="controls">
-                    <button class="btn-circle minus" onclick="updateCountExport(${index}, -1)">-</button>
-                    <input type="number" id="count-export-${index}" class="quantity-input" value="${countsExport[index]}" min="0" oninput="handleInputExport(${index}, this.value)">
-                    <button class="btn-circle plus" onclick="updateCountExport(${index}, 1)">+</button>
-                </div>
-            `;
-            list.appendChild(card);
-        }
-    });
-    
-    applyFiltersExport();
-}
-
-window.addCustomItemSlotExport = function() {
-    const index = exportInventory.length; 
-    
-    exportInventory.push({ name: "Własny przedmiot", price: 0, category: "custom", isCustom: true });
-    countsExport[index] = 1;
-
-    renderInventoryExport();
-    calculateTotalExport();
-    showNotice("Dodano nowe pole na własny przedmiot (Eksport)!", "success");
-}
-
-window.updateCustomNameExport = function(i, val) {
-    exportInventory[i].name = val || "Własny przedmiot";
-    updateCartViewExport();
-}
-
-window.updateCustomPriceExport = function(i, val) {
-    exportInventory[i].price = parseInt(val) || 0;
-    calculateTotalExport();
-}
-
-window.updateCountExport = function(i, change) {
-    countsExport[i] = Math.max(0, (countsExport[i] || 0) + change);
-    const input = document.getElementById(`count-export-${i}`);
-    if (input) input.value = countsExport[i];
-    calculateTotalExport();
-}
-
-window.handleInputExport = function(i, value) {
-    countsExport[i] = Math.max(0, parseInt(value) || 0);
-    calculateTotalExport();
-}
-
-function calculateTotalExport() {
-    currentTotalExport = exportInventory.reduce((sum, item, i) => sum + (item.price * (countsExport[i] || 0)), 0);
-    const totalDisplay = document.getElementById('total-price-export');
-    if (totalDisplay) totalDisplay.innerText = currentTotalExport + '$';
-    
-    updateCartViewExport();
-}
-
-window.toggleCartExport = function() {
-    const sidebar = document.getElementById('cart-sidebar-export');
-    if (sidebar) sidebar.classList.toggle('active');
-};
-
-window.updateCartViewExport = function() {
-    const container = document.getElementById('cart-items-container-export');
-    const badge = document.getElementById('cart-badge-export');
-    const sidebarTotal = document.getElementById('cart-sidebar-total-export');
-    
-    let totalItems = 0;
-    let html = '';
-
-    exportInventory.forEach((item, index) => {
-        if (countsExport[index] > 0) {
-            totalItems += countsExport[index];
-            let itemTotal = item.price * countsExport[index];
-            let displayName = item.isCustom ? (item.name || "Własny przedmiot") : item.name;
-            
-            html += `
-                <div class="cart-item">
-                    <div class="cart-item-info-col">
-                        <span class="cart-item-name">${displayName}</span>
-                        <div class="cart-controls">
-                            <button class="cart-btn-circle minus" onclick="updateCountExport(${index}, -1)">-</button>
-                            <span class="cart-item-qty">${countsExport[index]}</span>
-                            <button class="cart-btn-circle plus" onclick="updateCountExport(${index}, 1)">+</button>
-                        </div>
-                    </div>
-                    <div class="cart-item-price-col">${itemTotal}$</div>
-                </div>
-            `;
-        }
-    });
-
-    if (totalItems === 0) {
-        html = '<div class="empty-cart-msg">Brak dodanych przedmiotów</div>';
-    }
-
-    if (container) container.innerHTML = html;
-    if (badge) badge.innerText = totalItems;
-    if (sidebarTotal) sidebarTotal.innerText = currentTotalExport + '$';
-};
-
-window.filterCategoryExport = function(cat, btn) {
-    currentCategoryExport = cat;
-    const viewExport = document.getElementById('view-export');
-    if(viewExport) {
-        viewExport.querySelectorAll('.categories-container .cat-btn').forEach(b => b.classList.remove('active'));
-    }
-    if (btn) btn.classList.add('active');
-    applyFiltersExport();
-}
-
-function applyFiltersExport() {
-    const searchInputExportEl = document.getElementById('search-input-export');
-    const term = searchInputExportEl ? searchInputExportEl.value.toLowerCase() : "";
-    const viewExport = document.getElementById('view-export');
-    if(viewExport) {
-        viewExport.querySelectorAll('.item-card:not(.custom-item)').forEach(card => {
-            const dataName = card.getAttribute('data-name');
-            if(dataName) {
-                const match = dataName.includes(term) && 
-                              (currentCategoryExport === 'wszystkie' || card.getAttribute('data-category') === currentCategoryExport);
-                card.classList.toggle('hidden', !match);
-            }
-        });
-    }
-}
-
-window.generateQuoteExport = async function() {
-    if (!Object.values(countsExport).some(c => c > 0)) return showNotice("Koszyk eksportu jest pusty!", "warning");
-    
-    const ssnInput = document.getElementById('customer-ssn-input-export');
-    currentCustomerSSNExport = ssnInput ? ssnInput.value.trim() : "";
-
-    const btn = document.getElementById('quote-btn-export');
-    if(!btn) return;
-    const originalBtnHtml = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Przetwarzanie...';
-
-    setTimeout(() => {
-        finalizeQuoteExport(currentEmployeeName);
-        btn.disabled = false;
-        btn.innerHTML = originalBtnHtml;
-    }, 400);
-}
-
-window.finalizeQuoteExport = function(employeeName) {
-    lastGeneratedReportID = `EXP-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-    const date = getFormattedDate();
-    
-    let employeeText = `PRACOWNIK: ${employeeName.toUpperCase()}`;
-    if (currentCustomerSSNExport !== "") {
-        employeeText += `<br>KLIENT (SSN): ${currentCustomerSSNExport}`;
-    }
-
-    const receiptHTML = `
-        <div class="receipt">
-            <div class="receipt-header">
-                <h2>EL CARTEL EXPORT</h2>
-                <p class="receipt-meta">Raport sprzedaży przedmiotów</p>
-                <p class="receipt-meta">NR: ${lastGeneratedReportID}</p>
-                <p class="receipt-meta">${employeeText}</p>
-            </div>
-            <div class="receipt-divider"></div>
-            <div class="receipt-items-list">
-                ${exportInventory.map((item, i) => {
-                    if (countsExport[i] > 0) {
-                        let dName = item.isCustom ? (item.name || "Własny przedmiot") : item.name;
-                        return `
-                        <div class="receipt-row">
-                            <span>${dName} x${countsExport[i]}</span>
-                            <span>${item.price * countsExport[i]}$</span>
-                        </div>
-                        `;
-                    }
-                    return '';
-                }).join('')}
-            </div>
-            <div class="receipt-divider"></div>
-            <div class="receipt-row total">
-                <span>RAZEM:</span>
-                <span>${currentTotalExport}$</span>
-            </div>
-            <p class="receipt-meta" style="margin-top: 15px;">Data wystawienia: ${date}</p>
-            <div class="receipt-stamp">SPRZEDANO</div>
-        </div>
-    `;
-
-    const preview = document.getElementById('receipt-preview-container-export');
-    const capture = document.getElementById('receipt-capture-area-export');
-
-    if (preview && capture) {
-        preview.innerHTML = receiptHTML;
-        capture.innerHTML = receiptHTML;
-        const quoteModalExport = document.getElementById('quote-modal-export');
-        if(quoteModalExport) quoteModalExport.classList.add('active');
-    }
-}
-
-window.sendToDiscordExport = async function() {
-    const btn = document.getElementById('send-discord-btn-export');
-    const area = document.getElementById('receipt-capture-area-export');
-    
-    if (!area || !btn) return;
-
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PRZETWARZANIE...';
-
-    const itemsToLog = [];
-    exportInventory.forEach((item, i) => {
-        if (countsExport[i] > 0) {
-            let dName = item.isCustom ? (item.name || "Własny przedmiot") : item.name;
-            itemsToLog.push({
-                name: dName,
-                qty: countsExport[i],
-                total: item.price * countsExport[i]
-            });
-        }
-    });
-
-    const logPayload = {
-        action: "save_receipt",
-        type: "sprzedaz", 
-        date: getFormattedDateTime(),
-        employee: currentEmployeeName,
-        report_id: lastGeneratedReportID,
-        items: itemsToLog
-    };
-
+async function checkUpdates() {
     try {
-        const canvas = await html2canvas(area, { scale: 3, backgroundColor: "#ffffff", useCORS: true });
-        canvas.toBlob(async (blob) => {
-            const formData = new FormData();
-            formData.append("file", blob, "raport.png");
-            
-            let employeeFieldValue = `\`${currentEmployeeName}\``;
-            if (currentCustomerSSNExport !== "") {
-                employeeFieldValue += `\n(Klient SSN: **${currentCustomerSSNExport}**)`;
-            }
-
-            const embedPayload = {
-                embeds: [{
-                    title: "🚛 NOWY RAPORT SPRZEDAŻY",
-                    color: 15995922,
-                    fields: [
-                        { name: "👤 Pracownik:", value: employeeFieldValue, inline: true },
-                        { name: "📋 Nr raportu:", value: `\`${lastGeneratedReportID}\``, inline: true },
-                        { name: "💰 Suma:", value: `\`${currentTotalExport}$\``, inline: false }
-                    ],
-                    image: { url: "attachment://raport.png" },
-                    timestamp: new Date().toISOString(),
-                    footer: { text: "System EL CARTEL EXPORT" }
-                }]
-            };
-
-            formData.append("payload_json", JSON.stringify(embedPayload));
-
-            const res = await fetch(DISCORD_WEBHOOK_URL_EXPORT, { method: "POST", body: formData });
-            if (res.ok) {
-                fetch(REPORTS_API_URL, {
-                    method: "POST",
-                    body: JSON.stringify(logPayload)
-                }).catch(e => console.error("Błąd zapisu w arkuszu:", e));
-
-                showNotice("Wysłano raport na Discord!", "success");
-                closeModalExport();
-                resetCartAndInventoryExport();
-            } else {
-                showNotice("Błąd Webhooka!", "danger");
-            }
-        }, "image/png");
-    } catch (e) {
-        showNotice("Błąd generatora obrazu!", "danger");
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fab fa-discord"></i> Wyślij raport na Discord';
-    }
-}
-
-window.closeModalExport = () => {
-    const quoteModalExport = document.getElementById('quote-modal-export');
-    if(quoteModalExport) quoteModalExport.classList.remove('active');
-}
-
-window.toggleSummaryExport = function() {
-    const bar = document.getElementById('summary-bar-export');
-    const icon = document.getElementById('toggle-icon-export');
-    if (bar && icon) {
-        bar.classList.toggle('open');
-        if (bar.classList.contains('open')) {
-            icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
-        } else {
-            icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
-        }
-    }
-}
-
-// ==========================================
-// SYSTEM POWIADOMIEŃ I DYNAMICZNEGO CHANGELOGA (WSPÓLNY)
-// ==========================================
-async function fetchChangelogData() {
-    try {
-        const response = await fetch(`${REPORTS_API_URL}?action=get_reports&t=${new Date().getTime()}`);
+        const response = await fetch(`version.json?t=${new Date().getTime()}`);
         const data = await response.json();
-        
-        const clData = data.filter(r => r.type === "changelog");
-        if (clData.length > 0) {
-            const grouped = {};
-            clData.forEach(r => {
-                if (!grouped[r.report_id]) grouped[r.report_id] = { date: r.date, items: [] };
-                grouped[r.report_id].items.push(r.name);
-            });
-            
-            const sortedVersions = Object.keys(grouped).reverse();
-            
-            const container = document.getElementById('dynamic-changelog-container');
-            if(container && sortedVersions.length > 0) {
-                LATEST_CHANGELOG_VERSION = sortedVersions[0]; 
-                container.innerHTML = ""; 
-                
-                sortedVersions.forEach((v, index) => {
-                    let displayDate = grouped[v].date;
-                    const d = parseDate(grouped[v].date);
-                    if (d && !isNaN(d.getTime())) {
-                        const day = String(d.getDate()).padStart(2, '0');
-                        const month = String(d.getMonth() + 1).padStart(2, '0');
-                        const year = d.getFullYear();
-                        const hours = String(d.getHours()).padStart(2, '0');
-                        const minutes = String(d.getMinutes()).padStart(2, '0');
-                        displayDate = `${day}.${month}.${year} ${hours}:${minutes}`;
-                    }
-                    
-                    const dateLabel = index === 0 ? "Najnowsza" : displayDate;
-                    
-                    let listHtml = "";
-                    
-                    let displayVersion = v;
-                    if (v.startsWith('v')) {
-                        displayVersion = v.substring(1);
-                    }
-                    
-                    grouped[v].items.forEach(itemStr => {
-                        let tag = "INFO";
-                        let desc = itemStr;
-                        if(itemStr.includes('|||')) {
-                            const parts = itemStr.split('|||');
-                            tag = parts[0];
-                            desc = parts[1];
-                        }
-                        
-                        let clClass = "cl-tag";
-                        if (tag === "NOWOŚĆ") clClass = "cl-new";
-                        else if (tag === "POPRAWKA") clClass = "cl-fix";
-                        else if (tag === "USUNIĘTO") clClass = "cl-del";
-
-                        listHtml += `<li><span class="cl-tag ${clClass}">${tag}</span> ${desc}</li>`;
-                    });
-
-                    let adminControls = "";
-                    if (isTravisVance()) {
-                        const safeItems = encodeURIComponent(JSON.stringify(grouped[v].items));
-                        adminControls = `
-                            <div style="margin-left: auto; display: flex; gap: 12px;">
-                                <button onclick="openEditChangelog('${v}', '${safeItems}')" style="background: none; border: none; color: var(--accent-color); cursor: pointer; font-size: 1.1rem; transition: 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='var(--accent-color)'"><i class="fas fa-edit"></i></button>
-                                <button onclick="deleteChangelog('${v}')" style="background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1.1rem; transition: 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='var(--danger)'"><i class="fas fa-trash"></i></button>
-                            </div>
-                        `;
-                    }
-                    
-                    container.innerHTML += `
-                        <div class="changelog-item">
-                            <div class="changelog-version-header">
-                                Wersja ${displayVersion} <span class="changelog-date">${dateLabel}</span>
-                                ${adminControls}
-                            </div>
-                            <ul class="changelog-list">${listHtml}</ul>
-                        </div>
-                    `;
-                });
-                checkChangelogNotification();
+        const serverVersion = data.version.trim();
+        console.log(`[SYSTEM] Wersja lokalna: ${APP_VERSION} | Wersja na serwerze: ${serverVersion}`);
+        if (serverVersion !== APP_VERSION) {
+            if (localStorage.getItem('update_ignored_version') === serverVersion) {
+                return;
             }
+            showUpdatePrompt(serverVersion);
         }
-    } catch(e) {
-        console.log("Nie udało się pobrać dynamicznego changeloga", e);
-        checkChangelogNotification(); 
+    } catch (e) {
+        // Ciche ignorowanie błędu
     }
 }
 
-function checkChangelogNotification() {
-    const seenVersion = localStorage.getItem('elcartel_changelog_seen');
-    const navDot = document.getElementById('nav-notification-dot');
-    const dropDot = document.getElementById('dropdown-notification-dot');
-    
-    if (seenVersion !== LATEST_CHANGELOG_VERSION) {
-        if (navDot) navDot.classList.remove('hidden');
-        if (dropDot) dropDot.classList.remove('hidden');
-    } else {
-        if (navDot) navDot.classList.add('hidden');
-        if (dropDot) dropDot.classList.add('hidden');
-    }
-}
-
-window.openChangelog = function() {
-    document.getElementById('user-dropdown').classList.remove('active');
-    document.getElementById('changelog-modal').classList.add('active');
-    
-    localStorage.setItem('elcartel_changelog_seen', LATEST_CHANGELOG_VERSION);
-    checkChangelogNotification(); 
-}
-
-window.closeChangelog = function() {
-    document.getElementById('changelog-modal').classList.remove('active');
-}
-
-// ==========================================
-// ADMIN: DODAWANIE CHANGELOGA
-// ==========================================
-window.openAdminChangelog = function() {
-    if (!isTravisVance()) return showNotice("Brak uprawnień!", "danger");
-
-    document.getElementById('user-dropdown').classList.remove('active');
-    document.getElementById('admin-changelog-modal').classList.add('active');
-    if(document.getElementById('admin-changes-list').children.length === 0) {
-        addAdminChangeSlot();
-    }
-}
-
-window.closeAdminChangelog = function() {
-    document.getElementById('admin-changelog-modal').classList.remove('active');
-}
-
-window.addAdminChangeSlot = function() {
-    if (!isTravisVance()) return;
-    const container = document.getElementById('admin-changes-list');
+function showUpdatePrompt(serverVersion) {
+    if (document.getElementById('update-prompt')) return;
     const div = document.createElement('div');
-    div.style.display = 'flex';
-    div.style.gap = '10px';
-    div.style.alignItems = 'center';
+    div.id = 'update-prompt';
+    div.className = 'update-notify';
     div.innerHTML = `
-        <select class="custom-input admin-change-tag" style="width: 120px; padding: 10px;">
-            <option value="NOWOŚĆ">NOWOŚĆ</option>
-            <option value="POPRAWKA">POPRAWKA</option>
-            <option value="USUNIĘTO">USUNIĘTO</option>
-        </select>
-        <input type="text" class="custom-input admin-change-desc" placeholder="Opis zmiany..." style="flex: 1; padding: 10px;">
-        <button type="button" class="settings-close-btn" style="width: 40px; height: 40px; flex-shrink: 0;" onclick="this.parentElement.remove()">
-            <i class="fas fa-trash"></i>
-        </button>
+        <span><i class="fas fa-sync-alt fa-spin"></i> Wgrano nową wersję systemu!</span>
+        <button class="update-btn-refresh" onclick="forceHardReload('${serverVersion}')">Odśwież</button>
     `;
-    container.appendChild(div);
+    document.body.appendChild(div);
 }
 
-window.publishChangelog = async function() {
-    if (!isTravisVance()) return showNotice("Brak uprawnień!", "danger");
-
-    const version = document.getElementById('admin-version-input').value.trim();
-    if (!version) return showNotice("Podaj numer wersji!", "warning");
-    
-    const rows = document.querySelectorAll('#admin-changes-list > div');
-    if (rows.length === 0) return showNotice("Dodaj co najmniej jedną zmianę!", "warning");
-    
-    let itemsToLog = [];
-    let valid = true;
-    
-    rows.forEach(row => {
-        const tag = row.querySelector('.admin-change-tag').value;
-        const desc = row.querySelector('.admin-change-desc').value.trim();
-        if (!desc) valid = false;
-        
-        itemsToLog.push({
-            name: `${tag}|||${desc}`,
-            qty: 1,
-            total: 0
-        });
-    });
-    
-    if (!valid) return showNotice("Wypełnij opisy wszystkich zmian!", "warning");
-    
-    const btn = document.getElementById('publish-changelog-btn');
-    const originalHtml = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Zapisywanie...';
-    
-    const safeVersion = "v" + version;
-    
-    const logPayload = {
-        action: "save_receipt",
-        type: "changelog",
-        date: getFormattedDateTime(),
-        employee: currentEmployeeName,
-        report_id: safeVersion, 
-        items: itemsToLog
-    };
-    
-    try {
-        await fetch(REPORTS_API_URL, {
-            method: "POST",
-            body: JSON.stringify(logPayload)
-        });
-        
-        showNotice("Changelog opublikowany pomyślnie!", "success");
-        closeAdminChangelog();
-        document.getElementById('admin-version-input').value = "";
-        document.getElementById('admin-changes-list').innerHTML = "";
-        
-        fetchChangelogData(); 
-        
-    } catch(e) {
-        showNotice("Błąd publikacji!", "danger");
-        console.error(e);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalHtml;
+window.forceHardReload = async function(serverVersion) {
+    console.log("[SYSTEM] Inicjowanie twardego przeładowania...");
+    if (serverVersion) {
+        localStorage.setItem('update_ignored_version', serverVersion);
     }
-}
-
-window.openEditChangelog = function(version, itemsJson) {
-    if (!isTravisVance()) return showNotice("Brak uprawnień!", "danger");
-
-    document.getElementById('changelog-modal').classList.remove('active'); 
-    const items = JSON.parse(decodeURIComponent(itemsJson));
-    document.getElementById('edit-cl-original-version').value = version;
-    
-    let displayVersion = version.startsWith('v') ? version.substring(1) : version;
-    document.getElementById('edit-cl-version-input').value = displayVersion;
-    
-    const container = document.getElementById('edit-cl-changes-list');
-    container.innerHTML = "";
-    
-    items.forEach(itemStr => {
-        let tag = "INFO";
-        let desc = itemStr;
-        if(itemStr.includes('|||')) {
-            const parts = itemStr.split('|||');
-            tag = parts[0];
-            desc = parts[1];
+    if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (let reg of registrations) {
+            await reg.unregister();
         }
-        
-        const div = document.createElement('div');
-        div.style.display = 'flex';
-        div.style.gap = '10px';
-        div.style.alignItems = 'center';
-        div.innerHTML = `
-            <select class="custom-input admin-change-tag" style="width: 120px; padding: 10px;">
-                <option value="NOWOŚĆ" ${tag==='NOWOŚĆ'?'selected':''}>NOWOŚĆ</option>
-                <option value="POPRAWKA" ${tag==='POPRAWKA'?'selected':''}>POPRAWKA</option>
-                <option value="USUNIĘTO" ${tag==='USUNIĘTO'?'selected':''}>USUNIĘTO</option>
-            </select>
-            <input type="text" class="custom-input admin-change-desc" value="${desc.replace(/"/g, '&quot;')}" style="flex: 1; padding: 10px;">
-            <button type="button" class="settings-close-btn" style="width: 40px; height: 40px; flex-shrink: 0;" onclick="this.parentElement.remove()">
-                <i class="fas fa-trash"></i>
-            </button>
-        `;
-        container.appendChild(div);
-    });
-    
-    document.getElementById('edit-changelog-modal').classList.add('active');
-}
-
-window.closeEditChangelog = function() {
-    document.getElementById('edit-changelog-modal').classList.remove('active');
-    document.getElementById('changelog-modal').classList.add('active'); 
-}
-
-window.addEditChangeSlot = function() {
-    if (!isTravisVance()) return;
-    const container = document.getElementById('edit-cl-changes-list');
-    const div = document.createElement('div');
-    div.style.display = 'flex';
-    div.style.gap = '10px';
-    div.style.alignItems = 'center';
-    div.innerHTML = `
-        <select class="custom-input admin-change-tag" style="width: 120px; padding: 10px;">
-            <option value="NOWOŚĆ">NOWOŚĆ</option>
-            <option value="POPRAWKA">POPRAWKA</option>
-            <option value="USUNIĘTO">USUNIĘTO</option>
-        </select>
-        <input type="text" class="custom-input admin-change-desc" placeholder="Opis zmiany..." style="flex: 1; padding: 10px;">
-        <button type="button" class="settings-close-btn" style="width: 40px; height: 40px; flex-shrink: 0;" onclick="this.parentElement.remove()">
-            <i class="fas fa-trash"></i>
-        </button>
-    `;
-    container.appendChild(div);
-}
-
-window.saveEditedChangelog = async function() {
-    if (!isTravisVance()) return showNotice("Brak uprawnień!", "danger");
-
-    const origVersion = document.getElementById('edit-cl-original-version').value;
-    const newVersion = document.getElementById('edit-cl-version-input').value.trim();
-    if(!newVersion) return showNotice("Podaj numer wersji!", "warning");
-    
-    const rows = document.querySelectorAll('#edit-cl-changes-list > div');
-    if(rows.length === 0) return showNotice("Musisz podać chociaż jedną zmianę!", "warning");
-    
-    let itemsToLog = [];
-    let valid = true;
-    rows.forEach(row => {
-        const tag = row.querySelector('.admin-change-tag').value;
-        const desc = row.querySelector('.admin-change-desc').value.trim();
-        if(!desc) valid = false;
-        itemsToLog.push({ name: `${tag}|||${desc}`, qty: 1, total: 0 });
-    });
-    
-    if(!valid) return showNotice("Wypełnij puste opisy!", "warning");
-    
-    const safeNewVersion = newVersion.startsWith('v') ? newVersion : 'v' + newVersion;
-    
-    const btn = document.getElementById('save-edit-cl-btn');
-    const origHtml = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Zapisywanie...';
-    
-    try {
-        await fetch(REPORTS_API_URL, {
-            method: 'POST',
-            body: JSON.stringify({
-                action: 'edit_changelog',
-                original_version: origVersion,
-                new_version: safeNewVersion,
-                items: itemsToLog,
-                employee: currentEmployeeName,
-                date: getFormattedDateTime()
-            })
-        });
-        showNotice("Zaktualizowano changelog!", "success");
-        closeEditChangelog();
-        fetchChangelogData();
-    } catch(e) {
-        showNotice("Błąd edycji!", "danger");
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = origHtml;
     }
-}
-
-window.deleteChangelog = async function(version) {
-    if (!isTravisVance()) return showNotice("Brak uprawnień!", "danger");
-
-    if(!confirm("Na pewno usunąć tę wersję changelogu: " + version + "?")) return;
-    
-    try {
-        await fetch(REPORTS_API_URL, {
-            method: 'POST',
-            body: JSON.stringify({
-                action: 'delete_changelog',
-                version: version
-            })
-        });
-        showNotice("Usunięto wersję " + version + "!", "success");
-        fetchChangelogData(); 
-    } catch(e) {
-        showNotice("Błąd usuwania!", "danger");
+    if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        for (let name of cacheNames) {
+            await caches.delete(name);
+        }
     }
-}
+    window.location.href = window.location.pathname + '?refresh=' + new Date().getTime();
+};
+
+setInterval(checkUpdates, 60000);
+setTimeout(checkUpdates, 3000);
 
 // ==========================================
-// SYSTEM USTAWIEŃ
+// SYSTEM USTAWIEŃ (ZMIANA PIN)
 // ==========================================
 window.openSettings = function() {
     document.getElementById('user-dropdown').classList.remove('active');
@@ -1584,10 +1033,18 @@ window.changeEmployeePin = async function() {
     const newPin = document.getElementById('new-pin-input').value;
     const confirmPin = document.getElementById('new-pin-confirm').value;
 
-    if (!oldPin || !newPin || !confirmPin) return showNotice("Wypełnij wszystkie pola!", "warning");
-    if (newPin !== confirmPin) return showNotice("Nowe kody PIN nie są identyczne!", "danger");
-    if (newPin.length < 4) return showNotice("Nowy PIN musi mieć dokładnie 4 cyfry!", "warning");
-    if (oldPin === newPin) return showNotice("Nowy PIN musi różnić się od starego!", "warning");
+    if (!oldPin || !newPin || !confirmPin) {
+        return showNotice("Wypełnij wszystkie pola!", "warning");
+    }
+    if (newPin !== confirmPin) {
+        return showNotice("Nowe kody PIN nie są identyczne!", "danger");
+    }
+    if (newPin.length < 4) {
+        return showNotice("Nowy PIN musi mieć dokładnie 4 cyfry!", "warning");
+    }
+    if (oldPin === newPin) {
+        return showNotice("Nowy PIN musi różnić się od starego!", "warning");
+    }
 
     const btn = document.getElementById('change-pin-btn');
     const originalHtml = btn.innerHTML;
@@ -1615,6 +1072,7 @@ window.changeEmployeePin = async function() {
         }
     } catch (e) {
         showNotice("Błąd połączenia z bazą danych!", "danger");
+        console.error(e);
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalHtml;
@@ -1622,7 +1080,7 @@ window.changeEmployeePin = async function() {
 }
 
 // ==========================================
-// MOJE STATYSTYKI (WSPÓLNY)
+// SYSTEM STATYSTYK PRACOWNIKA (MODAL)
 // ==========================================
 window.openMyStats = async function() {
     document.getElementById('user-dropdown').classList.remove('active');
@@ -1635,14 +1093,16 @@ window.openMyStats = async function() {
         const response = await fetch(`${REPORTS_API_URL}?action=get_reports&t=${new Date().getTime()}`);
         const rawData = await response.json();
         
+        // Zapisujemy wszystkie dane przypisane do pracownika
         myStatsRawData = rawData.filter(row => row.employee === currentEmployeeName);
         
+        // Domyślnie ładujemy dzisiejsze dane dla skupu
         document.getElementById('my-stats-time-filter').value = 'today';
-        currentStatsType = currentActiveView === 'export' ? 'sprzedaz' : 'skup';
+        currentStatsType = 'skup';
         currentStatsRange = 'today';
         
-        document.getElementById('btn-stats-skup').classList.toggle('active', currentStatsType === 'skup');
-        document.getElementById('btn-stats-sprzedaz').classList.toggle('active', currentStatsType === 'sprzedaz');
+        document.getElementById('btn-stats-skup').classList.add('active');
+        document.getElementById('btn-stats-sprzedaz').classList.remove('active');
 
         renderMyStatsDisplay();
         
@@ -1650,6 +1110,7 @@ window.openMyStats = async function() {
         document.getElementById('my-stats-content').classList.remove('hidden');
         
     } catch (err) {
+        console.error(err);
         document.getElementById('my-stats-loader').innerHTML = '<p style="color:var(--danger);"><i class="fas fa-exclamation-triangle"></i> Błąd pobierania danych.</p>';
     }
 }
@@ -1666,7 +1127,7 @@ window.changeStatsTimeRange = function(range) {
     renderMyStatsDisplay();
 }
 
-window.renderMyStatsDisplay = function() {
+function renderMyStatsDisplay() {
     const typeData = myStatsRawData.filter(row => row.employee === currentEmployeeName && row.type === currentStatsType);
     
     let periodTotal = 0;
@@ -1770,7 +1231,7 @@ window.closeMyStats = function() {
 }
 
 // ==========================================
-// MOJE TRANSAKCJE
+// SYSTEM TRANSAKCJI PRACOWNIKA (MODAL)
 // ==========================================
 window.openMyTransactions = async function() {
     document.getElementById('user-dropdown').classList.remove('active');
@@ -1784,11 +1245,13 @@ window.openMyTransactions = async function() {
         const rawData = await response.json();
         
         myStatsRawData = rawData.filter(row => row.employee === currentEmployeeName);
+        
         renderTransactionsList();
         
         document.getElementById('my-transactions-loader').classList.add('hidden');
         document.getElementById('my-transactions-content').classList.remove('hidden');
     } catch (err) {
+        console.error(err);
         document.getElementById('my-transactions-loader').innerHTML = '<p style="color:var(--danger);"><i class="fas fa-exclamation-triangle"></i> Błąd pobierania danych.</p>';
     }
 }
@@ -1802,23 +1265,13 @@ function renderTransactionsList() {
         return;
     }
 
+    // Grupowanie przedmiotów po report_id
     const grouped = {};
     myStatsRawData.forEach(row => {
         if (!row.report_id) return;
         if (!grouped[row.report_id]) {
-            let displayDate = row.date;
-            const d = parseDate(row.date);
-            if (d && !isNaN(d.getTime())) {
-                const day = String(d.getDate()).padStart(2, '0');
-                const month = String(d.getMonth() + 1).padStart(2, '0');
-                const year = d.getFullYear();
-                const hours = String(d.getHours()).padStart(2, '0');
-                const minutes = String(d.getMinutes()).padStart(2, '0');
-                displayDate = `${day}.${month}.${year} ${hours}:${minutes}`;
-            }
-
             grouped[row.report_id] = {
-                date: displayDate,
+                date: row.date,
                 total: 0,
                 items: [],
                 type: row.type
@@ -1828,6 +1281,7 @@ function renderTransactionsList() {
         grouped[row.report_id].items.push(`${row.name} (x${row.qty}) - ${row.total}$`);
     });
 
+    // Sortowanie od najnowszej do najstarszej transakcji
     const sortedIds = Object.keys(grouped).reverse(); 
 
     sortedIds.forEach(id => {
@@ -1875,9 +1329,6 @@ window.closeMyTransactions = function() {
     `;
 }
 
-// ==========================================
-// ZGŁASZANIE POMYŁEK
-// ==========================================
 window.openReportModal = function(receiptId) {
     currentReportReceiptId = receiptId;
     document.getElementById('report-receipt-id').innerText = receiptId;
@@ -1903,17 +1354,13 @@ window.submitTransactionReport = async function() {
 
     try {
         const embedPayload = {
-            content: "<@303630730528030720>", 
+            content: "<@303630730528030720>", // <-- TUTAJ WPISZ SWOJE ID
             embeds: [{
                 title: "⚠️ Zgłoszenie pomyłki w transakcji!",
                 color: 15158332, 
                 fields: [
                     { name: "📋 Numer paragonu:", value: `\`${currentReportReceiptId}\``, inline: true },
-                    { 
-                        name: "👤 Zgłaszający:", 
-                        value: `**${currentEmployeeName}**\nSSN: \`${currentEmployeeSsn}\`\nRanga: \`${currentEmployeeRank}\``, 
-                        inline: true 
-                    },
+                    { name: "👤 Zgłaszający:", value: `**${currentEmployeeName}**`, inline: true },
                     { name: "📝 Powód / Opis błędu:", value: reason, inline: false }
                 ],
                 timestamp: new Date().toISOString(),
@@ -1921,374 +1368,25 @@ window.submitTransactionReport = async function() {
             }]
         };
 
-        const resDiscord = await fetch(DISCORD_WEBHOOK_URL_SKUP, { 
+        const res = await fetch(DISCORD_WEBHOOK_URL, { 
             method: "POST", 
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify(embedPayload) 
         });
 
-        const resSheet = await fetch(REPORTS_API_URL, {
-            method: 'POST',
-            body: JSON.stringify({
-                action: 'save_error_report',
-                date: getFormattedDateTime(),
-                employee: currentEmployeeName,
-                receipt_id: currentReportReceiptId,
-                reason: reason
-            })
-        });
-
-        if (resDiscord.ok && resSheet.ok) {
-            showNotice("Zgłoszenie pomyłki zapisane i wysłane na Discord!", "success");
+        if (res.ok) {
+            showNotice("Zgłoszenie pomyłki wysłane na Discord!", "success");
             closeReportModal();
         } else {
-            throw new Error("Błąd podczas wysyłania.");
+            throw new Error("Błąd Discord API");
         }
     } catch (e) {
         showNotice("Błąd wysyłania zgłoszenia!", "danger");
+        console.error(e);
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalHtml;
     }
 }
-
-// ==========================================
-// ZARZĄDZANIE ZGŁOSZENIAMI (ADMIN)
-// ==========================================
-window.openAdminReports = async function() {
-    if (!isTravisVance()) return showNotice("Brak uprawnień!", "danger");
-
-    document.getElementById('user-dropdown').classList.remove('active');
-    document.getElementById('admin-reports-modal').classList.add('active');
-    
-    document.getElementById('admin-reports-loader').style.display = 'block';
-    document.getElementById('admin-reports-container').innerHTML = '';
-
-    try {
-        const response = await fetch(`${REPORTS_API_URL}?action=get_error_reports&t=${new Date().getTime()}`);
-        const data = await response.json();
-
-        const container = document.getElementById('admin-reports-container');
-        container.innerHTML = '';
-        
-        const pendingReports = data.filter(r => r.status === 'Oczekujące').reverse();
-        const resolvedReports = data.filter(r => r.status !== 'Oczekujące').reverse().slice(0, 10); 
-        
-        if (pendingReports.length === 0 && resolvedReports.length === 0) {
-            container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); width: 100%;">Brak zgłoszeń w systemie.</p>';
-        } else {
-            let html = '';
-            
-            if (pendingReports.length > 0) {
-                html += '<h3 style="color: var(--danger); margin-bottom: 10px; width: 100%; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Wymagają uwagi</h3>';
-                pendingReports.forEach(r => html += buildAdminReportCard(r));
-            }
-            
-            if (resolvedReports.length > 0) {
-                html += '<h3 style="color: var(--success); margin-top: 20px; margin-bottom: 10px; width: 100%; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Ostatnio Rozwiązane</h3>';
-                resolvedReports.forEach(r => html += buildAdminReportCard(r));
-            }
-            
-            container.innerHTML = html;
-        }
-    } catch (e) {
-        document.getElementById('admin-reports-container').innerHTML = '<p style="color: var(--danger); text-align: center;">Błąd pobierania danych.</p>';
-    } finally {
-        document.getElementById('admin-reports-loader').style.display = 'none';
-    }
-}
-
-function buildAdminReportCard(r) {
-    let statusColor = r.status === 'Oczekujące' ? 'var(--warning)' : (r.status === 'Zaakceptowane' ? 'var(--success)' : 'var(--danger)');
-    
-    let actionsHtml = r.status === 'Oczekujące' ? `
-        <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
-            <button onclick="updateReportStatus('${r.receipt_id}', 'Odrzucone')" style="background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s;">Odrzuć</button>
-            <button onclick="updateReportStatus('${r.receipt_id}', 'Zaakceptowane')" style="background: rgba(34, 197, 94, 0.15); color: var(--success); border: 1px solid rgba(34, 197, 94, 0.3); padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s;">Zaakceptuj pomyłkę</button>
-        </div>
-    ` : '';
-
-    return `
-        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; width: 100%;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span style="font-weight: 800; color: var(--text-primary);"><i class="fas fa-hashtag"></i> ID: ${r.receipt_id}</span>
-                <span style="font-size: 0.8rem; color: var(--text-secondary);">${r.date}</span>
-            </div>
-            <div style="margin-bottom: 5px; font-size: 0.9rem;"><span style="color: var(--text-secondary);">Zgłasza:</span> <strong style="color: var(--text-primary);">${r.employee}</strong></div>
-            <div style="margin-bottom: 15px; font-size: 0.9rem; line-height: 1.4;"><span style="color: var(--text-secondary);">Powód:</span> <span style="color: #fff;">${r.reason}</span></div>
-            <div style="font-size: 0.9rem;"><span style="color: var(--text-secondary);">Status:</span> <strong style="color: ${statusColor};">${r.status}</strong></div>
-            ${actionsHtml}
-        </div>
-    `;
-}
-
-window.closeAdminReports = function() {
-    document.getElementById('admin-reports-modal').classList.remove('active');
-}
-
-window.updateReportStatus = async function(receiptId, newStatus) {
-    if (!isTravisVance()) return;
-    
-    try {
-        showNotice("Aktualizowanie...", "info");
-        await fetch(REPORTS_API_URL, {
-            method: 'POST',
-            body: JSON.stringify({
-                action: 'update_error_report',
-                receipt_id: receiptId,
-                new_status: newStatus
-            })
-        });
-        showNotice(`Zgłoszenie pomyłki zaktualizowane: ${newStatus}`, "success");
-        openAdminReports(); 
-    } catch(e) {
-        showNotice("Wystąpił błąd podczas aktualizacji!", "danger");
-    }
-}
-
-// ==========================================
-// IDENTYFIKATOR KARTY PROFILU + GAMIFIKACJA
-// ==========================================
-window.openIdCard = async function() {
-    document.getElementById('user-dropdown').classList.remove('active');
-    
-    if (currentEmployeeName) {
-        document.getElementById('id-card-name').innerText = currentEmployeeName.toUpperCase();
-        document.getElementById('id-card-ssn').innerText = currentEmployeeSsn;
-        document.getElementById('id-card-date-zatrudnienia').innerText = currentEmployeeDateZatrudnienia;
-        
-        const photoContainer = document.querySelector('#id-card-modal .id-photo-box');
-        if (currentEmployeePhoto && currentEmployeePhoto !== "") {
-            photoContainer.innerHTML = `<img src="${currentEmployeePhoto}" alt="Zdjęcie postaci" class="id-photo-img">`;
-        } else {
-            photoContainer.innerHTML = `<i class="fas fa-user-tie"></i>`;
-        }
-
-        const signatureEl = document.getElementById('id-card-signature');
-        if (signatureEl) signatureEl.innerText = currentEmployeeName;
-
-        document.getElementById('id-card-rank-container').innerHTML = `<span class="active-rank">${currentEmployeeRank}</span>`;
-        
-        // Reset Gamifikacji przed wczytaniem
-        document.getElementById('id-card-level-text').innerText = "Analiza danych...";
-        document.getElementById('id-card-xp-text').innerText = "Wczytywanie XP...";
-        document.getElementById('id-progress-bar-fill').style.width = "0%";
-        document.getElementById('id-badges-container').innerHTML = '<i class="fas fa-spinner fa-spin text-secondary"></i> Pobieranie osiągnięć...';
-    }
-    
-    document.getElementById('id-card-modal').classList.add('active');
-
-    // Pobieranie danych do Leveli i Osiągnięć
-    try {
-        const response = await fetch(`${REPORTS_API_URL}?action=get_reports&t=${new Date().getTime()}`);
-        const rawData = await response.json();
-        
-        const myData = rawData.filter(row => row.employee === currentEmployeeName);
-        
-        let totalXP = 0;
-        let txSet = new Set();
-        
-        myData.forEach(row => {
-            totalXP += row.total;
-            if(row.report_id) txSet.add(row.report_id);
-        });
-        
-        let txCount = txSet.size || (myData.length > 0 ? 1 : 0);
-        
-        renderGamification(totalXP, txCount);
-        
-    } catch (e) {
-        console.error(e);
-        document.getElementById('id-card-level-text').innerText = "Błąd pobierania danych";
-        document.getElementById('id-card-xp-text').innerText = "Brak połączenia";
-        document.getElementById('id-badges-container').innerHTML = '';
-    }
-}
-
-function renderGamification(totalXP, txCount) {
-    const levels = [
-        { lvl: 1, max: 50000, name: "Rekrut" },
-        { lvl: 2, max: 250000, name: "Znawca" },
-        { lvl: 3, max: 500000, name: "Specjalista" },
-        { lvl: 4, max: 700000, name: "Ekspert" },
-        { lvl: 5, max: 1500000, name: "Weteran" },
-        { lvl: 6, max: 5000000, name: "Legenda lombardu" }
-    ];
-    
-    let currentLvl = 1;
-    let currentMax = 50000;
-    let prevMax = 0;
-    
-    for (let i = 0; i < levels.length; i++) {
-        if (totalXP < levels[i].max) {
-            currentLvl = levels[i].lvl;
-            currentMax = levels[i].max;
-            prevMax = i > 0 ? levels[i-1].max : 0;
-            break;
-        }
-    }
-    
-    let xpInCurrentLevel = totalXP - prevMax;
-    let xpNeededForNextLevel = currentMax - prevMax;
-    let progressPercent = (xpInCurrentLevel / xpNeededForNextLevel) * 100;
-    if (progressPercent > 100) progressPercent = 100;
-    if (currentLvl === 6) progressPercent = 100; 
-    
-    document.getElementById('id-card-level-text').innerText = `Poziom ${currentLvl} - ${levels[currentLvl-1].name}`;
-    
-    if (currentLvl === 6) {
-        document.getElementById('id-card-xp-text').innerText = `MAX LEVEL (${totalXP.toLocaleString()}$)`;
-    } else {
-        document.getElementById('id-card-xp-text').innerText = `${totalXP.toLocaleString()}$ / ${currentMax.toLocaleString()}$`;
-    }
-    
-    setTimeout(() => {
-        document.getElementById('id-progress-bar-fill').style.width = `${progressPercent}%`;
-    }, 100);
-    
-    // Lista osiągnięć do odblokowania
-    const badges = [
-        { icon: "fa-tint", name: "Pierwsza krew", desc: "Zrealizowano pierwszą transakcję w systemie.", color: "#ef4444", condition: txCount >= 1 },
-        { icon: "fa-handshake", name: "Solidna firma", desc: "Zrealizowano 150 transakcji.", color: "#a855f7", condition: txCount >= 150 },
-        { icon: "fa-fish", name: "Rekin biznesu", desc: "Wygenerowano 300,000$ obrotu całkowitego.", color: "#38bdf8", condition: totalXP >= 300000 },
-        { icon: "fa-medal", name: "Stary wyga", desc: "Zrealizowano 200 transakcji.", color: "#fbbf24", condition: txCount >= 200 },
-        { icon: "fa-crown", name: "Milioner", desc: "Przekroczono barierę 5,000,000$ obrotu. Jesteś elitą.", color: "#eab308", condition: totalXP >= 5000000 }
-    ];
-    
-    const container = document.getElementById('id-badges-container');
-    container.innerHTML = '';
-    
-    badges.forEach(b => {
-        const isUnlocked = b.condition;
-        const badgeEl = document.createElement('div');
-        badgeEl.title = b.desc;
-        badgeEl.style.cssText = `
-            background: rgba(255,255,255,0.05); 
-            border: 1px solid rgba(255,255,255,0.1); 
-            padding: 8px 12px; 
-            border-radius: 8px; 
-            display: flex; 
-            align-items: center; 
-            gap: 8px; 
-            font-size: 0.8rem; 
-            font-weight: 600; 
-            cursor: help;
-            transition: 0.2s;
-            opacity: ${isUnlocked ? '1' : '0.4'};
-            filter: ${isUnlocked ? 'none' : 'grayscale(100%)'};
-        `;
-        
-        badgeEl.onmouseover = () => badgeEl.style.transform = 'translateY(-2px)';
-        badgeEl.onmouseout = () => badgeEl.style.transform = 'translateY(0)';
-        
-        badgeEl.innerHTML = `<i class="fas ${b.icon}" style="color: ${b.color}; font-size: 1.1rem;"></i> <span style="color: #fff;">${b.name}</span>`;
-        container.appendChild(badgeEl);
-    });
-}
-
-window.closeIdCard = function() {
-    document.getElementById('id-card-modal').classList.remove('active');
-}
-
-// ==========================================
-// FUNKCJE WSPÓLNE I AUTO UPDATE
-// ==========================================
-window.showNotice = function(msg, type) {
-    const container = document.getElementById('toast-container');
-    if(!container) return;
-    const t = document.createElement('div');
-    t.className = `toast ${type}`;
-    t.innerText = msg;
-    container.appendChild(t);
-    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, 3000);
-}
-
-async function checkUpdates() {
-    try {
-        const response = await fetch(`version.json?t=${new Date().getTime()}`);
-        const data = await response.json();
-        const serverVersion = data.version.trim();
-        if (serverVersion !== APP_VERSION) {
-            if (localStorage.getItem('update_ignored_version') === serverVersion) {
-                return;
-            }
-            showUpdatePrompt(serverVersion);
-        }
-    } catch (e) {
-    }
-}
-
-function showUpdatePrompt(serverVersion) {
-    if (document.getElementById('update-prompt')) return;
-    const div = document.createElement('div');
-    div.id = 'update-prompt';
-    div.className = 'update-notify';
-    div.innerHTML = `
-        <span><i class="fas fa-sync-alt fa-spin"></i> Wgrano nową wersję systemu!</span>
-        <button class="update-btn-refresh" onclick="forceHardReload('${serverVersion}')">Odśwież</button>
-    `;
-    document.body.appendChild(div);
-}
-
-window.forceHardReload = async function(serverVersion) {
-    if (serverVersion) {
-        localStorage.setItem('update_ignored_version', serverVersion);
-    }
-    if ('serviceWorker' in navigator) {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        for (let reg of registrations) {
-            await reg.unregister();
-        }
-    }
-    if ('caches' in window) {
-        const cacheNames = await caches.keys();
-        for (let name of cacheNames) {
-            await caches.delete(name);
-        }
-    }
-    window.location.href = window.location.pathname + '?refresh=' + new Date().getTime();
-};
-
-setInterval(checkUpdates, 60000);
-setTimeout(checkUpdates, 3000);
-
-// ==========================================
-// OBSŁUGA ZDARZEŃ DOM
-// ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    const loginPinInput = document.getElementById('employee-login-pin');
-    if (loginPinInput) {
-        loginPinInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') login();
-        });
-    }
-
-    const searchInput = document.getElementById('search-input');
-    if(searchInput) searchInput.addEventListener('input', applyFilters);
-
-    const finalPriceInput = document.getElementById('final-price-input');
-    if(finalPriceInput) {
-        finalPriceInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') generateQuote();
-        });
-    }
-
-    const resetBtnSkup = document.getElementById('reset-btn');
-    if(resetBtnSkup) {
-        resetBtnSkup.onclick = () => {
-            resetCartAndInventory();
-            showNotice("Wyczyszczono koszyk!", "warning");
-        };
-    }
-
-    const searchInputExport = document.getElementById('search-input-export');
-    if (searchInputExport) searchInputExport.addEventListener('input', applyFiltersExport);
-
-    const resetBtnExport = document.getElementById('reset-btn-export');
-    if (resetBtnExport) {
-        resetBtnExport.onclick = () => {
-            resetCartAndInventoryExport();
-            showNotice("Wyczyszczono listę!", "warning");
-        };
-    }
-});
