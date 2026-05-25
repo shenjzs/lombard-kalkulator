@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI
 // ==========================================
-const APP_VERSION = "3.6.2";
+const APP_VERSION = "3.6.3";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 // ==========================================
