@@ -7,8 +7,8 @@ let LATEST_CHANGELOG_VERSION = APP_VERSION;
 // ==========================================
 // KONFIGURACJA I API
 // ==========================================
-const DISCORD_WEBHOOK_URL_SKUP = "https://discord.com/api/webhooks/1500540604827046078/_uzuOq6EK9Ip0XggKscXNsmPRZrl4EdmBSLcWcMRaavI0wimpqkxWIRn8TrELISJ6RZQ"; 
-const DISCORD_WEBHOOK_URL_EXPORT = "https://discord.com/api/webhooks/1500573620605550725/VmpdLB3qN1FT6Jkf-U-Wo1cig-WEpVjleki4f-EA45G5QfSuBJeC3f1fqCKB_LTeXOQ5";
+const DISCORD_WEBHOOK_URL_SKUP = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/skup"; 
+const DISCORD_WEBHOOK_URL_EXPORT = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/export";
 
 const PIN_API_URL = "https://script.google.com/macros/s/AKfycbycnbsg8yC8Cqk0tF-6syzBTvTLvO-MyTgx-zqAPjgBXPR132MicKNtjNoq3WMQfmLR/exec";
 const REPORTS_API_URL = "https://script.google.com/macros/s/AKfycbwcbHTDSA5H0LO2hWYmBleL0z74CXyLYzm188cvhnQBLdbmrOw0r5OMj7QyPXivMZfzeg/exec";
