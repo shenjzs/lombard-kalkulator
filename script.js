@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI
 // ==========================================
-const APP_VERSION = "3.6.3";
+const APP_VERSION = "3.7.3";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 // ==========================================
@@ -28,6 +28,14 @@ let currentStatsType = 'skup';
 let currentStatsRange = 'today';
 
 let currentReportReceiptId = ""; 
+
+// ==========================================
+// FUNKCJA FORMATOWANIA WALUTY
+// ==========================================
+window.formatMoney = function(amount) {
+    if (isNaN(amount)) return "0";
+    return Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+};
 
 // ==========================================
 // FUNKCJA AUTORYZACJI SZEFA
@@ -272,6 +280,9 @@ window.login = async function() {
             fetchChangelogData();
             
             switchView('skup');
+            
+            // SPRAWDZANIE PREMII
+            checkEmployeeBonuses();
 
         } else {
             showNotice("Nieprawidłowy PIN!", "danger");
@@ -341,6 +352,63 @@ document.addEventListener('click', function(event) {
     }
 });
 
+// ==========================================
+// SYSTEM POWIADOMIEŃ O PREMII
+// ==========================================
+async function checkEmployeeBonuses() {
+    try {
+        const res = await fetch(`${REPORTS_API_URL}?action=get_bonuses&t=${new Date().getTime()}`);
+        const data = await res.json();
+        
+        if (data.bonuses && data.bonuses.length > 0) {
+            const myUnreadBonuses = data.bonuses.filter(b => b.employee === currentEmployeeName && b.status === "Nieodebrane");
+            
+            if (myUnreadBonuses.length > 0) {
+                let totalBonus = 0;
+                let detailsHtml = "";
+                
+                myUnreadBonuses.forEach(b => {
+                    totalBonus += parseFloat(b.amount) || 0;
+                    detailsHtml += `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; align-items: center;">
+                            <span style="color: var(--text-secondary); text-align: left; line-height: 1.2;">
+                                <strong style="color: var(--text-primary); font-size: 0.8rem;">Od: ${b.boss}</strong><br>
+                                <small>${b.reason}</small>
+                            </span>
+                            <strong style="color: var(--ad-gold); font-size: 1.1rem;">+${window.formatMoney(b.amount)}$</strong>
+                        </div>
+                    `;
+                });
+
+                document.getElementById('bonus-notification-details').innerHTML = `
+                    <div style="font-size: 2.5rem; font-weight: 900; color: var(--success); margin-bottom: 15px; text-shadow: 0 0 10px rgba(34, 197, 94, 0.4);">
+                        +${window.formatMoney(totalBonus)}$
+                    </div>
+                    <div style="border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px; text-align: left;">
+                        ${detailsHtml}
+                    </div>
+                `;
+                
+                document.getElementById('bonus-notification-modal').classList.add('active');
+
+                // Oznacz jako przeczytane w bazie
+                fetch(REPORTS_API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'mark_bonus_read',
+                        employee: currentEmployeeName
+                    })
+                }).catch(e => console.error("Błąd oznaczania premii", e));
+            }
+        }
+    } catch (e) {
+        console.error("Błąd sprawdzania premii:", e);
+    }
+}
+
+window.closeBonusNotification = function() {
+    document.getElementById('bonus-notification-modal').classList.remove('active');
+}
 
 // ==========================================
 // LOKALNE STATYSTYKI SKUPU

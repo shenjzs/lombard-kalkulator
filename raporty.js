@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "3.6.3"; // Normalizacja nazw produktów
+const APP_VERSION = "3.7.3"; // Normalizacja nazw produktów
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
@@ -14,12 +14,14 @@ const BOSS_DISCORD_WEBHOOK = "https://discord.com/api/webhooks/15017224114714707
 let topItemsChartInstance = null;
 let cashflowChartInstance = null;
 let peakHoursChartInstance = null; 
+let bonusesChartInstance = null;
 window.currentGlobalGoal = 0;
 
 // Globalna zmienna przechowująca przetworzone dane dla wyszukiwarki
 window.globalSortedTransactions = [];
 window.currentEmployeesList = []; // Lista pracowników do edycji
 window.globalRawFeed = []; // Globalne logi do profili pracownika
+window.globalBonuses = []; // Globalne premie
 let currentEmployeeName = "";
 let currentFeedLimit = 50; // LIMIT WYŚWIETLANIA DLA LIVE FEEDA
 
@@ -221,6 +223,9 @@ async function loadRealData() {
     document.getElementById('total-sell').innerHTML = kpiSkeleton;
     document.getElementById('total-balance').innerHTML = kpiSkeleton;
     document.getElementById('total-profit').innerHTML = kpiSkeleton;
+    
+    const totalBonusesEl = document.getElementById('total-bonuses');
+    if (totalBonusesEl) totalBonusesEl.innerHTML = kpiSkeleton;
 
     const tableSkeleton = Array(5).fill(`
         <tr>
@@ -281,6 +286,15 @@ async function loadRealData() {
         // Zapis globalny do wyliczania statystyk pracownika na kliknięcie
         window.globalRawFeed = rawData;
         
+        // Pobieranie premii z bazy
+        try {
+            const bonusesRes = await fetch(`${REPORTS_API_URL}?action=get_bonuses&t=${new Date().getTime()}`);
+            const bonusesData = await bonusesRes.json();
+            window.globalBonuses = bonusesData.bonuses || [];
+        } catch(e) {
+            window.globalBonuses = [];
+        }
+        
         // Filtrujemy tylko to co związane z kasą (skup i sprzedaż)
         const data = rawData.filter(row => row.type === "skup" || row.type === "sprzedaz");
         
@@ -316,15 +330,35 @@ async function loadRealData() {
         let totalBuy = 0;
         let totalSell = 0;
         let totalProfit = 0; 
+        let totalBonuses = 0;
         
         const groupedBuy = {};
         const groupedSell = {};
+        const groupedBonuses = {};
         const rankingBuy = {};
         const rankingSell = {};
         const rawFeed = [];
         const dailyData = {}; 
         const dynamicBuyStats = {};
         const hourlyData = new Array(24).fill(0);
+        
+        // Zliczanie premii z uwzględnieniem filtrów
+        window.globalBonuses.forEach(b => {
+            const bDate = parseDate(b.date);
+            const bTS = bDate.getTime();
+            
+            if (filterStartTS && bTS < filterStartTS) return;
+            if (filterEndTS && bTS > filterEndTS) return;
+
+            const empName = b.employee || "Nieznany";
+            if (empFilterValue !== "ALL" && empName !== empFilterValue) return;
+
+            const amt = parseFloat(b.amount) || 0;
+            totalBonuses += amt;
+
+            if (!groupedBonuses[empName]) groupedBonuses[empName] = 0;
+            groupedBonuses[empName] += amt;
+        });
 
         data.forEach(row => {
             const rowDate = parseDate(row.date);
@@ -400,9 +434,13 @@ async function loadRealData() {
                 rankingSell[empName].totalSellVal += row.total;
             }
         });
+        
+        // Odjęcie wypłaconych premii od zysku netto
+        totalProfit -= totalBonuses;
 
         animateCountUp(document.getElementById('total-buy'), totalBuy);
         animateCountUp(document.getElementById('total-sell'), totalSell);
+        if (totalBonusesEl) animateCountUp(totalBonusesEl, totalBonuses);
         
         let balance = totalSell - totalBuy;
         const balEl = document.getElementById('total-balance');
@@ -515,7 +553,7 @@ async function loadRealData() {
         };
 
         prepareLiveFeed();
-        renderCharts(groupedSell, dailyData, hourlyData);
+        renderCharts(groupedSell, dailyData, hourlyData, groupedBonuses);
         document.getElementById('report-timestamp').innerText = `Ostatnia aktualizacja: ${new Date().toLocaleTimeString()}`;
 
     } catch (err) {
@@ -665,7 +703,7 @@ function updateGoalProgress(currentSell) {
     }
 }
 
-function renderCharts(groupedSell, dailyData, hourlyData) {
+function renderCharts(groupedSell, dailyData, hourlyData, groupedBonuses) {
     Chart.defaults.color = '#94a3b8';
     Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
     Chart.defaults.font.family = "'Inter', sans-serif";
@@ -673,6 +711,7 @@ function renderCharts(groupedSell, dailyData, hourlyData) {
     if (topItemsChartInstance) topItemsChartInstance.destroy();
     if (cashflowChartInstance) cashflowChartInstance.destroy();
     if (peakHoursChartInstance) peakHoursChartInstance.destroy();
+    if (bonusesChartInstance) bonusesChartInstance.destroy();
 
     const topItems = Object.values(groupedSell)
         .sort((a, b) => b.total - a.total)
@@ -777,6 +816,57 @@ function renderCharts(groupedSell, dailyData, hourlyData) {
             }
         }
     });
+
+    // =====================================
+    // NOWY WYKRES PREMII (DOUGHNUT)
+    // =====================================
+    const bonusLabels = Object.keys(groupedBonuses || {});
+    const bonusData = Object.values(groupedBonuses || {});
+    const hasBonuses = bonusData.some(v => v > 0);
+
+    const finalBonusLabels = hasBonuses ? bonusLabels : ["Brak premii w tym okresie"];
+    const finalBonusData = hasBonuses ? bonusData : [1];
+    
+    const doughnutColorsArr = bonusLabels.map((_, i) => {
+        const colors = ['#f59e0b', '#38bdf8', '#22c55e', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
+        return colors[i % colors.length];
+    });
+    const finalBonusColors = hasBonuses ? doughnutColorsArr : ['rgba(255, 255, 255, 0.05)'];
+
+    const ctxBonus = document.getElementById('bonusesChart');
+    if(ctxBonus) {
+        bonusesChartInstance = new Chart(ctxBonus.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: finalBonusLabels,
+                datasets: [{
+                    data: finalBonusData,
+                    backgroundColor: finalBonusColors,
+                    borderWidth: 0,
+                    hoverOffset: hasBonuses ? 8 : 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { 
+                        position: 'right', 
+                        labels: { color: '#94a3b8', font: { family: "'Inter', sans-serif" } } 
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                if(!hasBonuses) return " Brak wypłaconych premii";
+                                return ' ' + context.label + ': ' + window.formatMoney(context.raw) + '$';
+                            }
+                        }
+                    }
+                },
+                cutout: '75%'
+            }
+        });
+    }
 }
 
 // ==========================================
@@ -1169,6 +1259,107 @@ window.toggleEmployeeRole = async function(pin, newRole) {
 }
 
 // ==========================================
+// ZARZĄDZANIE PREMIAMI
+// ==========================================
+window.openBonusesManager = async function() {
+    document.getElementById('bonuses-manager-modal').classList.remove('hidden');
+    const select = document.getElementById('new-bonus-emp');
+    select.innerHTML = '<option value="">Wybierz pracownika...</option>';
+    
+    if (window.currentEmployeesList) {
+        window.currentEmployeesList.forEach(emp => {
+            const opt = document.createElement('option');
+            opt.value = emp.name;
+            opt.innerText = emp.name;
+            select.appendChild(opt);
+        });
+    }
+    
+    await loadBonusesToTable();
+}
+
+window.closeBonusesManager = function() {
+    document.getElementById('bonuses-manager-modal').classList.add('hidden');
+}
+
+async function loadBonusesToTable() {
+    const tbody = document.getElementById('bonuses-table-body');
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Ładowanie danych...</td></tr>';
+    
+    try {
+        const res = await fetch(`${REPORTS_API_URL}?action=get_bonuses&t=${new Date().getTime()}`);
+        const data = await res.json();
+        window.globalBonuses = data.bonuses || [];
+
+        if (window.globalBonuses.length > 0) {
+            const sortedBonuses = window.globalBonuses.sort((a,b) => new Date(b.date) - new Date(a.date));
+            tbody.innerHTML = sortedBonuses.map(b => {
+                let displayDate = b.date;
+                if (typeof displayDate === 'string' && displayDate.includes('T')) {
+                    displayDate = new Date(displayDate).toLocaleString('pl-PL');
+                }
+                return `
+                    <tr>
+                        <td>${displayDate}</td>
+                        <td><strong class="clickable-emp" onclick="window.openEmployeeProfile('${b.employee}')"><i class="fas fa-user-circle"></i> ${b.employee}</strong></td>
+                        <td><span style="color: var(--text-secondary);">${b.reason || '-'}</span></td>
+                        <td style="text-align: right; color: var(--warning); font-weight: 800;">${window.formatMoney(b.amount)}$</td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Brak wpisów o premiach.</td></tr>';
+        }
+    } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--danger);">Błąd połączenia z bazą!</td></tr>';
+    }
+}
+
+window.addBonus = async function() {
+    const btn = document.getElementById('add-bonus-btn');
+    const empInput = document.getElementById('new-bonus-emp');
+    const amountInput = document.getElementById('new-bonus-amount');
+    const reasonInput = document.getElementById('new-bonus-reason');
+
+    const employee = empInput.value;
+    const amount = parseFloat(amountInput.value);
+    const reason = reasonInput.value.trim();
+
+    if (!employee) return showNotice("Wybierz pracownika!", "danger");
+    if (isNaN(amount) || amount <= 0) return showNotice("Wprowadź poprawną kwotę!", "danger");
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    try {
+        const res = await fetch(REPORTS_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'save_bonus',
+                employee: employee,
+                amount: amount,
+                reason: reason,
+                boss: document.getElementById('logged-boss-name').innerText 
+            })
+        });
+
+        showNotice("Przetwarzanie...", "info");
+        await loadBonusesToTable();
+        await loadRealData(); 
+        showNotice(`Wypłacono premię dla: ${employee}`, "success");
+
+        amountInput.value = '';
+        reasonInput.value = '';
+        empInput.value = '';
+    } catch (e) {
+        showNotice("Nie udało się zapisać premii!", "danger");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-plus"></i> Wypłać';
+    }
+}
+
+// ==========================================
 // GENEROWANIE RAPORTU GRAFICZNEGO I DISCORD
 // ==========================================
 window.sendReportToDiscord = async function() {
@@ -1184,10 +1375,13 @@ window.sendReportToDiscord = async function() {
     const totalSellVal = document.getElementById('total-sell').innerText;
     const totalBalVal = document.getElementById('total-balance').innerText;
     const totalProfitVal = document.getElementById('total-profit').innerText;
+    const totalBonusVal = document.getElementById('total-bonuses') ? document.getElementById('total-bonuses').innerText : "0$";
     
     document.getElementById('v-buy').innerText = totalBuyVal;
     document.getElementById('v-sell').innerText = totalSellVal;
-    document.getElementById('v-bal').innerText = totalBalVal;
+    document.getElementById('v-bal').innerText = totalProfitVal;
+    const vBonusEl = document.getElementById('v-bonus');
+    if(vBonusEl) vBonusEl.innerText = totalBonusVal;
     
     const dFrom = document.getElementById('filter-date-from') ? document.getElementById('filter-date-from').value : "POCZĄTEK";
     const dTo = document.getElementById('filter-date-to') ? document.getElementById('filter-date-to').value : "DZIŚ";
@@ -1253,7 +1447,8 @@ window.sendReportToDiscord = async function() {
                         { name: "📉 Wydatki (skup)", value: `\`${totalBuyVal}\``, inline: true },
                         { name: "📈 Przychody (sprzedaż)", value: `\`${totalSellVal}\``, inline: true },
                         { name: "⚖️ Bilans", value: `\`${totalBalVal}\``, inline: true },
-                        { name: "💎 Czysty zysk", value: ` 💰 ${totalProfitVal}`, inline: false },
+                        { name: "🎁 Wypłacone premie", value: `\`${totalBonusVal}\``, inline: true },
+                        { name: "💎 Zysk netto", value: ` 💰 ${totalProfitVal}`, inline: false },
                         { name: "🏆 Top zaopatrzeniowcy", value: topBuyStr, inline: true },
                         { name: "🚚 Top sprzedający", value: topSellStr, inline: true }
                     ],

@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Statystyki</title>
-    <link rel="stylesheet" href="style-raporty.css?v=3.6.3">
+    <link rel="stylesheet" href="style-raporty.css?v=3.7.3">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -61,6 +61,7 @@
             <h1>RAPORTY FINANSOWE</h1>
             <div class="header-meta">
                 <button onclick="openEmployeeManager()" class="manage-emp-btn"><i class="fas fa-users-cog"></i> Pracownicy</button>
+                <button onclick="openBonusesManager()" class="manage-emp-btn" style="color: var(--warning); border-color: rgba(245, 158, 11, 0.3);"><i class="fas fa-gift"></i> Premie</button>
             </div>
         </header>
 
@@ -130,6 +131,13 @@
                     <span class="kpi-value" id="total-sell">0$</span>
                 </div>
             </div>
+            <div class="kpi-card" style="border-bottom: 5px solid var(--warning);">
+                <div class="kpi-icon" style="background: rgba(245, 158, 11, 0.15); color: var(--warning);"><i class="fas fa-gift"></i></div>
+                <div class="kpi-info">
+                    <span class="kpi-label">Wypłacone premie</span>
+                    <span class="kpi-value" id="total-bonuses" style="color: var(--warning);">0$</span>
+                </div>
+            </div>
             <div class="kpi-card info">
                 <div class="kpi-icon"><i class="fas fa-balance-scale"></i></div>
                 <div class="kpi-info">
@@ -165,12 +173,22 @@
             </div>
         </div>
 
-        <div class="data-section" style="margin-bottom: 35px;">
-            <div class="section-header highlight-header" style="color: var(--warning);">
-                <h3><i class="fas fa-fire"></i> Godziny szczytu</h3>
+        <div class="charts-grid" style="margin-bottom: 35px;">
+            <div class="data-section">
+                <div class="section-header highlight-header" style="color: var(--warning);">
+                    <h3><i class="fas fa-fire"></i> Godziny szczytu</h3>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="peakHoursChart"></canvas>
+                </div>
             </div>
-            <div class="chart-wrapper">
-                <canvas id="peakHoursChart"></canvas>
+            <div class="data-section">
+                <div class="section-header highlight-header" style="color: var(--warning);">
+                    <h3><i class="fas fa-gift"></i> Podział premii wg. pracowników</h3>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="bonusesChart"></canvas>
+                </div>
             </div>
         </div>
 
@@ -283,6 +301,43 @@
         </footer>
     </div>
 
+    <div id="bonuses-manager-modal" class="emp-modal-overlay hidden">
+        <div class="emp-modal-content" style="max-width: 800px;">
+            <div class="emp-modal-header">
+                <h2 style="color: var(--warning);"><i class="fas fa-gift"></i> Panel premiowy</h2>
+                <button onclick="closeBonusesManager()" class="emp-close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="emp-modal-body">
+                <div class="emp-add-form" style="border-color: rgba(245, 158, 11, 0.3); background: rgba(245, 158, 11, 0.05);">
+                    <select id="new-bonus-emp" class="emp-input">
+                        <option value="">Wybierz pracownika...</option>
+                    </select>
+                    <input type="number" id="new-bonus-amount" placeholder="Kwota premii ($)" class="emp-input pin-input-small">
+                    <input type="text" id="new-bonus-reason" placeholder="Notatka" class="emp-input">
+                    <button onclick="addBonus()" id="add-bonus-btn" class="filter-btn success-btn" style="background: var(--warning); color: #000; border: none;">
+                        <i class="fas fa-plus"></i> Wypłać
+                    </button>
+                </div>
+                
+                <div class="emp-table-container">
+                    <table class="modern-table emp-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Pracownik</th>
+                                <th>Powód</th>
+                                <th style="text-align: right;">Kwota</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bonuses-table-body">
+                            <tr><td colspan="4" style="text-align:center;">Ładowanie danych...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="employee-manager-modal" class="emp-modal-overlay hidden">
         <div class="emp-modal-content">
             <div class="emp-modal-header">
@@ -295,9 +350,9 @@
                     <input type="password" id="new-emp-pin" placeholder="PIN (4 cyfry)" maxlength="4" class="emp-input pin-input-small">
                     
                     <select id="new-emp-rank" class="emp-input emp-select-rank">
-					    <option value="Właściciel">Właściciel</option>
-						<option value="Kierownik">Kierownik</option>
-						<option value="Pracownik">Pracownik</option>
+                        <option value="Właściciel">Właściciel</option>
+                        <option value="Kierownik">Kierownik</option>
+                        <option value="Pracownik">Pracownik</option>
                         <option value="Praktykant" selected>Praktykant</option>
                     </select>
 
@@ -346,9 +401,9 @@
                         <label>Stopień</label>
                         <select id="edit-emp-rank" class="emp-input emp-select-rank">
                             <option value="Właściciel">Właściciel</option>
-							<option value="Kierownik">Kierownik</option>
-							<option value="Pracownik">Pracownik</option>
-							<option value="Praktykant">Praktykant</option>
+                            <option value="Kierownik">Kierownik</option>
+                            <option value="Pracownik">Pracownik</option>
+                            <option value="Praktykant">Praktykant</option>
                         </select>
                     </div>
 
@@ -377,17 +432,21 @@
                 <div class="v-title">RAPORT FINANSOWY</div>
                 <div class="v-date" id="v-report-date"></div>
             </div>
-            <div class="v-main-stats">
+            <div class="v-main-stats" style="grid-template-columns: repeat(4, 1fr);">
                 <div class="v-stat-box">
                     <span class="v-label">ŁĄCZNE WYDATKI</span>
                     <span class="v-value v-red" id="v-buy">0$</span>
+                </div>
+                <div class="v-stat-box">
+                    <span class="v-label">PREMIE</span>
+                    <span class="v-value" style="color: var(--warning);" id="v-bonus">0$</span>
                 </div>
                 <div class="v-stat-box">
                     <span class="v-label">ŁĄCZNE PRZYCHODY</span>
                     <span class="v-value v-green" id="v-sell">0$</span>
                 </div>
                 <div class="v-stat-box highlight">
-                    <span class="v-label">BILANS KOŃCOWY</span>
+                    <span class="v-label">ZYSK NETTO</span>
                     <span class="v-value" id="v-bal">0$</span>
                 </div>
             </div>
@@ -409,6 +468,6 @@
     </div>
 
     <div id="toast-container" class="toast-container"></div>
-    <script src="raporty.js?v=3.6.3"></script>
+    <script src="raporty.js?v=3.7.3"></script>
 </body>
 </html>
