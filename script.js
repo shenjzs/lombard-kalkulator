@@ -1933,7 +1933,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isTravisVance()) {
             switchView('loyalty'); 
         } else {
-            showNotice("Moduł dostępny tylko dla zarządu!", "danger");
+            showNotice("Dostępne wkrótce!", "danger");
         }
     });
 
