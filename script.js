@@ -1744,7 +1744,7 @@ window.openAdminReports = async function() {
                 pendingReports.forEach(r => html += buildAdminReportCard(r));
             }
             if (resolvedReports.length > 0) {
-                html += '<h3 class="admin-report-title-success">Ostatnio Rozwiązane</h3>';
+                html += '<h3 class="admin-report-title-success">Ostatnio rozwiązane</h3>';
                 resolvedReports.forEach(r => html += buildAdminReportCard(r));
             }
             container.innerHTML = html;
