@@ -24,6 +24,7 @@ let currentEmployeePhoto = "";
 let currentActiveView = 'skup';
 
 let myStatsRawData = [];
+let myBonusesRawData = [];
 let currentStatsType = 'skup';
 let currentStatsRange = 'today';
 
@@ -281,7 +282,6 @@ window.login = async function() {
             
             switchView('skup');
             
-            // SPRAWDZANIE PREMII
             checkEmployeeBonuses();
 
         } else {
@@ -391,7 +391,6 @@ async function checkEmployeeBonuses() {
                 
                 document.getElementById('bonus-notification-modal').classList.add('active');
 
-                // Oznacz jako przeczytane w bazie
                 fetch(REPORTS_API_URL, {
                     method: 'POST',
                     body: JSON.stringify({
@@ -1838,7 +1837,7 @@ window.closeMyStats = function() {
 }
 
 // ==========================================
-// MOJE TRANSAKCJE
+// MOJE TRANSAKCJE ORAZ PREMIE
 // ==========================================
 window.openMyTransactions = async function() {
     document.getElementById('user-dropdown').classList.remove('active');
@@ -1848,16 +1847,47 @@ window.openMyTransactions = async function() {
     document.getElementById('my-transactions-content').classList.add('hidden');
     
     try {
-        const response = await fetch(`${REPORTS_API_URL}?action=get_reports&t=${new Date().getTime()}`);
-        const rawData = await response.json();
+        const [reportsRes, bonusesRes] = await Promise.all([
+            fetch(`${REPORTS_API_URL}?action=get_reports&t=${new Date().getTime()}`),
+            fetch(`${REPORTS_API_URL}?action=get_bonuses&t=${new Date().getTime()}`)
+        ]);
+        
+        const rawData = await reportsRes.json();
+        const bonusesData = await bonusesRes.json();
         
         myStatsRawData = rawData.filter(row => row.employee === currentEmployeeName);
-        renderTransactionsList();
+        myBonusesRawData = (bonusesData.bonuses || []).filter(b => b.employee === currentEmployeeName);
+        
+        switchTransView('historia');
         
         document.getElementById('my-transactions-loader').classList.add('hidden');
         document.getElementById('my-transactions-content').classList.remove('hidden');
     } catch (err) {
         document.getElementById('my-transactions-loader').innerHTML = '<p style="color:var(--danger);"><i class="fas fa-exclamation-triangle"></i> Błąd pobierania danych.</p>';
+    }
+}
+
+window.switchTransView = function(view) {
+    const btnHist = document.getElementById('btn-trans-historia');
+    const btnPremie = document.getElementById('btn-trans-premie');
+    const contHist = document.getElementById('transactions-list-container');
+    const contPremie = document.getElementById('bonuses-list-container');
+    const desc = document.getElementById('my-transactions-desc');
+
+    if (view === 'historia') {
+        btnHist.classList.add('active');
+        btnPremie.classList.remove('active');
+        contHist.classList.remove('hidden');
+        contPremie.classList.add('hidden');
+        desc.innerText = "Historia Twoich transakcji. Możesz zgłosić pomyłkę w wystawionym paragonie.";
+        renderTransactionsList();
+    } else {
+        btnHist.classList.remove('active');
+        btnPremie.classList.add('active');
+        contHist.classList.add('hidden');
+        contPremie.classList.remove('hidden');
+        desc.innerText = "Historia otrzymanych premii finansowych od zarządu.";
+        renderBonusesList();
     }
 }
 
@@ -1933,6 +1963,54 @@ function renderTransactionsList() {
     if(sortedIds.length === 0) {
          container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Brak zidentyfikowanych transakcji z ID.</p>';
     }
+}
+
+function renderBonusesList() {
+    const container = document.getElementById('bonuses-list-container');
+    container.innerHTML = '';
+    
+    if (!myBonusesRawData || myBonusesRawData.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Brak przyznanych premii w historii.</p>';
+        return;
+    }
+
+    const sortedBonuses = myBonusesRawData.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+    sortedBonuses.forEach(b => {
+        let displayDate = b.date;
+        if (typeof displayDate === 'string' && displayDate.includes('T')) {
+            displayDate = new Date(displayDate).toLocaleString('pl-PL');
+        }
+
+        let statusBadge = b.status === 'Odebrane' 
+            ? `<span style="background: rgba(34, 197, 94, 0.15); color: var(--success); padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase;">Odebrane</span>`
+            : `<span style="background: rgba(245, 158, 11, 0.15); color: var(--warning); padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase;">Nowe</span>`;
+
+        const div = document.createElement('div');
+        div.className = 'transaction-item-card';
+        div.innerHTML = `
+            <div class="transaction-header" style="justify-content: space-between; display: flex;">
+                <span style="font-weight: 800; color: var(--ad-gold); display: flex; align-items: center; gap: 8px;"><i class="fas fa-gift"></i> Od: ${b.boss}</span>
+                <span class="transaction-date" style="font-size: 0.8rem; color: var(--text-secondary);">${displayDate}</span>
+            </div>
+            <div class="transaction-body" style="margin: 15px 0;">
+                <div style="font-size: 0.9rem; color: white; margin-bottom: 10px; line-height: 1.5;">
+                    ${b.reason || 'Brak notatki'}
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="transaction-total" style="font-weight: 900; color: var(--success); font-size: 1.2rem;">+${window.formatMoney(b.amount)}$</div>
+                    ${statusBadge}
+                </div>
+            </div>
+        `;
+        div.style.background = "rgba(0,0,0,0.3)";
+        div.style.border = "1px solid var(--border-color)";
+        div.style.borderRadius = "14px";
+        div.style.padding = "15px";
+        div.style.marginBottom = "15px";
+        
+        container.appendChild(div);
+    });
 }
 
 window.closeMyTransactions = function() {

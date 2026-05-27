@@ -410,13 +410,18 @@
                 <h2><i class="fas fa-list"></i> Moje transakcje</h2>
                 <button onclick="closeMyTransactions()" class="settings-close-btn"><i class="fas fa-times"></i></button>
             </div>
-            <p class="settings-desc">Historia Twoich transakcji. Możesz zgłosić pomyłkę w wystawionym paragonie.</p>
+            <p class="settings-desc" id="my-transactions-desc">Historia Twoich transakcji. Możesz zgłosić pomyłkę w wystawionym paragonie.</p>
             <div id="my-transactions-loader" style="text-align: center; padding: 40px 0;">
                 <i class="fas fa-circle-notch fa-spin fa-3x" style="color: var(--accent-color);"></i>
-                <p style="margin-top: 15px; color: var(--text-secondary); font-weight: 600;">Pobieranie historii z bazy...</p>
+                <p style="margin-top: 15px; color: var(--text-secondary); font-weight: 600;">Pobieranie danych z bazy...</p>
             </div>
             <div id="my-transactions-content" class="hidden" style="width: 100%;">
+                <div class="my-stats-toggle-container">
+                    <button class="my-stats-toggle-btn active" id="btn-trans-historia" onclick="switchTransView('historia')"><i class="fas fa-history"></i> Transakcje</button>
+                    <button class="my-stats-toggle-btn" id="btn-trans-premie" onclick="switchTransView('premie')"><i class="fas fa-gift"></i> Moje premie</button>
+                </div>
                 <div id="transactions-list-container" class="transactions-list"></div>
+                <div id="bonuses-list-container" class="transactions-list hidden"></div>
             </div>
         </div>
     </div>
@@ -594,10 +599,10 @@
             </div>
             <div style="text-align: center; padding: 10px 0;">
                 <i class="fas fa-hand-holding-usd" style="font-size: 4.5rem; color: var(--ad-gold); margin-bottom: 20px; filter: drop-shadow(0 0 15px rgba(234, 179, 8, 0.4));"></i>
-                <h3 style="font-size: 1.6rem; margin-bottom: 10px; color: var(--text-primary); font-weight: 900;">Otrzymałeś premię!</h3>
-                <p class="settings-desc" style="margin-bottom: 25px;">Ojcowie docenili Twoją ciężką pracę w firmie.</p>
+                <h3 style="font-size: 1.6rem; margin-bottom: 10px; color: var(--text-primary); font-weight: 900;">Otrzymałeś nową premię!</h3>
+                <p class="settings-desc" style="margin-bottom: 25px;">Zarząd docenił Twoją ciężką pracę w firmie.</p>
                 <div id="bonus-notification-details" style="background: rgba(0,0,0,0.3); border: 1px dashed var(--ad-gold); padding: 20px; border-radius: 16px; margin-bottom: 25px;">
-                    </div>
+                </div>
                 <button onclick="closeBonusNotification()" class="settings-save-btn" style="background: var(--ad-gold); color: #000; box-shadow: 0 4px 15px rgba(234, 179, 8, 0.3); font-size: 1.1rem; padding: 16px;"><i class="fas fa-check-circle"></i> Odbierz premię</button>
             </div>
         </div>

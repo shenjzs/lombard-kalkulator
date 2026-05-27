@@ -312,8 +312,8 @@
                     <select id="new-bonus-emp" class="emp-input">
                         <option value="">Wybierz pracownika...</option>
                     </select>
-                    <input type="number" id="new-bonus-amount" placeholder="Kwota premii ($)" class="emp-input pin-input-small">
-                    <input type="text" id="new-bonus-reason" placeholder="Notatka" class="emp-input">
+                    <input type="number" id="new-bonus-amount" placeholder="Kwota ($)" class="emp-input" style="flex: 0.5; text-align: center;">
+                    <input type="text" id="new-bonus-reason" placeholder="Tytuł" class="emp-input">
                     <button onclick="addBonus()" id="add-bonus-btn" class="filter-btn success-btn" style="background: var(--warning); color: #000; border: none;">
                         <i class="fas fa-plus"></i> Wypłać
                     </button>
@@ -325,7 +325,7 @@
                             <tr>
                                 <th>Data</th>
                                 <th>Pracownik</th>
-                                <th>Powód</th>
+                                <th>Tytuł</th>
                                 <th style="text-align: right;">Kwota</th>
                             </tr>
                         </thead>

@@ -498,11 +498,11 @@ header h1 {
 }
 
 /* ==========================================================================
-   KARTY KPI (KWOTY)
+   KARTY KPI (KWOTY) - ZOPTYMALIZOWANE RWD (FIX UCINANIA I SIATKI)
    ========================================================================== */
 .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr)); 
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
     gap: 15px; 
     margin-bottom: 45px;
 }
@@ -510,7 +510,7 @@ header h1 {
 .kpi-card {
     background: var(--card-bg);
     padding: 18px 15px; 
-    border-radius: 24px;
+    border-radius: 20px;
     display: flex;
     align-items: center;
     gap: 12px; 
@@ -524,11 +524,11 @@ header h1 {
 .kpi-icon {
     width: 48px; 
     height: 48px; 
-    border-radius: 16px;
+    border-radius: 14px;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 1.5rem; 
+    font-size: 1.4rem; 
     flex-shrink: 0; 
 }
 
@@ -540,14 +540,14 @@ header h1 {
 }
 
 .kpi-label {
-    font-size: 0.75rem;
+    font-size: 0.75rem; 
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .kpi-value { 
-    font-size: 1.45rem; 
+    font-size: 1.3rem; 
     font-weight: 900; 
     color: #fff; 
     line-height: 1.2; 
@@ -950,7 +950,7 @@ header h1 {
 .section-header.collapsed .toggle-icon { transform: rotate(-180deg); }
 
 /* ==========================================================================
-   MODAL DO ZARZĄDZANIA PRACOWNIKAMI
+   MODAL DO ZARZĄDZANIA PRACOWNIKAMI I PREMIAMI (FIX NAKŁADANIA)
    ========================================================================== */
 .emp-modal-overlay {
     position: fixed;
@@ -1071,11 +1071,43 @@ header h1 {
     letter-spacing: 0.5px;
 }
 
+/* KONTENER TABELI Z WŁASNYM SCROLLEM (NAPRAWA ZACHODZENIA NAGŁÓWKA) */
 .emp-table-container {
     background: rgba(0,0,0,0.15);
     border-radius: 16px;
     border: 1px solid rgba(255,255,255,0.05);
-    padding: 15px;
+    padding: 0; /* Wyzerowane, aby uniknąć przezroczystej przestrzeni pod sticky */
+    max-height: 380px; 
+    overflow-y: auto; 
+}
+
+.emp-table-container::-webkit-scrollbar {
+    width: 6px;
+}
+.emp-table-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+.emp-table-container::-webkit-scrollbar-thumb {
+    background: rgba(56, 189, 248, 0.3);
+    border-radius: 10px;
+}
+
+.emp-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0; 
+}
+
+.emp-table th {
+    background: var(--card-bg); 
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+
+.emp-table th, .emp-table td {
+    padding: 15px 20px; 
 }
 
 .emp-table td:last-child {
@@ -1364,6 +1396,15 @@ header h1 {
     background: #fff;
 }
 
+@media (max-width: 600px) {
+    .scroll-to-top {
+        bottom: 20px;
+        right: 20px;
+        width: 45px;
+        height: 45px;
+    }
+}
+
 /* ==========================================================================
    ANIMACJE WEJŚCIOWE (DASHBOARD SLIDE-UP)
    ========================================================================== */
@@ -1567,25 +1608,23 @@ header h1 {
 .rep-btn.sub:hover { background: var(--danger); color: white; transform: translateY(-2px); }
 
 /* ==========================================================================
-   MEDIA QUERIES (RESPONSYWNOŚĆ) - ZAKTUALIZOWANE DLA 5 KART
+   MEDIA QUERIES (RESPONSYWNOŚĆ)
    ========================================================================== */
 
-@media (max-width: 1350px) {
-    .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 1400px) {
+    /* Pozwalamy siatce działać z auto-fit dla łagodniejszego spadania kart do nowej linii */
+    .kpi-card { padding: 18px 15px; gap: 15px; }
+    .kpi-value { font-size: 1.25rem; }
+    .kpi-icon { width: 48px; height: 48px; font-size: 1.5rem; }
 }
 
 @media (max-width: 1100px) {
-    .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .tables-container { grid-template-columns: 1fr; }
     .charts-grid { grid-template-columns: 1fr; } 
     .filters-bar { flex-direction: column; align-items: stretch; }
     .filter-actions { margin-left: 0; flex-direction: column; }
     .feed-item-summary { flex-wrap: wrap; }
     .feed-item-value { margin-left: 0; width: 100%; text-align: right; }
-}
-
-@media (max-width: 800px) {
-    .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 600px) {
@@ -1597,8 +1636,6 @@ header h1 {
     
     header h1 { font-size: 1.8rem; word-break: break-word; }
     .header-meta { flex-direction: column; gap: 10px; }
-    
-    .kpi-grid { grid-template-columns: 1fr; }
     
     .goal-section { padding: 20px; }
     .goal-header { flex-direction: column; align-items: stretch; }
@@ -1617,8 +1654,4 @@ header h1 {
     .login-icon { font-size: 2.5rem; }
     
     .table-wrapper { padding: 0 15px 20px 15px; overflow-x: auto; }
-}
-
-@media (max-width: 500px) {
-    .kpi-grid { grid-template-columns: 1fr; }
 }
