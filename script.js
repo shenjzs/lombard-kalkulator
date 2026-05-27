@@ -1701,7 +1701,7 @@ window.submitTransactionReport = async function() {
                 title: "⚠️ Zgłoszenie pomyłki w transakcji!", color: 15158332, 
                 fields: [
                     { name: "📋 Numer paragonu:", value: `\`${currentReportReceiptId}\``, inline: true },
-                    { name: "👤 Zgłaszający:", value: `**${currentEmployeeName}**\nSSN: \`${currentEmployeeSsn}\`\nRanga: \`${currentEmployeeRank}\``, inline: true },
+                    { name: "👤 Zgłaszający:", value: `**${currentEmployeeName}**\nSSN: \`${currentEmployeeSsn}\`\nStopień: \`${currentEmployeeRank}\``, inline: true },
                     { name: "📝 Powód / Opis błędu:", value: reason, inline: false }
                 ],
                 timestamp: new Date().toISOString(), footer: { text: "System EL CARTEL PAWN SHOP" }
