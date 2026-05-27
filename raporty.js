@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "3.7.3"; // Normalizacja nazw produktów
+const APP_VERSION = "3.7.4"; // Normalizacja nazw produktów
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN

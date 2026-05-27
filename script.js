@@ -1,4 +1,4 @@
-const APP_VERSION = "3.7.3";
+const APP_VERSION = "3.7.4";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const DISCORD_WEBHOOK_URL_SKUP = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/skup"; 
@@ -738,7 +738,8 @@ window.sendToDiscord = async function() {
         date: getFormattedDateTime(),
         employee: currentEmployeeName,
         report_id: receiptID, 
-        items: itemsToLog
+        items: itemsToLog,
+        ssn: currentCustomerSSN // <--- TUTAJ PRZEKAZUJEMY SSN DO BACKENDU
     };
 
     try {
@@ -1034,7 +1035,7 @@ function applyFiltersExport() {
 }
 
 window.generateQuoteExport = async function() {
-    if (!Object.values(countsExport).some(c => c > 0)) return showNotice("Koszyk eksportu jest pusty!", "warning");
+    if (!Object.values(countsExport).some(c => c > 0)) return showNotice("Koszyk jest pusty!", "warning");
     
     const ssnInput = document.getElementById('customer-ssn-input-export');
     currentCustomerSSNExport = ssnInput ? ssnInput.value.trim() : "";
@@ -1125,7 +1126,8 @@ window.sendToDiscordExport = async function() {
         date: getFormattedDateTime(),
         employee: currentEmployeeName,
         report_id: lastGeneratedReportID,
-        items: itemsToLog
+        items: itemsToLog,
+        ssn: currentCustomerSSNExport // <--- TUTAJ PRZEKAZUJEMY SSN DLA EKSPORTU
     };
 
     try {
@@ -1612,7 +1614,6 @@ function renderTransactionsList() {
 
     const grouped = {};
     myStatsRawData.forEach(row => {
-        // Zabezpieczenie: Ignorujemy puste ID oraz wpisy z Changeloga!
         if (!row.report_id || row.type === 'changelog') return;
         
         if (!grouped[row.report_id]) {
@@ -1636,7 +1637,6 @@ function renderTransactionsList() {
         }
         grouped[row.report_id].total += row.total;
         
-        // Zabezpieczenie przed "undefined" dla Przetopu Złota, który nie ma wpisanej nazwy przedmiotu
         let itemName = row.name || (row.report_id.includes('GOLD') ? 'Przetop złota' : 'Nieznany przedmiot');
         let itemQty = row.qty || 1;
         
@@ -1648,7 +1648,6 @@ function renderTransactionsList() {
     sortedIds.forEach(id => {
         const data = grouped[id];
         
-        // Dynamiczne dobieranie ikon (Skup / Export / Przetop Złota)
         let typeIcon = '';
         if (data.type === 'skup') typeIcon = '<i class="fas fa-cart-arrow-down text-accent"></i>';
         else if (data.type === 'sprzedaz') typeIcon = '<i class="fas fa-truck-loading text-success"></i>';
@@ -1934,7 +1933,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isTravisVance()) {
             switchView('loyalty'); 
         } else {
-            showNotice("Dostępne wkrótce!", "danger");
+            showNotice("Moduł dostępny tylko dla zarządu!", "danger");
         }
     });
 
@@ -2030,7 +2029,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('claim-bonus-notification-btn')?.addEventListener('click', closeBonusNotification);
 
     const handleListClick = (e, listType) => {
-        const btn = e.target.closest('.btn-circle');
+        const btn = e.target.closest('.btn-circle') || e.target.closest('.cart-btn-circle');
         if (btn) {
             const index = parseInt(btn.getAttribute('data-index'));
             const action = btn.getAttribute('data-action');
@@ -2046,6 +2045,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('items-list')?.addEventListener('click', (e) => handleListClick(e, 'skup'));
     document.getElementById('items-list-export')?.addEventListener('click', (e) => handleListClick(e, 'export'));
+    document.getElementById('cart-items-container')?.addEventListener('click', (e) => handleListClick(e, 'skup'));
+    document.getElementById('cart-items-container-export')?.addEventListener('click', (e) => handleListClick(e, 'export'));
 
     const handleListInput = (e, listType) => {
         if(e.target.classList.contains('quantity-input')) {
