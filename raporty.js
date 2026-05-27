@@ -532,11 +532,13 @@ async function loadRealData() {
                         date: item.date,
                         type: item.type,
                         id: realId || `TX-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+                        ssn: item.ssn || "", 
                         totalAmount: 0,
                         items: [],
                         sortIndex: index 
                     };
                 }
+                if (item.ssn) groupedTransactions[key].ssn = item.ssn;
                 groupedTransactions[key].totalAmount += item.total;
                 groupedTransactions[key].items.push(item);
             });
@@ -1256,6 +1258,75 @@ window.toggleEmployeeRole = async function(pin, newRole) {
         await loadEmployeesToTable();
         showNotice("Zmieniono uprawnienia!", "success");
     } catch (e) { showNotice("Błąd zmiany uprawnień!", "danger"); }
+}
+
+// ==========================================
+// ZARZĄDZANIE KLIENTAMI (KARTY LOJALNOŚCIOWE)
+// ==========================================
+window.openClientsManager = function() {
+    document.getElementById('clients-manager-modal').classList.remove('hidden');
+    renderClientsTable();
+}
+
+window.closeClientsManager = function() {
+    document.getElementById('clients-manager-modal').classList.add('hidden');
+    const searchInput = document.getElementById('client-search-input');
+    if (searchInput) searchInput.value = "";
+}
+
+window.renderClientsTable = function() {
+    const tbody = document.getElementById('clients-table-body');
+    const searchInput = document.getElementById('client-search-input');
+    const term = searchInput ? searchInput.value.toLowerCase().trim() : "";
+
+    if (!window.globalSortedTransactions || window.globalSortedTransactions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Brak danych transakcyjnych do analizy.</td></tr>';
+        return;
+    }
+
+    const clientsMap = {};
+
+    window.globalSortedTransactions.forEach(tx => {
+        // Zakładamy, że w przyszłości lub obecnie skrypt na serwerze zwraca parametr 'ssn' w obiekcie transakcji
+        const ssn = tx.ssn ? String(tx.ssn).trim() : "";
+        if (ssn && ssn !== "" && ssn !== "---") {
+            if (!clientsMap[ssn]) {
+                clientsMap[ssn] = {
+                    ssn: ssn,
+                    stamps: 0,
+                    totalSpent: 0
+                };
+            }
+            // 1 transakcja = 1 pieczątka (wystarczy ułamek sekundy od transakcji)
+            clientsMap[ssn].stamps += 1;
+            clientsMap[ssn].totalSpent += tx.totalAmount;
+        }
+    });
+
+    let clientsArray = Object.values(clientsMap);
+
+    if (term) {
+        clientsArray = clientsArray.filter(c => c.ssn.toLowerCase().includes(term));
+    }
+
+    clientsArray.sort((a, b) => b.stamps - a.stamps);
+
+    if (clientsArray.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: var(--text-secondary); padding: 20px;">Brak zarejestrowanych klientów z SSN.<br><span style="font-size:0.8rem;">(Upewnij się, że baza jest podłączona przed uruchomieniem systemu kart lojalnościowych)</span></td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = clientsArray.map(c => `
+        <tr>
+            <td><strong style="color: var(--accent-color); font-family: monospace; font-size: 1.1rem;">${c.ssn}</strong></td>
+            <td style="text-align: center;"><span class="rank-badge"><i class="fas fa-stamp"></i> ${c.stamps}</span></td>
+            <td style="text-align: right; font-weight: 800; color: var(--success);">${window.formatMoney(c.totalSpent)}$</td>
+        </tr>
+    `).join('');
+}
+
+window.filterClients = function() {
+    window.renderClientsTable();
 }
 
 // ==========================================

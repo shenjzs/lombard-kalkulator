@@ -87,6 +87,12 @@
 
     <div id="main-app" class="hidden">
         
+        <div id="loyalty-menu-container" style="display: flex; justify-content: center; padding-top: 25px;">
+            <button id="loyalty-nav-btn" class="nav-link-btn" style="opacity: 0.4; cursor: not-allowed; border-color: #555; color: #888;">
+                <i class="fas fa-id-card" style="color: #888;"></i> <span class="nav-text">Karty Lojalnościowe</span>
+            </button>
+        </div>
+
         <div id="view-skup">
             <div class="container container-pt40">
                 <header>
@@ -257,6 +263,25 @@
 
             <div id="receipt-capture-area-export" class="receipt-capture-hidden"></div>
         </div>
+        
+        <div id="view-loyalty" class="hidden">
+            <div class="container container-pt40">
+                <header>
+                    <h1>PROGRAM LOJALNOŚCIOWY</h1>
+                    <div class="header-meta">
+                        <span><i class="fas fa-id-card"></i> SYSTEM PUNKTOWY DLA KLIENTÓW</span>
+                    </div>
+                </header>
+                <div class="ad-card" style="max-width: 600px; margin: 0 auto; text-align: center;">
+                    <div class="ad-header">
+                        <i class="fas fa-tools"></i>
+                        <span>MODUŁ W BUDOWIE</span>
+                    </div>
+                    <p style="color: var(--text-secondary);">Skanowanie, zarządzanie i wymiana punktów przez klientów wkrótce dostępna.</p>
+                </div>
+            </div>
+        </div>
+
     </div> 
 
     <div id="quote-modal" class="modal">

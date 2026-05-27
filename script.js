@@ -165,19 +165,30 @@ window.switchView = function(view) {
     const themeStyle = document.getElementById('theme-style');
     const viewSkup = document.getElementById('view-skup');
     const viewExport = document.getElementById('view-export');
+    const viewLoyalty = document.getElementById('view-loyalty');
     const navLogoIcon = document.getElementById('nav-logo-icon');
 
     if (view === 'skup') {
         if(themeStyle) themeStyle.href = `style.css?v=${APP_VERSION}`;
-        viewSkup.classList.remove('hidden');
-        viewExport.classList.add('hidden');
+        if(viewSkup) viewSkup.classList.remove('hidden');
+        if(viewExport) viewExport.classList.add('hidden');
+        if(viewLoyalty) viewLoyalty.classList.add('hidden');
         navLogoIcon.className = 'fas fa-cash-register';
         document.querySelector('.navbar').classList.remove('scrolled'); 
     } else if (view === 'export') {
         if(themeStyle) themeStyle.href = `style-sprzedaz.css?v=${APP_VERSION}`;
-        viewSkup.classList.add('hidden');
-        viewExport.classList.remove('hidden');
+        if(viewSkup) viewSkup.classList.add('hidden');
+        if(viewExport) viewExport.classList.remove('hidden');
+        if(viewLoyalty) viewLoyalty.classList.add('hidden');
         navLogoIcon.className = 'fas fa-box-open';
+        document.querySelector('.navbar').classList.remove('scrolled'); 
+    } else if (view === 'loyalty') {
+        if (!isTravisVance()) return showNotice("Brak uprawnień do tego modułu!", "danger");
+        if(themeStyle) themeStyle.href = `style.css?v=${APP_VERSION}`;
+        if(viewSkup) viewSkup.classList.add('hidden');
+        if(viewExport) viewExport.classList.add('hidden');
+        if(viewLoyalty) viewLoyalty.classList.remove('hidden');
+        navLogoIcon.className = 'fas fa-id-card';
         document.querySelector('.navbar').classList.remove('scrolled'); 
     }
     document.getElementById('user-dropdown').classList.remove('active');
@@ -211,6 +222,25 @@ window.login = async function() {
             if (adminReportsBtn) {
                 if(isTravisVance()) adminReportsBtn.classList.remove('hidden');
                 else adminReportsBtn.classList.add('hidden');
+            }
+
+            const loyaltyBtn = document.getElementById('loyalty-nav-btn');
+            if (loyaltyBtn) {
+                if (isTravisVance()) {
+                    loyaltyBtn.style.opacity = '1';
+                    loyaltyBtn.style.cursor = 'pointer';
+                    loyaltyBtn.style.borderColor = 'rgba(56, 189, 248, 0.2)';
+                    loyaltyBtn.style.color = 'var(--text-primary)';
+                    loyaltyBtn.querySelector('i').style.color = 'var(--accent-color)';
+                    loyaltyBtn.classList.remove('disabled-nav-link');
+                } else {
+                    loyaltyBtn.style.opacity = '0.4';
+                    loyaltyBtn.style.cursor = 'not-allowed';
+                    loyaltyBtn.style.borderColor = '#555';
+                    loyaltyBtn.style.color = '#888';
+                    loyaltyBtn.querySelector('i').style.color = '#888';
+                    loyaltyBtn.classList.add('disabled-nav-link');
+                }
             }
 
             document.getElementById('logged-user-name').innerText = currentEmployeeName.toUpperCase();
@@ -294,6 +324,16 @@ window.logout = function() {
     const adminReportsBtn = document.getElementById('admin-reports-btn');
     if(adminChangelogBtn) adminChangelogBtn.classList.add('hidden');
     if(adminReportsBtn) adminReportsBtn.classList.add('hidden');
+
+    const loyaltyBtn = document.getElementById('loyalty-nav-btn');
+    if (loyaltyBtn) {
+        loyaltyBtn.style.opacity = '0.4';
+        loyaltyBtn.style.cursor = 'not-allowed';
+        loyaltyBtn.style.borderColor = '#555';
+        loyaltyBtn.style.color = '#888';
+        loyaltyBtn.querySelector('i').style.color = '#888';
+        loyaltyBtn.classList.add('disabled-nav-link');
+    }
     
     const banner = document.getElementById('announcement-banner');
     if(banner) banner.classList.add('hidden');
@@ -1888,6 +1928,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('nav-skup-btn')?.addEventListener('click', (e) => { e.preventDefault(); switchView('skup'); });
     document.getElementById('nav-export-btn')?.addEventListener('click', (e) => { e.preventDefault(); switchView('export'); });
+
+    document.getElementById('loyalty-nav-btn')?.addEventListener('click', (e) => { 
+        e.preventDefault(); 
+        if (isTravisVance()) {
+            switchView('loyalty'); 
+        } else {
+            showNotice("Dostępne wkrótce!", "danger");
+        }
+    });
 
     document.getElementById('profile-toggle-btn')?.addEventListener('click', toggleUserMenu);
     document.getElementById('menu-id-card')?.addEventListener('click', openIdCard);
