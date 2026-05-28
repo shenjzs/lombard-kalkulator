@@ -1899,7 +1899,7 @@ window.checkLoyaltyCustomer = async function() {
         } else {
             currentLoyaltyCustomer = { ssn: ssnInput, stamps: 0 };
             document.getElementById('loyalty-display-stamps').innerText = "0";
-            showNotice("Nowy klient (brak w bazie)", "info");
+            showNotice("Brak klienta o podanym SSN w bazie.", "info");
         }
     } catch(e) {
         showNotice("Błąd pobierania danych z bazy!", "danger");
