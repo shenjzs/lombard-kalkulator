@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Kasa fiskalna</title>
-    <link id="theme-style" rel="stylesheet" href="style.css?v=3.7.4">
+    <link id="theme-style" rel="stylesheet" href="style.css?v=3.8.4">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -86,12 +86,6 @@
     </div>
 
     <div id="main-app" class="hidden">
-        
-        <div id="loyalty-menu-container" style="display: flex; justify-content: center; padding-top: 25px;">
-            <button id="loyalty-nav-btn" class="nav-link-btn" style="opacity: 0.4; cursor: not-allowed; border-color: #555; color: #888;">
-                <i class="fas fa-id-card" style="color: #888;"></i> <span class="nav-text">Karty Lojalnościowe</span>
-            </button>
-        </div>
 
         <div id="view-skup">
             <div class="container container-pt40">
@@ -267,22 +261,75 @@
         <div id="view-loyalty" class="hidden">
             <div class="container container-pt40">
                 <header>
-                    <h1>PROGRAM LOJALNOŚCIOWY</h1>
+                    <h1>SYSTEM LOJALNOŚCIOWY</h1>
                     <div class="header-meta">
-                        <span><i class="fas fa-id-card"></i> SYSTEM PUNKTOWY DLA KLIENTÓW</span>
+                        <span><i class="fas fa-id-card"></i> KARTY STAŁEGO KLIENTA</span>
                     </div>
                 </header>
-                <div class="ad-card" style="max-width: 600px; margin: 0 auto; text-align: center;">
-                    <div class="ad-header">
-                        <i class="fas fa-tools"></i>
-                        <span>MODUŁ W BUDOWIE</span>
-                    </div>
-                    <p style="color: var(--text-secondary);">Skanowanie, zarządzanie i wymiana punktów przez klientów wkrótce dostępna.</p>
+                
+                <div class="loyalty-search-wrapper">
+                    <i class="fas fa-search search-icon-left"></i>
+                    <input type="number" id="loyalty-search-ssn" placeholder="Wprowadź numer SSN klienta..." class="loyalty-search-input">
+                    <button id="check-loyalty-btn" class="quote-button loyalty-search-btn">Szukaj</button>
                 </div>
+
+                <div id="loyalty-customer-info" class="ad-card loyalty-info-card hidden">
+                    <div class="flex-between-center loyalty-info-header">
+                        <div>
+                            <div class="loyalty-info-label">Klient SSN</div>
+                            <div id="loyalty-display-ssn" class="loyalty-info-value-ssn">---</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="loyalty-info-label">Zebrane pieczątki</div>
+                            <div id="loyalty-display-stamps" class="loyalty-info-value-stamps">0</div>
+                        </div>
+                    </div>
+
+                    <h3 class="loyalty-rewards-title">Odbiór nagród</h3>
+                    <div class="items-grid loyalty-grid">
+                        
+                        <div class="item-card loyalty-reward-card">
+                            <div>
+                                <span class="qty-badge loyalty-reward-badge">Koszt: 5 pieczątek</span>
+                                <div class="loyalty-reward-name">Bonus +10% do wyceny</div>
+                            </div>
+                            <button class="quote-button claim-reward-btn loyalty-reward-btn" data-cost="5" data-reward="Bonus +10%"><i class="fas fa-gift"></i> Odbierz nagrodę</button>
+                        </div>
+                        
+                        <div class="item-card loyalty-reward-card">
+                            <div>
+                                <span class="qty-badge loyalty-reward-badge">Koszt: 10 pieczątek</span>
+                                <div class="loyalty-reward-name">Darmowy złoty zegarek</div>
+                            </div>
+                            <button class="quote-button claim-reward-btn loyalty-reward-btn" data-cost="10" data-reward="Złoty zegarek"><i class="fas fa-gift"></i> Odbierz nagrodę</button>
+                        </div>
+                        
+                        <div class="item-card loyalty-reward-card">
+                            <div>
+                                <span class="qty-badge loyalty-reward-badge">Koszt: 25 pieczątek</span>
+                                <div class="loyalty-reward-name">Złota sztabka</div>
+                            </div>
+                            <button class="quote-button claim-reward-btn loyalty-reward-btn" data-cost="25" data-reward="Złota sztabka"><i class="fas fa-gift"></i> Odbierz nagrodę</button>
+                        </div>
+                         
+                        <div class="item-card loyalty-reward-card">
+                            <div>
+                                <span class="qty-badge loyalty-reward-badge">Koszt: 50 pieczątek</span>
+                                <div class="loyalty-reward-name">Tajemnicza skrzynia szefa</div>
+                            </div>
+                            <button class="quote-button claim-reward-btn loyalty-reward-btn" data-cost="50" data-reward="Tajemnicza skrzynia"><i class="fas fa-gift"></i> Odbierz nagrodę</button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
     </div> 
+
+    <button id="loyalty-floating-btn" class="loyalty-floating-btn hidden" title="Karty Lojalnościowe">
+        <i class="fas fa-id-card"></i>
+    </button>
 
     <div id="quote-modal" class="modal">
         <div class="modal-content settings-modal-content modal-w480">
@@ -619,7 +666,7 @@
             <div class="bonus-content-layout">
                 <i class="fas fa-hand-holding-usd bonus-main-icon"></i>
                 <h3 class="bonus-title">Otrzymałeś nową premię!</h3>
-                <p class="settings-desc bonus-desc">Zarząd docenił Twoją ciężką pracę w firmie.</p>
+                <p class="settings-desc bonus-desc">Ojcowie docenili Twoją ciężką pracę w firmie.</p>
                 <div id="bonus-notification-details" class="bonus-details-box">
                 </div>
                 <button id="claim-bonus-notification-btn" class="settings-save-btn btn-gold-lg"><i class="fas fa-check-circle"></i> Odbierz premię</button>
@@ -629,6 +676,6 @@
 
     <div id="toast-container" class="toast-container"></div>
     
-    <script src="script.js?v=3.7.4"></script>
+    <script src="script.js?v=3.8.4"></script>
 </body>
 </html>

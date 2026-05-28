@@ -1,4 +1,4 @@
-const APP_VERSION = "3.7.4";
+const APP_VERSION = "3.8.4";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const DISCORD_WEBHOOK_URL_SKUP = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/skup"; 
@@ -18,6 +18,9 @@ let myBonusesRawData = [];
 let currentStatsType = 'skup';
 let currentStatsRange = 'today';
 let currentReportReceiptId = ""; 
+
+// Zmienna przechowująca dane wyszukanego klienta (Karty Lojalnościowe)
+let currentLoyaltyCustomer = null;
 
 window.formatMoney = function(amount) {
     if (isNaN(amount)) return "0";
@@ -183,8 +186,6 @@ window.switchView = function(view) {
         navLogoIcon.className = 'fas fa-box-open';
         document.querySelector('.navbar').classList.remove('scrolled'); 
     } else if (view === 'loyalty') {
-        if (!isTravisVance()) return showNotice("Brak uprawnień do tego modułu!", "danger");
-        if(themeStyle) themeStyle.href = `style.css?v=${APP_VERSION}`;
         if(viewSkup) viewSkup.classList.add('hidden');
         if(viewExport) viewExport.classList.add('hidden');
         if(viewLoyalty) viewLoyalty.classList.remove('hidden');
@@ -224,23 +225,9 @@ window.login = async function() {
                 else adminReportsBtn.classList.add('hidden');
             }
 
-            const loyaltyBtn = document.getElementById('loyalty-nav-btn');
+            const loyaltyBtn = document.getElementById('loyalty-floating-btn');
             if (loyaltyBtn) {
-                if (isTravisVance()) {
-                    loyaltyBtn.style.opacity = '1';
-                    loyaltyBtn.style.cursor = 'pointer';
-                    loyaltyBtn.style.borderColor = 'rgba(56, 189, 248, 0.2)';
-                    loyaltyBtn.style.color = 'var(--text-primary)';
-                    loyaltyBtn.querySelector('i').style.color = 'var(--accent-color)';
-                    loyaltyBtn.classList.remove('disabled-nav-link');
-                } else {
-                    loyaltyBtn.style.opacity = '0.4';
-                    loyaltyBtn.style.cursor = 'not-allowed';
-                    loyaltyBtn.style.borderColor = '#555';
-                    loyaltyBtn.style.color = '#888';
-                    loyaltyBtn.querySelector('i').style.color = '#888';
-                    loyaltyBtn.classList.add('disabled-nav-link');
-                }
+                loyaltyBtn.classList.remove('hidden');
             }
 
             document.getElementById('logged-user-name').innerText = currentEmployeeName.toUpperCase();
@@ -325,14 +312,9 @@ window.logout = function() {
     if(adminChangelogBtn) adminChangelogBtn.classList.add('hidden');
     if(adminReportsBtn) adminReportsBtn.classList.add('hidden');
 
-    const loyaltyBtn = document.getElementById('loyalty-nav-btn');
+    const loyaltyBtn = document.getElementById('loyalty-floating-btn');
     if (loyaltyBtn) {
-        loyaltyBtn.style.opacity = '0.4';
-        loyaltyBtn.style.cursor = 'not-allowed';
-        loyaltyBtn.style.borderColor = '#555';
-        loyaltyBtn.style.color = '#888';
-        loyaltyBtn.querySelector('i').style.color = '#888';
-        loyaltyBtn.classList.add('disabled-nav-link');
+        loyaltyBtn.classList.add('hidden');
     }
     
     const banner = document.getElementById('announcement-banner');
@@ -739,7 +721,7 @@ window.sendToDiscord = async function() {
         employee: currentEmployeeName,
         report_id: receiptID, 
         items: itemsToLog,
-        ssn: currentCustomerSSN // <--- TUTAJ PRZEKAZUJEMY SSN DO BACKENDU
+        ssn: currentCustomerSSN 
     };
 
     try {
@@ -1035,7 +1017,7 @@ function applyFiltersExport() {
 }
 
 window.generateQuoteExport = async function() {
-    if (!Object.values(countsExport).some(c => c > 0)) return showNotice("Koszyk jest pusty!", "warning");
+    if (!Object.values(countsExport).some(c => c > 0)) return showNotice("Koszyk eksportu jest pusty!", "warning");
     
     const ssnInput = document.getElementById('customer-ssn-input-export');
     currentCustomerSSNExport = ssnInput ? ssnInput.value.trim() : "";
@@ -1127,7 +1109,7 @@ window.sendToDiscordExport = async function() {
         employee: currentEmployeeName,
         report_id: lastGeneratedReportID,
         items: itemsToLog,
-        ssn: currentCustomerSSNExport // <--- TUTAJ PRZEKAZUJEMY SSN DLA EKSPORTU
+        ssn: currentCustomerSSNExport 
     };
 
     try {
@@ -1891,6 +1873,101 @@ window.showNotice = function(msg, type = 'info') {
     setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
 }
 
+// LOGIKA KART LOJALNOŚCIOWYCH
+window.checkLoyaltyCustomer = async function() {
+    const ssnInput = document.getElementById('loyalty-search-ssn').value.trim();
+    if(!ssnInput) return showNotice("Podaj numer SSN!", "warning");
+    
+    const btn = document.getElementById('check-loyalty-btn');
+    const origText = btn.innerText;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    try {
+        const res = await fetch(`${REPORTS_API_URL}?action=get_loyalty&t=${new Date().getTime()}`);
+        const data = await res.json();
+        const loyaltyList = data.loyalty || [];
+        
+        const customer = loyaltyList.find(c => String(c.ssn) === ssnInput);
+        
+        document.getElementById('loyalty-customer-info').classList.remove('hidden');
+        document.getElementById('loyalty-display-ssn').innerText = ssnInput;
+        
+        if(customer) {
+            currentLoyaltyCustomer = { ssn: ssnInput, stamps: Number(customer.stamps) };
+            document.getElementById('loyalty-display-stamps').innerText = currentLoyaltyCustomer.stamps;
+        } else {
+            currentLoyaltyCustomer = { ssn: ssnInput, stamps: 0 };
+            document.getElementById('loyalty-display-stamps').innerText = "0";
+            showNotice("Nowy klient (brak w bazie)", "info");
+        }
+    } catch(e) {
+        showNotice("Błąd pobierania danych z bazy!", "danger");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = origText;
+    }
+}
+
+window.claimReward = async function(btn) {
+    if(!currentLoyaltyCustomer) return showNotice("Wyszukaj najpierw klienta!", "warning");
+    
+    const cost = parseInt(btn.getAttribute('data-cost'));
+    const rewardName = btn.getAttribute('data-reward');
+    
+    if(currentLoyaltyCustomer.stamps < cost) {
+        return showNotice(`Niewystarczająca liczba pieczątek! Brakuje: ${cost - currentLoyaltyCustomer.stamps}`, "danger");
+    }
+    
+    if(!confirm(`Czy na pewno chcesz wydać ${cost} pieczątek na: ${rewardName}?`)) return;
+
+    const origHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    try {
+        // 1. Zapisz w bazie (odejmij punkty)
+        const res = await fetch(REPORTS_API_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                action: 'deduct_loyalty_stamps',
+                ssn: currentLoyaltyCustomer.ssn,
+                cost: cost
+            })
+        });
+
+        if (!res.ok) throw new Error("Błąd bazy danych");
+
+        // 2. Wyślij na Discord
+        const embedPayload = {
+            embeds: [{
+                title: "🎁 ODEBRANO NAGRODĘ LOJALNOŚCIOWĄ!",
+                color: 15844367, 
+                fields: [
+                    { name: "👤 Klient (SSN):", value: `\`${currentLoyaltyCustomer.ssn}\``, inline: true },
+                    { name: "🧑‍💼 Wydał:", value: `\`${currentEmployeeName}\``, inline: true },
+                    { name: "🏆 Nagroda:", value: `**${rewardName}** (Koszt: ${cost} pieczątek)`, inline: false }
+                ],
+                timestamp: new Date().toISOString(),
+                footer: { text: "System EL CARTEL PAWN SHOP" }
+            }]
+        };
+
+        await fetch(DISCORD_WEBHOOK_URL_SKUP, { method: "POST", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(embedPayload) });
+        
+        // 3. Aktualizuj UI
+        currentLoyaltyCustomer.stamps -= cost;
+        document.getElementById('loyalty-display-stamps').innerText = currentLoyaltyCustomer.stamps;
+        
+        showNotice("Nagroda odebrana! (Punkty pobrane)", "success");
+    } catch(e) {
+        showNotice("Wystąpił błąd przy pobieraniu punktów!", "danger");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+    }
+}
+
 async function checkUpdates() {
     try {
         const response = await fetch(`version.json?t=${new Date().getTime()}`);
@@ -1928,13 +2005,18 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('nav-skup-btn')?.addEventListener('click', (e) => { e.preventDefault(); switchView('skup'); });
     document.getElementById('nav-export-btn')?.addEventListener('click', (e) => { e.preventDefault(); switchView('export'); });
 
-    document.getElementById('loyalty-nav-btn')?.addEventListener('click', (e) => { 
+    // Dymek z kartami lojalnościowymi (tylko Travis Vance widzi ten dymek dzięki stylowaniu w login())
+    document.getElementById('loyalty-floating-btn')?.addEventListener('click', (e) => { 
         e.preventDefault(); 
-        if (isTravisVance()) {
-            switchView('loyalty'); 
-        } else {
-            showNotice("Dostępne wkrótce!", "danger");
-        }
+        switchView('loyalty'); 
+        showNotice("UWAGA: System lojalnościowy jest w fazie testów i aktualnie nie obowiązuje w grze!", "warning");
+    });
+
+    document.getElementById('check-loyalty-btn')?.addEventListener('click', window.checkLoyaltyCustomer);
+    document.getElementById('loyalty-search-ssn')?.addEventListener('keypress', function(e) { if (e.key === 'Enter') window.checkLoyaltyCustomer(); });
+
+    document.querySelectorAll('.claim-reward-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => window.claimReward(e.currentTarget));
     });
 
     document.getElementById('profile-toggle-btn')?.addEventListener('click', toggleUserMenu);

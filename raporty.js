@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "3.7.4"; // Normalizacja nazw produktów
+const APP_VERSION = "3.8.4"; // Normalizacja nazw produktów
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
@@ -22,6 +22,7 @@ window.globalSortedTransactions = [];
 window.currentEmployeesList = []; // Lista pracowników do edycji
 window.globalRawFeed = []; // Globalne logi do profili pracownika
 window.globalBonuses = []; // Globalne premie
+window.globalLoyaltyData = []; // Baza klientów (pieczątki)
 let currentEmployeeName = "";
 let currentFeedLimit = 50; // LIMIT WYŚWIETLANIA DLA LIVE FEEDA
 
@@ -293,6 +294,15 @@ async function loadRealData() {
             window.globalBonuses = bonusesData.bonuses || [];
         } catch(e) {
             window.globalBonuses = [];
+        }
+
+        // POBIERANIE BAZY KLIENTÓW (Karty lojalnościowe)
+        try {
+            const loyaltyRes = await fetch(`${REPORTS_API_URL}?action=get_loyalty&t=${new Date().getTime()}`);
+            const loyaltyData = await loyaltyRes.json();
+            window.globalLoyaltyData = loyaltyData.loyalty || [];
+        } catch(e) {
+            window.globalLoyaltyData = [];
         }
         
         // Filtrujemy tylko to co związane z kasą (skup i sprzedaż)
@@ -1265,7 +1275,7 @@ window.toggleEmployeeRole = async function(pin, newRole) {
 // ==========================================
 window.openClientsManager = function() {
     document.getElementById('clients-manager-modal').classList.remove('hidden');
-    renderClientsTable();
+    window.renderClientsTable();
 }
 
 window.closeClientsManager = function() {
@@ -1279,40 +1289,21 @@ window.renderClientsTable = function() {
     const searchInput = document.getElementById('client-search-input');
     const term = searchInput ? searchInput.value.toLowerCase().trim() : "";
 
-    if (!window.globalSortedTransactions || window.globalSortedTransactions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Brak danych transakcyjnych do analizy.</td></tr>';
+    if (!window.globalLoyaltyData || window.globalLoyaltyData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Brak zarejestrowanych klientów w bazie.</td></tr>';
         return;
     }
 
-    const clientsMap = {};
-
-    window.globalSortedTransactions.forEach(tx => {
-        // Zakładamy, że w przyszłości lub obecnie skrypt na serwerze zwraca parametr 'ssn' w obiekcie transakcji
-        const ssn = tx.ssn ? String(tx.ssn).trim() : "";
-        if (ssn && ssn !== "" && ssn !== "---") {
-            if (!clientsMap[ssn]) {
-                clientsMap[ssn] = {
-                    ssn: ssn,
-                    stamps: 0,
-                    totalSpent: 0
-                };
-            }
-            // 1 transakcja = 1 pieczątka (wystarczy ułamek sekundy od transakcji)
-            clientsMap[ssn].stamps += 1;
-            clientsMap[ssn].totalSpent += tx.totalAmount;
-        }
-    });
-
-    let clientsArray = Object.values(clientsMap);
+    let clientsArray = [...window.globalLoyaltyData];
 
     if (term) {
-        clientsArray = clientsArray.filter(c => c.ssn.toLowerCase().includes(term));
+        clientsArray = clientsArray.filter(c => String(c.ssn).toLowerCase().includes(term));
     }
 
     clientsArray.sort((a, b) => b.stamps - a.stamps);
 
     if (clientsArray.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: var(--text-secondary); padding: 20px;">Brak zarejestrowanych klientów z SSN.<br><span style="font-size:0.8rem;">(Upewnij się, że baza jest podłączona przed uruchomieniem systemu kart lojalnościowych)</span></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: var(--text-secondary); padding: 20px;">Brak klientów pasujących do wyszukiwania.</td></tr>';
         return;
     }
 

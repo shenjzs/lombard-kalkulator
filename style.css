@@ -2341,35 +2341,6 @@ body:has(.modal.active) .summary-bar {
     white-space: pre-wrap;
 }
 
-.danger-submit-btn {
-    width: 100%;
-    background: linear-gradient(135deg, var(--danger), #b91c1c);
-    color: white;
-    border: none;
-    padding: 16px 20px;
-    border-radius: 14px;
-    font-weight: 800;
-    font-size: 1rem;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 12px;
-    transition: var(--transition-normal);
-    margin-top: 15px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
-    word-break: break-word;
-    text-align: center;
-}
-
-.danger-submit-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5);
-    filter: brightness(1.1);
-}
-
 /* ==========================================================================
    WYPROWADZONE STYLE INLINE (REFACTORING CZYSTOŚCI KODU)
    ========================================================================== */
@@ -2433,55 +2404,274 @@ body:has(.modal.active) .summary-bar {
 .bonus-details-box { background: rgba(0,0,0,0.3); border: 1px dashed var(--ad-gold); padding: 20px; border-radius: 16px; margin-bottom: 25px; }
 .btn-gold-lg { background: var(--ad-gold); color: #000; box-shadow: 0 4px 15px rgba(234, 179, 8, 0.3); font-size: 1.1rem; padding: 16px; }
 
-/* Dynamic classes for script.js templates */
-.word-break-all { word-break: break-word; }
-.text-success-inline { color: var(--success); }
-.admin-report-card { background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; width: 100%; }
-.admin-report-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
-.admin-report-id { font-weight: 800; color: var(--text-primary); }
-.admin-report-date { font-size: 0.8rem; color: var(--text-secondary); }
-.admin-report-emp { margin-bottom: 5px; font-size: 0.9rem; }
-.admin-report-reason { margin-bottom: 15px; font-size: 0.9rem; line-height: 1.4; }
-.admin-report-status { font-size: 0.9rem; }
-.admin-report-actions { margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end; }
-.btn-reject { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-.btn-accept { background: rgba(34, 197, 94, 0.15); color: var(--success); border: 1px solid rgba(34, 197, 94, 0.3); padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-.transaction-header-type { font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
-.transaction-header-type.gold { color: var(--ad-gold); }
-.transaction-date { font-size: 0.8rem; color: var(--text-secondary); }
-.transaction-body-layout { margin: 15px 0; }
-.transaction-items-list { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px; }
-.transaction-total-amount { font-weight: 900; color: var(--success); font-size: 1.1rem; }
-.transaction-total-amount.lg { font-size: 1.2rem; }
-.transaction-actions-layout { border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px; text-align: right; }
-.bonus-item-desc { font-size: 0.9rem; color: white; margin-bottom: 10px; line-height: 1.5; }
-.badge-unlocked { opacity: 1; filter: none; }
-.badge-locked { opacity: 0.4; filter: grayscale(100%); }
-.gamification-badge { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px; font-size: 0.8rem; font-weight: 600; cursor: help; transition: 0.2s; }
-.gamification-badge:hover { transform: translateY(-2px); }
-.text-white-inline { color: #fff; }
-.bonus-detail-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; align-items: center; }
-.bonus-detail-from { color: var(--text-secondary); text-align: left; line-height: 1.2; }
-.bonus-detail-boss { color: var(--text-primary); font-size: 0.8rem; }
-.bonus-detail-amount { color: var(--ad-gold); font-size: 1.1rem; font-weight: 800; }
-.bonus-total-summary { font-size: 2.5rem; font-weight: 900; color: var(--success); margin-bottom: 15px; text-shadow: 0 0 10px rgba(34, 197, 94, 0.4); }
-.bonus-list-wrapper { border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px; text-align: left; }
-.custom-inputs-wrapper { display: flex; gap: 10px; width: 60%; }
-.admin-change-slot-layout { display: flex; gap: 10px; align-items: center; }
-.admin-change-select { width: 120px; padding: 10px; }
-.admin-change-input { flex: 1; padding: 10px; }
-.btn-delete-slot { width: 40px; height: 40px; flex-shrink: 0; }
-.search-icon-left { position: absolute; left: 25px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); z-index: 10; font-size: 1.2rem; }
-.search-icon-left-export { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); }
-.nav-chevron { font-size: 0.8rem; }
-.reset-export-padding { padding: 15px 20px; }
-.empty-history-msg { text-align: center; color: var(--text-secondary); padding: 20px; width: 100%; }
-.admin-report-title-warning { color: var(--warning); margin-bottom: 10px; width: 100%; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
-.admin-report-title-success { color: var(--success); margin-top: 20px; margin-bottom: 10px; width: 100%; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
-.status-badge-received { background: rgba(34, 197, 94, 0.15); color: var(--success); padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
-.status-badge-new { background: rgba(245, 158, 11, 0.15); color: var(--warning); padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
-.admin-controls-layout { margin-left: auto; display: flex; gap: 12px; }
-.btn-admin-edit { background: none; border: none; color: var(--accent-color); cursor: pointer; font-size: 1.1rem; transition: 0.2s; }
-.btn-admin-edit:hover { color: white; }
-.btn-admin-del { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1.1rem; transition: 0.2s; }
-.btn-admin-del:hover { color: white; }
+/* ==========================================================================
+   MODUŁ KART LOJALNOŚCIOWYCH ORAZ WSPÓLNE PRZYCISKI
+   ========================================================================== */
+.custom-input {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    padding: 12px 15px;
+    border-radius: 8px;
+    outline: none;
+    font-family: inherit;
+    transition: 0.2s;
+}
+
+.custom-input:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+}
+
+.add-custom-slot-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.add-custom-slot-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #fff;
+}
+
+.settings-save-btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.3s;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.settings-save-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+}
+
+.settings-close-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.settings-close-btn:hover {
+    background: var(--danger);
+    color: #fff;
+}
+
+.danger-submit-btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: var(--danger);
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.3s;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.danger-submit-btn:hover {
+    background: var(--danger);
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+.loyalty-floating-btn {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    color: #000;
+    border: none;
+    font-size: 1.8rem;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), 0 0 15px var(--accent-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10000;
+}
+
+.loyalty-floating-btn:hover {
+    transform: scale(1.1) translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 25px var(--accent-color);
+    background: #fff;
+    color: var(--accent-color);
+}
+
+.loyalty-search-wrapper {
+    max-width: 600px;
+    margin: 0 auto 30px auto;
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.loyalty-search-wrapper i.fa-search {
+    position: absolute !important;
+    left: 25px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    color: var(--text-secondary) !important;
+    z-index: 10;
+    font-size: 1.2rem;
+    pointer-events: none;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.loyalty-search-input {
+    width: 100%;
+    padding: 20px 140px 20px 65px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    background: rgba(15, 23, 42, 0.6);
+    color: white;
+    font-size: 1.1rem;
+    box-sizing: border-box;
+    outline: none;
+    transition: var(--transition-normal);
+}
+
+.loyalty-search-input:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    background: rgba(15, 23, 42, 0.9);
+}
+
+.loyalty-search-btn {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    padding: 0 20px;
+    border-radius: 12px;
+    height: calc(100% - 20px);
+    font-size: 0.9rem;
+    min-width: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    z-index: 10;
+}
+
+.loyalty-info-card {
+    max-width: 800px;
+    margin: 0 auto 40px auto;
+    text-align: left;
+}
+
+.loyalty-info-header {
+    border-bottom: 1px dashed rgba(255,255,255,0.1);
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+}
+
+.loyalty-info-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.loyalty-info-value-ssn {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: white;
+}
+
+.loyalty-info-value-stamps {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--accent-color);
+}
+
+.loyalty-rewards-title {
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    border-left: 4px solid var(--accent-color);
+    padding-left: 10px;
+}
+
+.loyalty-reward-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    background: rgba(0,0,0,0.2);
+}
+
+.loyalty-reward-badge {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--accent-color);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.loyalty-reward-name {
+    font-weight: 800;
+    font-size: 1.1rem;
+    margin-top: 10px;
+    color: white;
+}
+
+.loyalty-reward-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 12px;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 600px) {
+    .loyalty-floating-btn {
+        bottom: 20px;
+        left: 20px;
+        width: 55px;
+        height: 55px;
+        font-size: 1.5rem;
+    }
+}
+
+/* Ukrycie strzałek w polu wyszukiwania SSN */
+#loyalty-search-ssn::-webkit-inner-spin-button,
+#loyalty-search-ssn::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+#loyalty-search-ssn {
+    -moz-appearance: textfield;
+}
