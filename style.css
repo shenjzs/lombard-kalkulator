@@ -2393,6 +2393,11 @@ body:has(.modal.active) .summary-bar {
 .id-progress-bg { background: rgba(0,0,0,0.5); border-radius: 10px; height: 12px; width: 100%; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px; overflow: hidden; }
 .id-progress-fill { background: linear-gradient(90deg, var(--accent-color), #3b82f6); height: 100%; width: 0%; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
 .id-badges-layout { display: flex; gap: 8px; flex-wrap: wrap; }
+.badge-unlocked { opacity: 1; filter: none; }
+.badge-locked { opacity: 0.4; filter: grayscale(100%); }
+.gamification-badge { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px; font-size: 0.8rem; font-weight: 600; cursor: help; transition: 0.2s; }
+.gamification-badge:hover { transform: translateY(-2px); }
+.text-white-inline { color: #fff; }
 .id-status-icon-success { color: var(--success); font-size: 0.6rem; }
 .modal-bonus-w500 { max-width: 500px; border-color: var(--ad-gold); box-shadow: 0 25px 50px rgba(0,0,0,0.8), 0 0 30px rgba(234, 179, 8, 0.15); }
 .bonus-header-border { border-bottom-color: rgba(234, 179, 8, 0.3); }

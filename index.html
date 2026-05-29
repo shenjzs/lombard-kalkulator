@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Kasa fiskalna</title>
-    <link id="theme-style" rel="stylesheet" href="style.css?v=3.8.4">
+    <link id="theme-style" rel="stylesheet" href="style.css?v=3.9.4">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -265,6 +265,9 @@
                     <div class="header-meta">
                         <span><i class="fas fa-id-card"></i> KARTY STAŁEGO KLIENTA</span>
                     </div>
+                    <p style="color: var(--text-secondary); margin-top: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem;">
+                        <i class="fas fa-info-circle" style="color: var(--accent-color);"></i> Obecny przelicznik: <span id="current-loyalty-rate-display" style="color: var(--success); font-size: 1.1rem; font-weight: 900;">Ładowanie...</span>
+                    </p>
                 </header>
                 
                 <div class="loyalty-search-wrapper">
@@ -287,7 +290,6 @@
 
                     <h3 class="loyalty-rewards-title">Odbiór nagród</h3>
                     <div class="items-grid loyalty-grid">
-                        
                         <div class="item-card loyalty-reward-card">
                             <div>
                                 <span class="qty-badge loyalty-reward-badge">Koszt: 9999 pieczątek</span>
@@ -299,7 +301,7 @@
                         <div class="item-card loyalty-reward-card">
                             <div>
                                 <span class="qty-badge loyalty-reward-badge">Koszt: 9999 pieczątek</span>
-                                <div class="loyalty-reward-name">Darmowy złoty zegarek</div>
+                                <div class="loyalty-reward-name">Złoty zegarek</div>
                             </div>
                             <button class="quote-button claim-reward-btn loyalty-reward-btn" data-cost="9999" data-reward="Złoty zegarek"><i class="fas fa-gift"></i> Odbierz nagrodę</button>
                         </div>
@@ -676,6 +678,25 @@
 
     <div id="toast-container" class="toast-container"></div>
     
-    <script src="script.js?v=3.8.4"></script>
+    <script src="script.js?v=3.9.4"></script>
+    <script>
+        // Automatyczne pobranie przelicznika przy wejściu w zakładkę lojalnościową
+        document.getElementById('loyalty-floating-btn').addEventListener('click', async () => {
+            const display = document.getElementById('current-loyalty-rate-display');
+            if (display && display.innerText === 'Ładowanie...' && typeof REPORTS_API_URL !== 'undefined') {
+                try {
+                    const res = await fetch(REPORTS_API_URL + "?action=get_loyalty_settings&t=" + new Date().getTime());
+                    const data = await res.json();
+                    if (data.rate) {
+                        display.innerText = data.rate + "$ = 1 pieczątka";
+                    } else {
+                        display.innerText = "Brak danych";
+                    }
+                } catch(e) {
+                    display.innerText = "Błąd API";
+                }
+            }
+        });
+    </script>
 </body>
 </html>

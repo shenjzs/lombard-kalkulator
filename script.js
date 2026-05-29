@@ -1,4 +1,4 @@
-const APP_VERSION = "3.8.4";
+const APP_VERSION = "3.9.4";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const DISCORD_WEBHOOK_URL_SKUP = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/skup"; 
@@ -984,7 +984,7 @@ window.updateCartViewExport = function() {
         }
     });
 
-    if (totalItems === 0) html = '<div class="empty-cart-msg">Brak dodanych przedmiotów</div>';
+    if (totalItems === 0) html = '<div class="empty-cart-msg">Brak przedmiotów</div>';
     if (container) container.innerHTML = html;
     if (badge) badge.innerText = totalItems;
     if (sidebarTotal) sidebarTotal.innerText = currentTotalExport + '$';
@@ -1807,7 +1807,7 @@ window.openIdCard = async function() {
         document.getElementById('id-card-level-text').innerText = "Analiza danych...";
         document.getElementById('id-card-xp-text').innerText = "Wczytywanie XP...";
         document.getElementById('id-progress-bar-fill').style.width = "0%";
-        document.getElementById('id-badges-container').innerHTML = '<i class="fas fa-spinner fa-spin text-secondary"></i> Pobieranie osiągnięć...';
+        document.getElementById('id-badges-container').innerHTML = '<i class="fas fa-circle-notch fa-spin fa-fw text-secondary"></i> Pobieranie osiągnięć...';
     }
     
     document.getElementById('id-card-modal').classList.add('active');
@@ -1819,7 +1819,8 @@ window.openIdCard = async function() {
         let totalXP = 0; let txSet = new Set();
         myData.forEach(row => { totalXP += row.total; if(row.report_id) txSet.add(row.report_id); });
         let txCount = txSet.size || (myData.length > 0 ? 1 : 0);
-        renderGamification(totalXP, txCount);
+        
+        renderGamification(totalXP, txCount, myData);
     } catch (e) {
         document.getElementById('id-card-level-text').innerText = "Błąd pobierania danych";
         document.getElementById('id-card-xp-text').innerText = "Brak połączenia";
@@ -1827,28 +1828,81 @@ window.openIdCard = async function() {
     }
 }
 
-function renderGamification(totalXP, txCount) {
+function renderGamification(totalXP, txCount, myData = []) {
     const levels = [
-        { lvl: 1, max: 50000, name: "Rekrut" }, { lvl: 2, max: 350000, name: "Znawca" }, { lvl: 3, max: 500000, name: "Specjalista" },
-        { lvl: 4, max: 700000, name: "Ekspert" }, { lvl: 5, max: 1000000, name: "Weteran" }, { lvl: 6, max: 2000000, name: "Legenda lombardu" }
+        { lvl: 1, max: 50000, name: "Rekrut" },
+        { lvl: 2, max: 150000, name: "Praktykant" },
+        { lvl: 3, max: 350000, name: "Znawca" },
+        { lvl: 4, max: 500000, name: "Sprzedawca" },
+        { lvl: 5, max: 700000, name: "Specjalista" },
+        { lvl: 6, max: 1000000, name: "Ekspert" },
+        { lvl: 7, max: 1500000, name: "Starszy ekspert" },
+        { lvl: 8, max: 2000000, name: "Weteran" },
+        { lvl: 9, max: 3000000, name: "Mistrz handlu" },
+        { lvl: 10, max: 4000000, name: "Rekin biznesu" },
+        { lvl: 11, max: 5000000, name: "Szara eminencja" },
+        { lvl: 12, max: 7500000, name: "Kierownik rewiru" },
+        { lvl: 13, max: 10000000, name: "Boss podziemia" },
+        { lvl: 14, max: 15000000, name: "Ojciec Chrzestny" },
+        { lvl: 15, max: 20000000, name: "Legenda El Cartel" }
     ];
-    let currentLvl = 1, currentMax = 50000, prevMax = 0;
+    
+    const maxLevel = levels.length;
+    let currentLvl = 1, currentMax = levels[0].max, prevMax = 0;
+    
     for (let i = 0; i < levels.length; i++) {
-        if (totalXP < levels[i].max) { currentLvl = levels[i].lvl; currentMax = levels[i].max; prevMax = i > 0 ? levels[i-1].max : 0; break; }
+        if (totalXP < levels[i].max) { 
+            currentLvl = levels[i].lvl; 
+            currentMax = levels[i].max; 
+            prevMax = i > 0 ? levels[i-1].max : 0; 
+            break; 
+        }
+        if (i === levels.length - 1 && totalXP >= levels[i].max) {
+            currentLvl = levels[i].lvl;
+            currentMax = levels[i].max;
+            prevMax = i > 0 ? levels[i-1].max : 0;
+        }
     }
+    
     let progressPercent = ((totalXP - prevMax) / (currentMax - prevMax)) * 100;
-    if (progressPercent > 100 || currentLvl === 6) progressPercent = 100; 
+    if (progressPercent > 100 || currentLvl === maxLevel) progressPercent = 100; 
+    if (progressPercent < 0) progressPercent = 0;
     
     document.getElementById('id-card-level-text').innerText = `Poziom ${currentLvl} - ${levels[currentLvl-1].name}`;
-    document.getElementById('id-card-xp-text').innerText = currentLvl === 6 ? `MAX LEVEL (${totalXP.toLocaleString()}$)` : `${totalXP.toLocaleString()}$ / ${currentMax.toLocaleString()}$`;
+    document.getElementById('id-card-xp-text').innerText = currentLvl === maxLevel ? `MAX LEVEL (${totalXP.toLocaleString()}$)` : `${totalXP.toLocaleString()}$ / ${currentMax.toLocaleString()}$`;
     setTimeout(() => { document.getElementById('id-progress-bar-fill').style.width = `${progressPercent}%`; }, 100);
     
+    let maxSingleTx = 0;
+    let nightShiftCount = 0;
+    let weirdStuffCount = 0;
+    let goldCount = 0;
+
+    myData.forEach(tx => {
+        if (tx.total > maxSingleTx) maxSingleTx = tx.total;
+
+        if (tx.date) {
+            const txDate = parseDate(tx.date);
+            const hour = txDate.getHours();
+            if (hour >= 0 && hour <= 5) nightShiftCount++;
+        }
+
+        if (tx.name) {
+            const nameLow = tx.name.toLowerCase();
+            if (nameLow.includes('dziwna substancja')) weirdStuffCount += (tx.qty || 1);
+            if (nameLow.includes('złot') || nameLow.includes('sztabka')) goldCount += (tx.qty || 1);
+        }
+    });
+
     const badges = [
-        { icon: "fa-tint", name: "Pierwsza krew", color: "#ef4444", condition: txCount >= 1 },
-        { icon: "fa-handshake", name: "Solidna firma", color: "#a855f7", condition: txCount >= 150 },
-        { icon: "fa-fish", name: "Rekin biznesu", color: "#38bdf8", condition: totalXP >= 500000 },
-        { icon: "fa-medal", name: "Stary wyga", color: "#fbbf24", condition: txCount >= 450 },
-        { icon: "fa-crown", name: "Milioner", color: "#eab308", condition: totalXP >= 1000000 }
+        { icon: "fa-tint", name: "Pierwsza krew", color: "#ef4444", condition: txCount >= 1, desc: "Zrealizuj swoją pierwszą transakcję w firmie." },
+        { icon: "fa-handshake", name: "Solidna firma", color: "#a855f7", condition: txCount >= 150, desc: "Zrealizuj 150 udanych transakcji z klientami." },
+        { icon: "fa-fish", name: "Rekin biznesu", color: "#38bdf8", condition: totalXP >= 500000, desc: "Wygeneruj ponad 500 000$ obrotu." },
+        { icon: "fa-medal", name: "Stary wyga", color: "#fbbf24", condition: txCount >= 450, desc: "Zrealizuj 450 udanych transakcji z klientami." },
+        { icon: "fa-crown", name: "Milioner", color: "#eab308", condition: totalXP >= 2000000, desc: "Wygeneruj ponad 2 000 000$ obrotu." },
+        { icon: "fa-flask", name: "Chemiczny Ali", color: "#22c55e", condition: weirdStuffCount >= 100, desc: "Przetwórz w lombardzie 100 dziwnych substancji." },
+        { icon: "fa-coins", name: "Gorączka złota", color: "#eab308", condition: goldCount >= 50, desc: "Skup lub sprzedaj 50 złotych przedmiotów." },
+        { icon: "fa-money-bill-wave", name: "Gruba ryba", color: "#e11d48", condition: maxSingleTx >= 50000, desc: "Wykonaj pojedynczą transakcję na kwotę minimum 50 000$." },
+        { icon: "fa-moon", name: "Nocny Marek", color: "#8b5cf6", condition: nightShiftCount >= 50, desc: "Wykonaj 50 transakcji na nocnej zmianie (0:00 - 6:00)." }
     ];
     
     const container = document.getElementById('id-badges-container');
@@ -1856,6 +1910,7 @@ function renderGamification(totalXP, txCount) {
     badges.forEach(b => {
         const badgeEl = document.createElement('div');
         badgeEl.className = `gamification-badge ${b.condition ? 'badge-unlocked' : 'badge-locked'}`;
+        badgeEl.title = b.desc;
         badgeEl.innerHTML = `<i class="fas ${b.icon}" style="color: ${b.color}; font-size: 1.1rem;"></i> <span class="text-white-inline">${b.name}</span>`;
         container.appendChild(badgeEl);
     });
@@ -1873,7 +1928,9 @@ window.showNotice = function(msg, type = 'info') {
     setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
 }
 
-// LOGIKA KART LOJALNOŚCIOWYCH
+// ==========================================
+// KARTY LOJALNOŚCIOWE Z DYNAMICZNYM POBIERANIEM NAGRÓD
+// ==========================================
 window.checkLoyaltyCustomer = async function() {
     const ssnInput = document.getElementById('loyalty-search-ssn').value.trim();
     if(!ssnInput) return showNotice("Podaj numer SSN!", "warning");
@@ -1884,22 +1941,46 @@ window.checkLoyaltyCustomer = async function() {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
     try {
-        const res = await fetch(`${REPORTS_API_URL}?action=get_loyalty&t=${new Date().getTime()}`);
-        const data = await res.json();
+        const [loyaltyRes, settingsRes] = await Promise.all([
+            fetch(`${REPORTS_API_URL}?action=get_loyalty&t=${new Date().getTime()}`),
+            fetch(`${REPORTS_API_URL}?action=get_loyalty_settings&t=${new Date().getTime()}`)
+        ]);
+        
+        const data = await loyaltyRes.json();
+        const settingsData = await settingsRes.json();
+        
         const loyaltyList = data.loyalty || [];
+        const rewardsList = settingsData.rewards || [];
         
         const customer = loyaltyList.find(c => String(c.ssn) === ssnInput);
         
-        document.getElementById('loyalty-customer-info').classList.remove('hidden');
-        document.getElementById('loyalty-display-ssn').innerText = ssnInput;
-        
         if(customer) {
             currentLoyaltyCustomer = { ssn: ssnInput, stamps: Number(customer.stamps) };
+            document.getElementById('loyalty-display-ssn').innerText = ssnInput;
             document.getElementById('loyalty-display-stamps').innerText = currentLoyaltyCustomer.stamps;
+            
+            const rewardsGrid = document.querySelector('.loyalty-grid');
+            if(rewardsGrid) {
+                if(rewardsList.length > 0) {
+                    rewardsGrid.innerHTML = rewardsList.map(r => `
+                        <div class="item-card loyalty-reward-card">
+                            <div>
+                                <span class="qty-badge loyalty-reward-badge">Koszt: ${r.cost} pieczątek</span>
+                                <div class="loyalty-reward-name">${r.name}</div>
+                            </div>
+                            <button class="quote-button claim-reward-btn loyalty-reward-btn" onclick="window.claimReward(this)" data-cost="${r.cost}" data-reward="${r.name}"><i class="fas fa-gift"></i> Odbierz nagrodę</button>
+                        </div>
+                    `).join('');
+                } else {
+                    rewardsGrid.innerHTML = '<div style="color:var(--text-secondary); width:100%; grid-column: 1 / -1; text-align:center;">Brak dostępnych nagród. Szef musi je skonfigurować w panelu.</div>';
+                }
+            }
+            
+            document.getElementById('loyalty-customer-info').classList.remove('hidden');
         } else {
-            currentLoyaltyCustomer = { ssn: ssnInput, stamps: 0 };
-            document.getElementById('loyalty-display-stamps').innerText = "0";
-            showNotice("Brak klienta o podanym SSN w bazie.", "info");
+            currentLoyaltyCustomer = null;
+            document.getElementById('loyalty-customer-info').classList.add('hidden');
+            showNotice("Brak klienta o podanym SSN w bazie.", "warning");
         }
     } catch(e) {
         showNotice("Błąd pobierania danych z bazy!", "danger");
@@ -1926,7 +2007,6 @@ window.claimReward = async function(btn) {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
     try {
-        // 1. Zapisz w bazie (odejmij punkty)
         const res = await fetch(REPORTS_API_URL, {
             method: "POST",
             body: JSON.stringify({
@@ -1938,7 +2018,6 @@ window.claimReward = async function(btn) {
 
         if (!res.ok) throw new Error("Błąd bazy danych");
 
-        // 2. Wyślij na Discord
         const embedPayload = {
             embeds: [{
                 title: "🎁 ODEBRANO NAGRODĘ LOJALNOŚCIOWĄ!",
@@ -1955,7 +2034,6 @@ window.claimReward = async function(btn) {
 
         await fetch(DISCORD_WEBHOOK_URL_SKUP, { method: "POST", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(embedPayload) });
         
-        // 3. Aktualizuj UI
         currentLoyaltyCustomer.stamps -= cost;
         document.getElementById('loyalty-display-stamps').innerText = currentLoyaltyCustomer.stamps;
         
@@ -2005,7 +2083,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('nav-skup-btn')?.addEventListener('click', (e) => { e.preventDefault(); switchView('skup'); });
     document.getElementById('nav-export-btn')?.addEventListener('click', (e) => { e.preventDefault(); switchView('export'); });
 
-    // Dymek z kartami lojalnościowymi (tylko Travis Vance widzi ten dymek dzięki stylowaniu w login())
     document.getElementById('loyalty-floating-btn')?.addEventListener('click', (e) => { 
         e.preventDefault(); 
         switchView('loyalty'); 

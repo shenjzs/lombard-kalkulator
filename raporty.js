@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "3.8.4"; // Normalizacja nazw produktów
+const APP_VERSION = "3.9.4"; // Normalizacja nazw produktów
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
@@ -371,12 +371,6 @@ async function loadRealData() {
         });
 
         data.forEach(row => {
-            const rowDate = parseDate(row.date);
-            const rowTS = rowDate.getTime();
-            
-            if (filterStartTS && rowTS < filterStartTS) return;
-            if (filterEndTS && rowTS > filterEndTS) return;
-
             if (row.type === "skup") {
                 if (!dynamicBuyStats[row.name]) {
                     dynamicBuyStats[row.name] = { qty: 0, total: 0 };
@@ -1290,7 +1284,7 @@ window.renderClientsTable = function() {
     const term = searchInput ? searchInput.value.toLowerCase().trim() : "";
 
     if (!window.globalLoyaltyData || window.globalLoyaltyData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Brak zarejestrowanych klientów w bazie.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Brak zarejestrowanych klientów w bazie.</td></tr>';
         return;
     }
 
@@ -1303,7 +1297,7 @@ window.renderClientsTable = function() {
     clientsArray.sort((a, b) => b.stamps - a.stamps);
 
     if (clientsArray.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: var(--text-secondary); padding: 20px;">Brak klientów pasujących do wyszukiwania.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-secondary); padding: 20px;">Brak klientów pasujących do wyszukiwania.</td></tr>';
         return;
     }
 
@@ -1312,12 +1306,216 @@ window.renderClientsTable = function() {
             <td><strong style="color: var(--accent-color); font-family: monospace; font-size: 1.1rem;">${c.ssn}</strong></td>
             <td style="text-align: center;"><span class="rank-badge"><i class="fas fa-stamp"></i> ${c.stamps}</span></td>
             <td style="text-align: right; font-weight: 800; color: var(--success);">${window.formatMoney(c.totalSpent)}$</td>
+            <td style="text-align: right;">
+                <button onclick="openResetStampsModal('${c.ssn}', ${c.stamps})" class="emp-action-btn emp-btn-del" title="Wyzeruj pieczątki klienta">
+                    <i class="fas fa-trash-restore"></i>
+                </button>
+            </td>
         </tr>
     `).join('');
 }
 
 window.filterClients = function() {
     window.renderClientsTable();
+}
+
+window.openResetStampsModal = function(ssn, currentStamps) {
+    if(currentStamps <= 0) return showNotice("Ten klient ma już 0 pieczątek!", "info");
+    document.getElementById('reset-stamps-ssn').innerText = ssn;
+    document.getElementById('reset-stamps-target-ssn').value = ssn;
+    document.getElementById('reset-stamps-pin').value = '';
+    document.getElementById('reset-stamps-modal').classList.remove('hidden');
+}
+
+window.closeResetStampsModal = function() {
+    document.getElementById('reset-stamps-modal').classList.add('hidden');
+}
+
+window.confirmResetStamps = async function() {
+    const ssn = document.getElementById('reset-stamps-target-ssn').value;
+    const pin = document.getElementById('reset-stamps-pin').value;
+    const btn = document.getElementById('confirm-reset-stamps-btn');
+
+    if(!pin) return showNotice("Wprowadź swój PIN szefa!", "warning");
+
+    const origHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Weryfikacja...';
+
+    try {
+        const pinRes = await fetch(`${PIN_API_URL}?pin=${pin}`);
+        const pinData = await pinRes.json();
+
+        if(pinData.isValid && pinData.role && pinData.role.toLowerCase() === 'szef') {
+            // DODANE ZABEZPIECZENIE: Sprawdzenie, czy PIN należy do zalogowanego szefa
+            if(pinData.name !== currentEmployeeName) {
+                showNotice("Odmowa! Wprowadź SWÓJ kod PIN.", "danger");
+                document.getElementById('reset-stamps-pin').value = '';
+                return;
+            }
+
+            const customer = window.globalLoyaltyData.find(c => String(c.ssn) === String(ssn));
+            if(customer) {
+                const res = await fetch(REPORTS_API_URL, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        action: 'deduct_loyalty_stamps',
+                        ssn: ssn,
+                        cost: customer.stamps 
+                    })
+                });
+
+                if(res.ok) {
+                    showNotice(`Wyzerowano punkty klienta ${ssn}!`, "success");
+                    closeResetStampsModal();
+                    
+                    const loyaltyRes = await fetch(`${REPORTS_API_URL}?action=get_loyalty&t=${new Date().getTime()}`);
+                    const loyaltyData = await loyaltyRes.json();
+                    window.globalLoyaltyData = loyaltyData.loyalty || [];
+                    window.renderClientsTable();
+                } else {
+                    showNotice("Wystąpił błąd w bazie danych!", "danger");
+                }
+            }
+        } else {
+            showNotice("Błędny PIN lub brak uprawnień!", "danger");
+            document.getElementById('reset-stamps-pin').value = '';
+        }
+    } catch(e) {
+        showNotice("Błąd połączenia z serwerem!", "danger");
+    } finally {
+        if(btn) {
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+        }
+    }
+}
+
+// ==========================================
+// ZARZĄDZANIE USTAWIENIAMI LOJALNOŚCIOWYMI
+// ==========================================
+window.openLoyaltySettings = async function() {
+    document.getElementById('loyalty-settings-modal').classList.remove('hidden');
+    await loadLoyaltySettings();
+}
+
+window.closeLoyaltySettings = function() {
+    document.getElementById('loyalty-settings-modal').classList.add('hidden');
+}
+
+async function loadLoyaltySettings() {
+    const tbody = document.getElementById('loyalty-rewards-table-body');
+    const rateInput = document.getElementById('loyalty-rate-input');
+    
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Ładowanie danych...</td></tr>';
+    
+    try {
+        const res = await fetch(`${REPORTS_API_URL}?action=get_loyalty_settings&t=${new Date().getTime()}`);
+        const data = await res.json();
+        
+        if(data.rate) {
+            rateInput.value = data.rate;
+        }
+        
+        if (data.rewards && data.rewards.length > 0) {
+            tbody.innerHTML = data.rewards.map((r, idx) => `
+                <tr>
+                    <td><strong style="color: white;">${r.name}</strong></td>
+                    <td style="text-align: center;"><span class="rank-badge"><i class="fas fa-stamp"></i> ${r.cost}</span></td>
+                    <td style="text-align: right;">
+                        <button onclick="deleteLoyaltyReward('${r.name}')" class="emp-action-btn emp-btn-del" title="Usuń nagrodę">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: var(--text-secondary);">Brak zdefiniowanych nagród.</td></tr>';
+        }
+    } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: var(--danger);">Błąd pobierania ustawień z bazy!</td></tr>';
+    }
+}
+
+window.saveLoyaltyRate = async function() {
+    const rateInput = document.getElementById('loyalty-rate-input');
+    const rate = parseInt(rateInput.value);
+    const btn = document.getElementById('save-rate-btn');
+    
+    if(isNaN(rate) || rate <= 0) return showNotice("Podaj prawidłowy przelicznik!", "warning");
+    
+    const origHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
+    try {
+        const res = await fetch(REPORTS_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'save_loyalty_rate', rate: rate })
+        });
+        if(res.ok) {
+            showNotice("Przelicznik zapisany pomyślnie!", "success");
+        } else {
+            throw new Error();
+        }
+    } catch(e) {
+        showNotice("Błąd zapisu przelicznika!", "danger");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+    }
+}
+
+window.addLoyaltyReward = async function() {
+    const nameInput = document.getElementById('new-reward-name');
+    const costInput = document.getElementById('new-reward-cost');
+    const btn = document.getElementById('add-reward-btn');
+    
+    const name = nameInput.value.trim();
+    const cost = parseInt(costInput.value);
+    
+    if(!name) return showNotice("Podaj nazwę nagrody!", "warning");
+    if(isNaN(cost) || cost <= 0) return showNotice("Podaj prawidłowy koszt (punkty)!", "warning");
+    
+    const origHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
+    try {
+        const res = await fetch(REPORTS_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'add_loyalty_reward', name: name, cost: cost })
+        });
+        
+        if(res.ok) {
+            showNotice("Nagroda dodana!", "success");
+            nameInput.value = "";
+            costInput.value = "";
+            await loadLoyaltySettings();
+        } else {
+            throw new Error();
+        }
+    } catch(e) {
+        showNotice("Błąd dodawania nagrody!", "danger");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+    }
+}
+
+window.deleteLoyaltyReward = async function(name) {
+    if(!confirm(`Na pewno usunąć nagrodę: ${name}?`)) return;
+    try {
+        showNotice("Usuwanie nagrody...", "info");
+        await fetch(REPORTS_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'delete_loyalty_reward', name: name })
+        });
+        showNotice("Usunięto nagrodę!", "warning");
+        await loadLoyaltySettings();
+    } catch(e) {
+        showNotice("Błąd usuwania nagrody!", "danger");
+    }
 }
 
 // ==========================================
