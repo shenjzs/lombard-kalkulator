@@ -2680,3 +2680,54 @@ body:has(.modal.active) .summary-bar {
 #loyalty-search-ssn {
     -moz-appearance: textfield;
 }
+
+/* Poprawki wyświetlania Changelog (Travis Vance) */
+.changelog-version-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.admin-controls-layout {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-admin-edit, .btn-admin-del {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-admin-edit:hover { background: var(--accent-color); color: #000; }
+.btn-admin-del:hover { background: var(--danger); color: #fff; }
+
+/* Poprawki dla modala dodawania zmian */
+.admin-change-slot-layout {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.admin-change-select {
+    width: 140px;
+    flex-shrink: 0;
+}
+
+.admin-change-input {
+    flex-grow: 1;
+}
+
+.btn-delete-slot {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    margin: 0 !important;
+}
