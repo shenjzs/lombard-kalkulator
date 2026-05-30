@@ -2731,3 +2731,335 @@ body:has(.modal.active) .summary-bar {
     flex-shrink: 0;
     margin: 0 !important;
 }
+
+/* ==========================================================================
+   MOJE TRANSAKCJE & MOJE PREMIE (MODAL)
+   ========================================================================== */
+.admin-report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+}
+
+.transaction-header-type {
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.transaction-header-type.gold {
+    color: #facc15; /* Złoty kolor dla premii */
+}
+
+.transaction-date {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.transaction-body-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.transaction-items-list {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.transaction-total-amount {
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-top: 5px;
+}
+
+.transaction-total-amount.lg {
+    font-size: 1.4rem;
+    color: var(--success);
+    margin-top: 0;
+}
+
+.transaction-actions-layout {
+    margin-top: 15px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.05);
+    padding-top: 15px;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.bonus-item-desc {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+}
+
+.status-badge-received {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--success);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.status-badge-new {
+    background: rgba(56, 189, 248, 0.15);
+    color: var(--accent-color);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.report-error-btn {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: var(--danger) !important;
+    border: 1px solid rgba(239, 68, 68, 0.3) !important;
+    padding: 8px 15px !important;
+    border-radius: 10px !important;
+    cursor: pointer;
+    font-weight: 700;
+    transition: 0.2s;
+    font-size: 0.85rem;
+}
+
+.report-error-btn:hover {
+    background: var(--danger) !important;
+    color: white !important;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+/* ==========================================================================
+   PANEL ZGŁOSZEŃ POMYŁEK (ADMIN REPORTS)
+   ========================================================================== */
+.admin-report-title-warning {
+    color: var(--warning);
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    margin-top: 10px;
+    border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+    padding-bottom: 5px;
+    font-weight: 800;
+}
+
+.admin-report-title-success {
+    color: var(--success);
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    margin-top: 25px;
+    border-bottom: 1px solid rgba(34, 197, 94, 0.2);
+    padding-bottom: 5px;
+    font-weight: 800;
+}
+
+.admin-report-card {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 15px;
+    transition: 0.2s;
+}
+
+.admin-report-card:hover {
+    border-color: var(--accent-color);
+    box-shadow: 0 4px 15px rgba(56, 189, 248, 0.1);
+}
+
+.admin-report-id {
+    font-weight: 900;
+    color: var(--text-primary);
+    font-family: monospace;
+    font-size: 1.1rem;
+}
+
+.admin-report-emp, .admin-report-reason, .admin-report-status {
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.text-white-inline {
+    color: #fff;
+}
+
+.admin-report-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.btn-reject {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    padding: 10px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 800;
+    transition: 0.2s;
+    flex: 1;
+}
+
+.btn-reject:hover {
+    background: var(--danger);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.btn-accept {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--success);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    padding: 10px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 800;
+    transition: 0.2s;
+    flex: 1;
+}
+
+.btn-accept:hover {
+    background: var(--success);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+}
+
+/* ==========================================================================
+   WIDŻET ONLINE (ZALOGOWANI PRACOWNICY)
+   ========================================================================== */
+.online-widget {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    display: flex;
+    flex-direction: row;
+    z-index: 9999;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.online-avatar-container {
+    position: relative;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: 2px solid var(--card-bg);
+    background: var(--bg-color);
+    margin-left: -15px; /* Efekt nachodzenia na siebie */
+    transition: transform 0.2s, margin 0.2s;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+.online-widget .online-avatar-container:first-child {
+    margin-left: 0;
+}
+
+.online-avatar-container:hover {
+    transform: translateY(-8px);
+    margin-left: 0;
+    margin-right: 15px;
+    z-index: 100 !important;
+}
+
+.online-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.online-status-dot {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 14px;
+    height: 14px;
+    background: var(--success);
+    border: 2px solid var(--card-bg);
+    border-radius: 50%;
+    box-shadow: 0 0 5px var(--success);
+    animation: pulse-online 2s infinite;
+}
+
+@keyframes pulse-online {
+    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+    70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+.online-tooltip {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: rgba(0,0,0,0.8);
+    border: 1px solid var(--border-color);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+
+.online-avatar-container:hover .online-tooltip {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+@media (max-width: 600px) {
+    .online-widget { bottom: 90px; right: 20px; }
+    .online-avatar-container { width: 35px; height: 35px; }
+}
+
+/* ==========================================================================
+   PRZYCISK "NIESTANDARDOWY PRODUKT" (SKUP)
+   ========================================================================== */
+#add-custom-slot-btn {
+    background: transparent;
+    border: 1px dashed var(--accent-color); /* Na stałe niebieska ramka */
+    color: var(--accent-color); /* Na stałe niebieski tekst */
+    padding: 10px 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.85rem;
+    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 0 0 20px auto; /* Trzyma przycisk idealnie po prawej stronie */
+    width: fit-content;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#add-custom-slot-btn:hover {
+    background: rgba(56, 189, 248, 0.05);
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.4); /* Efekt poświaty po najechaniu */
+    transform: translateY(-2px);
+}

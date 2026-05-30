@@ -1,4 +1,4 @@
-const APP_VERSION = "3.9.4";
+const APP_VERSION = "3.9.5";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const DISCORD_WEBHOOK_URL_SKUP = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/skup"; 
@@ -21,6 +21,10 @@ let currentReportReceiptId = "";
 
 // Zmienna przechowująca dane wyszukanego klienta (Karty Lojalnościowe)
 let currentLoyaltyCustomer = null;
+
+// ZMIENNE DLA WIDŻETU ONLINE
+let onlineCheckInterval = null;
+window.currentEmployeesList = [];
 
 window.formatMoney = function(amount) {
     if (isNaN(amount)) return "0";
@@ -269,6 +273,17 @@ window.login = async function() {
             fetchChangelogData();
             switchView('skup');
             checkEmployeeBonuses();
+
+            // WIDŻET ONLINE - INICJALIZACJA
+            fetch(`${PIN_API_URL}?action=get_all`)
+                .then(res => res.json())
+                .then(d => { 
+                    if(d.employees) window.currentEmployeesList = d.employees; 
+                    updateOnlineEmployees(); 
+                })
+                .catch(e => console.error(e));
+            
+            onlineCheckInterval = setInterval(updateOnlineEmployees, 60000); // Co 1 min
         } else {
             showNotice("Nieprawidłowy PIN!", "danger");
         }
@@ -326,6 +341,11 @@ window.logout = function() {
     resetCartAndInventory();
     resetCartAndInventoryExport();
     
+    // CZYSZCZENIE WIDŻETU ONLINE
+    clearInterval(onlineCheckInterval);
+    const widget = document.getElementById('online-employees-widget');
+    if (widget) widget.classList.add('hidden');
+
     showNotice("Zakończono zmianę. Wylogowano.", "info");
 }
 
@@ -760,6 +780,7 @@ window.sendToDiscord = async function() {
                 showNotice("Wysłano na Discord i zaktualizowano obrót!", "success");
                 resetCartAndInventory();
                 closeModal();
+                updateOnlineEmployees(); // Aktualizujemy widżet po transakcji
             } else throw new Error();
         }, "image/png");
     } catch (e) {
@@ -1144,6 +1165,7 @@ window.sendToDiscordExport = async function() {
                 showNotice("Wysłano raport na Discord!", "success");
                 closeModalExport();
                 resetCartAndInventoryExport();
+                updateOnlineEmployees(); // Aktualizujemy widżet po transakcji
             } else {
                 showNotice("Błąd Webhooka!", "danger");
             }
@@ -1777,7 +1799,13 @@ window.openAdminReports = async function() {
 function buildAdminReportCard(r) {
     let statusColor = r.status === 'Oczekujące' ? 'var(--warning)' : (r.status === 'Zaakceptowane' ? 'var(--success)' : 'var(--danger)');
     let actionsHtml = r.status === 'Oczekujące' ? `<div class="admin-report-actions"><button class="btn-reject" data-action="admin-status" data-id="${r.receipt_id}" data-status="Odrzucone">Odrzuć</button><button class="btn-accept" data-action="admin-status" data-id="${r.receipt_id}" data-status="Zaakceptowane">Zaakceptuj pomyłkę</button></div>` : '';
-    return `<div class="admin-report-card"><div class="admin-report-header"><span class="admin-report-id"><i class="fas fa-hashtag"></i> ID: ${r.receipt_id}</span><span class="admin-report-date">${r.date}</span></div><div class="admin-report-emp"><span class="text-secondary">Zgłasza:</span> <strong class="text-primary">${r.employee}</strong></div><div class="admin-report-reason"><span class="text-secondary">Powód:</span> <span class="text-white-inline">${r.reason}</span></div><div class="admin-report-status"><span class="text-secondary">Status:</span> <strong style="color: ${statusColor};">${r.status}</strong></div>${actionsHtml}</div>`;
+    
+    let displayDate = r.date;
+    if (typeof displayDate === 'string' && displayDate.includes('T')) {
+        displayDate = new Date(displayDate).toLocaleString('pl-PL');
+    }
+
+    return `<div class="admin-report-card"><div class="admin-report-header"><span class="admin-report-id"><i class="fas fa-hashtag"></i> ID: ${r.receipt_id}</span><span class="admin-report-date transaction-date">${displayDate}</span></div><div class="admin-report-emp"><span class="text-secondary">Zgłasza:</span> <strong class="text-primary">${r.employee}</strong></div><div class="admin-report-reason"><span class="text-secondary">Powód:</span> <span class="text-white-inline">${r.reason}</span></div><div class="admin-report-status"><span class="text-secondary">Status:</span> <strong style="color: ${statusColor};">${r.status}</strong></div>${actionsHtml}</div>`;
 }
 
 window.closeAdminReports = function() { document.getElementById('admin-reports-modal').classList.remove('active'); }
@@ -2075,6 +2103,77 @@ window.forceHardReload = async function(serverVersion) {
 
 setInterval(checkUpdates, 60000);
 setTimeout(checkUpdates, 3000);
+
+// ==========================================
+// FUNKCJE WIDŻETU ONLINE
+// ==========================================
+window.updateOnlineEmployees = async function() {
+    try {
+        const response = await fetch(`${REPORTS_API_URL}?action=get_reports&t=${new Date().getTime()}`);
+        const data = await response.json();
+        
+        const now = new Date().getTime();
+        const onlineEmployeesMap = new Map();
+
+        data.forEach(row => {
+            if (row.employee && row.date && row.employee !== "System") {
+                const txTime = parseDate(row.date).getTime();
+                if (!isNaN(txTime)) {
+                    if (now - txTime <= 15 * 60 * 1000) { // 15 minut
+                        if (!onlineEmployeesMap.has(row.employee)) {
+                            onlineEmployeesMap.set(row.employee, txTime);
+                        } else {
+                            if (txTime > onlineEmployeesMap.get(row.employee)) {
+                                onlineEmployeesMap.set(row.employee, txTime);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Wymuś status "Online" dla Ciebie dopóki jesteś zalogowany
+        if (currentEmployeeName) {
+            onlineEmployeesMap.set(currentEmployeeName, now);
+        }
+
+        renderOnlineWidget(Array.from(onlineEmployeesMap.keys()));
+    } catch (e) {
+        console.error("Błąd widgetu online:", e);
+    }
+}
+
+function renderOnlineWidget(onlineNames) {
+    const widget = document.getElementById('online-employees-widget');
+    if (!widget) return;
+
+    if (onlineNames.length === 0) {
+        widget.classList.add('hidden');
+        widget.innerHTML = '';
+        return;
+    }
+
+    widget.classList.remove('hidden');
+    let html = '';
+    
+    onlineNames.forEach((name, index) => {
+        const emp = window.currentEmployeesList.find(e => e.name === name);
+        const photo = (emp && emp.photo) ? emp.photo : ''; 
+        const avatarHtml = photo 
+            ? `<img src="${photo}" class="online-avatar">` 
+            : `<div class="online-avatar" style="display:flex; justify-content:center; align-items:center; background:var(--border-color); color:var(--text-secondary); font-size:1.2rem; width:100%; height:100%; border-radius:50%;"><i class="fas fa-user"></i></div>`;
+
+        html += `
+            <div class="online-avatar-container" style="z-index: ${100 - index}">
+                ${avatarHtml}
+                <div class="online-status-dot"></div>
+                <div class="online-tooltip">${name}</div>
+            </div>
+        `;
+    });
+
+    widget.innerHTML = html;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     const loginPinInput = document.getElementById('employee-login-pin');
