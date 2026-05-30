@@ -2956,6 +2956,12 @@ body:has(.modal.active) .summary-bar {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* --- POPRAWKA: Przesunięcie widżetu, gdy koszyk jest otwarty --- */
+body:has(.cart-sidebar.active) .online-widget {
+    right: 410px;
+}
+/* --------------------------------------------------------------- */
+
 .online-avatar-container {
     position: relative;
     width: 45px;
@@ -3035,6 +3041,13 @@ body:has(.modal.active) .summary-bar {
     .online-avatar-container { width: 35px; height: 35px; }
 }
 
+@media (max-width: 768px) {
+    body:has(.cart-sidebar.active) .online-widget {
+        opacity: 0;
+        pointer-events: none;
+    }
+}
+
 /* ==========================================================================
    PRZYCISK "NIESTANDARDOWY PRODUKT" (SKUP)
    ========================================================================== */
@@ -3062,4 +3075,50 @@ body:has(.modal.active) .summary-bar {
     background: rgba(56, 189, 248, 0.05);
     box-shadow: 0 0 15px rgba(56, 189, 248, 0.4); /* Efekt poświaty po najechaniu */
     transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   ANIMACJE LOGOWANIA (ZOOM EFFECT)
+   ========================================================================== */
+.login-zoom-in {
+    animation: loginZoomIn 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    transform-origin: center center;
+}
+
+@keyframes loginZoomIn {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(2.5); opacity: 0; }
+}
+
+.app-zoom-out {
+    animation: appZoomOut 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    transform-origin: center top;
+}
+
+@keyframes appZoomOut {
+    0% { transform: scale(1.15); opacity: 0; filter: blur(8px); }
+    100% { transform: scale(1); opacity: 1; filter: blur(0); }
+}
+
+/* ==========================================================================
+   ANIMACJE ZAKŁADEK I MODALI (PŁYNNE PRZEJŚCIA)
+   ========================================================================== */
+.tab-zoom-in {
+    animation: tabFadeZoom 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    transform-origin: top center;
+}
+
+@keyframes tabFadeZoom {
+    0% { opacity: 0; transform: translateY(15px) scale(0.98); filter: blur(4px); }
+    100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+/* Płynne włączanie okienek popup (modali) */
+.modal.active .modal-content {
+    animation: modalFadeZoom 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes modalFadeZoom {
+    0% { opacity: 0; transform: scale(0.95) translateY(15px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
 }

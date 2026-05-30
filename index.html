@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Kasa fiskalna</title>
-    <link id="theme-style" rel="stylesheet" href="style.css?v=3.9.5">
+    <link id="theme-style" rel="stylesheet" href="style.css?v=3.9.6">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -86,7 +86,6 @@
     </div>
 
     <div id="main-app" class="hidden">
-
         <div id="view-skup">
             <div class="container container-pt40">
                 <header>
@@ -675,28 +674,9 @@
             </div>
         </div>
     </div>
-	<div id="online-employees-widget" class="online-widget hidden"></div>
+    <div id="online-employees-widget" class="online-widget hidden"></div>
     <div id="toast-container" class="toast-container"></div>
     
-    <script src="script.js?v=3.9.5"></script>
-    <script>
-        // Automatyczne pobranie przelicznika przy wejściu w zakładkę lojalnościową
-        document.getElementById('loyalty-floating-btn').addEventListener('click', async () => {
-            const display = document.getElementById('current-loyalty-rate-display');
-            if (display && display.innerText === 'Ładowanie...' && typeof REPORTS_API_URL !== 'undefined') {
-                try {
-                    const res = await fetch(REPORTS_API_URL + "?action=get_loyalty_settings&t=" + new Date().getTime());
-                    const data = await res.json();
-                    if (data.rate) {
-                        display.innerText = data.rate + "$ = 1 pieczątka";
-                    } else {
-                        display.innerText = "Brak danych";
-                    }
-                } catch(e) {
-                    display.innerText = "Błąd API";
-                }
-            }
-        });
-    </script>
+    <script src="script.js?v=3.9.6"></script>
 </body>
 </html>

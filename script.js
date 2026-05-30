@@ -1,4 +1,4 @@
-const APP_VERSION = "3.9.5";
+const APP_VERSION = "3.9.6";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const DISCORD_WEBHOOK_URL_SKUP = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/skup"; 
@@ -168,6 +168,7 @@ window.switchView = function(view) {
     if (!currentEmployeeName && document.getElementById('login-screen').classList.contains('active')) {
         return; 
     }
+    
     currentActiveView = view;
     const themeStyle = document.getElementById('theme-style');
     const viewSkup = document.getElementById('view-skup');
@@ -196,6 +197,7 @@ window.switchView = function(view) {
         navLogoIcon.className = 'fas fa-id-card';
         document.querySelector('.navbar').classList.remove('scrolled'); 
     }
+    
     document.getElementById('user-dropdown').classList.remove('active');
 }
 
@@ -212,6 +214,7 @@ window.login = async function() {
         const data = await response.json();
 
         if (data.isValid) {
+            window.mySessionStart = new Date().getTime(); // Zapisanie czasu wejścia
             currentEmployeeName = data.name;
             currentEmployeeRank = data.rank || "Pracownik"; 
             currentEmployeeSsn = data.ssn || "---"; 
@@ -259,38 +262,55 @@ window.login = async function() {
                 dropDefaultIcon.classList.remove('hidden');
             }
 
-            document.getElementById('login-screen').classList.remove('active');
-            document.getElementById('main-app').classList.remove('hidden');
-            document.getElementById('user-profile').classList.remove('hidden');
+            // --- ANIMACJA LOGOWANIA ---
+            const loginCard = document.querySelector('.login-card');
+            loginCard.classList.add('login-zoom-in');
             
-            const banner = document.getElementById('announcement-banner');
-            if(banner) banner.classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('login-screen').classList.remove('active');
+                loginCard.classList.remove('login-zoom-in');
+                btn.disabled = false;
+                btn.innerHTML = 'Odblokuj system <i class="fas fa-unlock"></i>';
+                
+                const mainApp = document.getElementById('main-app');
+                mainApp.classList.remove('hidden');
+                mainApp.classList.add('app-zoom-out');
+                
+                document.getElementById('user-profile').classList.remove('hidden');
+                
+                const banner = document.getElementById('announcement-banner');
+                if(banner) banner.classList.remove('hidden');
 
-            showNotice(`Rozpoczęto zmianę: ${data.name}`, "success");
-            
-            initSkup();
-            initExport();
-            fetchChangelogData();
-            switchView('skup');
-            checkEmployeeBonuses();
+                showNotice(`Rozpoczęto zmianę: ${data.name}`, "success");
+                
+                initSkup();
+                initExport();
+                fetchChangelogData();
+                switchView('skup');
+                checkEmployeeBonuses();
 
-            // WIDŻET ONLINE - INICJALIZACJA
-            fetch(`${PIN_API_URL}?action=get_all`)
-                .then(res => res.json())
-                .then(d => { 
-                    if(d.employees) window.currentEmployeesList = d.employees; 
-                    updateOnlineEmployees(); 
-                })
-                .catch(e => console.error(e));
-            
-            onlineCheckInterval = setInterval(updateOnlineEmployees, 60000); // Co 1 min
+                // WIDŻET ONLINE
+                fetch(`${PIN_API_URL}?action=get_all`)
+                    .then(res => res.json())
+                    .then(d => { 
+                        if(d.employees) window.currentEmployeesList = d.employees; 
+                        updateOnlineEmployees(); 
+                    })
+                    .catch(e => console.error(e));
+                
+                onlineCheckInterval = setInterval(updateOnlineEmployees, 60000);
+                
+                setTimeout(() => { mainApp.classList.remove('app-zoom-out'); }, 600);
+            }, 400);
+
         } else {
             showNotice("Nieprawidłowy PIN!", "danger");
+            btn.disabled = false;
+            btn.innerHTML = 'Odblokuj system <i class="fas fa-unlock"></i>';
         }
     } catch (error) {
         showNotice("Błąd połączenia z bazą PIN!", "danger");
         console.error(error);
-    } finally {
         btn.disabled = false;
         btn.innerHTML = 'Odblokuj system <i class="fas fa-unlock"></i>';
     }
@@ -780,7 +800,7 @@ window.sendToDiscord = async function() {
                 showNotice("Wysłano na Discord i zaktualizowano obrót!", "success");
                 resetCartAndInventory();
                 closeModal();
-                updateOnlineEmployees(); // Aktualizujemy widżet po transakcji
+                updateOnlineEmployees(); 
             } else throw new Error();
         }, "image/png");
     } catch (e) {
@@ -1165,7 +1185,7 @@ window.sendToDiscordExport = async function() {
                 showNotice("Wysłano raport na Discord!", "success");
                 closeModalExport();
                 resetCartAndInventoryExport();
-                updateOnlineEmployees(); // Aktualizujemy widżet po transakcji
+                updateOnlineEmployees(); 
             } else {
                 showNotice("Błąd Webhooka!", "danger");
             }
@@ -1963,6 +1983,16 @@ window.checkLoyaltyCustomer = async function() {
     const ssnInput = document.getElementById('loyalty-search-ssn').value.trim();
     if(!ssnInput) return showNotice("Podaj numer SSN!", "warning");
     
+    // Blokada dla pracowników firmy
+    if (window.currentEmployeesList && window.currentEmployeesList.length > 0) {
+        const isEmployee = window.currentEmployeesList.some(emp => String(emp.ssn) === ssnInput);
+        if (isEmployee) {
+            currentLoyaltyCustomer = null;
+            document.getElementById('loyalty-customer-info').classList.add('hidden');
+            return showNotice("Pracownicy firmy nie mogą korzystać z programu lojalnościowego!", "danger");
+        }
+    }
+
     const btn = document.getElementById('check-loyalty-btn');
     const origText = btn.innerText;
     btn.disabled = true;
@@ -2113,41 +2143,80 @@ window.updateOnlineEmployees = async function() {
         const data = await response.json();
         
         const now = new Date().getTime();
-        const onlineEmployeesMap = new Map();
+        const startOfToday = new Date().setHours(0, 0, 0, 0); // Północ dzisiejszego dnia
+        
+        const empStats = new Map();
 
+        // 1. Zbieramy dzisiejsze transakcje i grupujemy po pracowniku
+        const userTransactions = {};
         data.forEach(row => {
             if (row.employee && row.date && row.employee !== "System") {
                 const txTime = parseDate(row.date).getTime();
-                if (!isNaN(txTime)) {
-                    if (now - txTime <= 15 * 60 * 1000) { // 15 minut
-                        if (!onlineEmployeesMap.has(row.employee)) {
-                            onlineEmployeesMap.set(row.employee, txTime);
-                        } else {
-                            if (txTime > onlineEmployeesMap.get(row.employee)) {
-                                onlineEmployeesMap.set(row.employee, txTime);
-                            }
-                        }
-                    }
+                if (!isNaN(txTime) && txTime >= startOfToday) {
+                    if (!userTransactions[row.employee]) userTransactions[row.employee] = [];
+                    userTransactions[row.employee].push(txTime);
                 }
             }
         });
 
-        // Wymuś status "Online" dla Ciebie dopóki jesteś zalogowany
-        if (currentEmployeeName) {
-            onlineEmployeesMap.set(currentEmployeeName, now);
+        // 2. Szukamy początku "obecnej" sesji u innych pracowników
+        for (const [emp, times] of Object.entries(userTransactions)) {
+            times.sort((a, b) => b - a); // Sortowanie od najnowszej
+            let lastSeen = times[0];
+            let firstSeen = times[0];
+            
+            for (let i = 1; i < times.length; i++) {
+                // Jeśli przerwa między paragonami jest mniejsza niż 60 min, uznajemy że ciągle był w pracy
+                if (firstSeen - times[i] <= 60 * 60 * 1000) { 
+                    firstSeen = times[i];
+                } else {
+                    break; // Długa przerwa = wcześniejsze transakcje to inna zmiana
+                }
+            }
+            empStats.set(emp, { lastSeen, firstSeen });
         }
 
-        renderOnlineWidget(Array.from(onlineEmployeesMap.keys()));
+        // 3. Wymuszenie DOKŁADNEGO czasu tylko dla nas (od wpisania pinu)
+        if (currentEmployeeName) {
+            if (!window.mySessionStart) window.mySessionStart = now;
+            if (!empStats.has(currentEmployeeName)) {
+                empStats.set(currentEmployeeName, { lastSeen: now, firstSeen: window.mySessionStart });
+            } else {
+                const stats = empStats.get(currentEmployeeName);
+                stats.lastSeen = now; 
+                stats.firstSeen = window.mySessionStart; // Odrzuca stare dane z bazy na rzecz obecnego logowania!
+            }
+        }
+
+        const onlineData = [];
+        empStats.forEach((stats, name) => {
+            // Online jeśli wystawił coś max 15 minut temu, lub to my
+            if (now - stats.lastSeen <= 15 * 60 * 1000 || name === currentEmployeeName) {
+                const diffMs = Math.max(0, now - stats.firstSeen);
+                const diffMins = Math.floor(diffMs / 60000);
+                const hours = Math.floor(diffMins / 60);
+                const mins = diffMins % 60;
+                
+                let timeStr = "";
+                if (hours > 0) timeStr += `${hours}h `;
+                timeStr += `${mins}m`;
+                if (hours === 0 && mins === 0) timeStr = "< 1m";
+                
+                onlineData.push({ name: name, timeStr: timeStr });
+            }
+        });
+
+        renderOnlineWidget(onlineData);
     } catch (e) {
         console.error("Błąd widgetu online:", e);
     }
 }
 
-function renderOnlineWidget(onlineNames) {
+function renderOnlineWidget(onlineData) {
     const widget = document.getElementById('online-employees-widget');
     if (!widget) return;
 
-    if (onlineNames.length === 0) {
+    if (onlineData.length === 0) {
         widget.classList.add('hidden');
         widget.innerHTML = '';
         return;
@@ -2156,8 +2225,8 @@ function renderOnlineWidget(onlineNames) {
     widget.classList.remove('hidden');
     let html = '';
     
-    onlineNames.forEach((name, index) => {
-        const emp = window.currentEmployeesList.find(e => e.name === name);
+    onlineData.forEach((user, index) => {
+        const emp = window.currentEmployeesList.find(e => e.name === user.name);
         const photo = (emp && emp.photo) ? emp.photo : ''; 
         const avatarHtml = photo 
             ? `<img src="${photo}" class="online-avatar">` 
@@ -2167,7 +2236,7 @@ function renderOnlineWidget(onlineNames) {
             <div class="online-avatar-container" style="z-index: ${100 - index}">
                 ${avatarHtml}
                 <div class="online-status-dot"></div>
-                <div class="online-tooltip">${name}</div>
+                <div class="online-tooltip">${user.name} [${user.timeStr}]</div>
             </div>
         `;
     });
@@ -2182,10 +2251,25 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('nav-skup-btn')?.addEventListener('click', (e) => { e.preventDefault(); switchView('skup'); });
     document.getElementById('nav-export-btn')?.addEventListener('click', (e) => { e.preventDefault(); switchView('export'); });
 
-    document.getElementById('loyalty-floating-btn')?.addEventListener('click', (e) => { 
+    document.getElementById('loyalty-floating-btn')?.addEventListener('click', async (e) => { 
         e.preventDefault(); 
         switchView('loyalty'); 
         showNotice("UWAGA: System lojalnościowy jest w fazie testów i aktualnie nie obowiązuje w grze!", "warning");
+        
+        const display = document.getElementById('current-loyalty-rate-display');
+        if (display && display.textContent.includes('Ładowanie') && typeof REPORTS_API_URL !== 'undefined') {
+            try {
+                const res = await fetch(REPORTS_API_URL + "?action=get_loyalty_settings&t=" + new Date().getTime());
+                const data = await res.json();
+                if (data.rate) {
+                    display.innerText = data.rate + "$ = 1 pieczątka";
+                } else {
+                    display.innerText = "Brak danych";
+                }
+            } catch(e) {
+                display.innerText = "Błąd API";
+            }
+        }
     });
 
     document.getElementById('check-loyalty-btn')?.addEventListener('click', window.checkLoyaltyCustomer);

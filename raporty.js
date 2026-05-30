@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "3.9.5"; // Normalizacja nazw produktów
+const APP_VERSION = "3.9.6"; // Normalizacja nazw produktów
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
@@ -86,18 +86,35 @@ async function loginBoss() {
             if (data.role && data.role.toLowerCase().trim() === 'szef') {
                 currentEmployeeName = data.name;
                 document.getElementById('logged-boss-name').innerText = currentEmployeeName.toUpperCase();
-                document.getElementById('login-screen').classList.remove('active');
-                document.getElementById('dashboard-screen').classList.remove('hidden');
-                document.getElementById('user-profile').classList.remove('hidden');
-                showNotice(`Zalogowano pomyślnie jako ${data.name}`, "success");
                 
-                // Od razu wczytujemy też bazę HR do wizytówek
-                fetch(`${PIN_API_URL}?action=get_all`)
-                    .then(res => res.json())
-                    .then(d => { if(d.employees) window.currentEmployeesList = d.employees; })
-                    .catch(() => {});
+                // --- ANIMACJA LOGOWANIA ---
+                const loginCard = document.querySelector('.login-card');
+                loginCard.classList.add('login-zoom-in');
+                
+                setTimeout(() => {
+                    document.getElementById('login-screen').classList.remove('active');
+                    loginCard.classList.remove('login-zoom-in');
+                    btn.disabled = false;
+                    btn.innerHTML = 'Zaloguj <i class="fas fa-unlock"></i>';
+                    
+                    // Wejście głównego panelu
+                    const dashboard = document.getElementById('dashboard-screen');
+                    dashboard.classList.remove('hidden');
+                    dashboard.classList.add('app-zoom-out');
+                    
+                    document.getElementById('user-profile').classList.remove('hidden');
+                    showNotice(`Zalogowano pomyślnie jako ${data.name}`, "success");
+                    
+                    fetch(`${PIN_API_URL}?action=get_all`)
+                        .then(res => res.json())
+                        .then(d => { if(d.employees) window.currentEmployeesList = d.employees; })
+                        .catch(() => {});
 
-                loadRealData(); 
+                    loadRealData(); 
+                    
+                    setTimeout(() => { dashboard.classList.remove('app-zoom-out'); }, 600);
+                }, 400);
+                
             } else {
                 showNotice("Odmowa! Brak uprawnień zarządcy.", "danger");
                 document.getElementById('boss-pin-input').value = ""; 
@@ -108,8 +125,11 @@ async function loginBoss() {
     } catch (e) {
         showNotice("Błąd połączenia z bazą PIN!", "danger");
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = 'Zaloguj do panelu <i class="fas fa-arrow-right"></i>';
+        // Resetujemy guzik tylko, jeśli logowanie się NIE udało (żeby nie przerywać animacji)
+        if (!document.querySelector('.login-card').classList.contains('login-zoom-in')) {
+            btn.disabled = false;
+            btn.innerHTML = 'Zaloguj <i class="fas fa-unlock"></i>';
+        }
     }
 }
 

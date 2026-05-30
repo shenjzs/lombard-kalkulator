@@ -1001,7 +1001,7 @@ header h1 {
     flex-direction: column;
     box-shadow: 0 25px 50px rgba(0,0,0,0.5);
     overflow: hidden;
-    animation: fadeInDown 0.3s ease-out;
+    animation: modalFadeZoom 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
 .emp-modal-header {
@@ -2328,4 +2328,32 @@ header h1 {
 @keyframes skeletonLoading {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
+}
+
+/* ==========================================================================
+   ANIMACJE LOGOWANIA I MODALI
+   ========================================================================== */
+.login-zoom-in {
+    animation: loginZoomIn 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    transform-origin: center center;
+}
+
+@keyframes loginZoomIn {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(2.5); opacity: 0; }
+}
+
+.app-zoom-out {
+    animation: appZoomOut 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    transform-origin: center top;
+}
+
+@keyframes appZoomOut {
+    0% { transform: scale(1.15); opacity: 0; filter: blur(8px); }
+    100% { transform: scale(1); opacity: 1; filter: blur(0); }
+}
+
+@keyframes modalFadeZoom {
+    0% { opacity: 0; transform: scale(0.95) translateY(15px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
 }
