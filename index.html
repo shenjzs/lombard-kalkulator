@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Kasa fiskalna</title>
-    <link id="theme-style" rel="stylesheet" href="style.css?v=3.9.6">
+    <link id="theme-style" rel="stylesheet" href="style.css?v=3.9.7">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -54,6 +54,7 @@
                     </div>
                     
                     <div id="menu-id-card" class="dropdown-item"><i class="fas fa-id-badge"></i> Identyfikator</div>
+                    <div id="menu-achievements" class="dropdown-item"><i class="fas fa-trophy" style="color: var(--accent-color);"></i> Osiągnięcia</div>
                     <div id="menu-my-stats" class="dropdown-item"><i class="fas fa-chart-pie"></i> Moje statystyki</div>
                     <div id="menu-my-trans" class="dropdown-item"><i class="fas fa-list"></i> Moje transakcje</div>
                     <div id="menu-changelog" class="dropdown-item flex-between-center">
@@ -642,7 +643,6 @@
                             <div id="id-progress-bar-fill" class="id-progress-fill"></div>
                         </div>
                     </div>
-                    <div class="id-badges-container id-badges-layout" id="id-badges-container"></div>
                 </div>
 
                 <div class="id-card-footer-hz">
@@ -655,6 +655,21 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+    
+    <div id="achievements-modal" class="modal">
+        <div class="modal-content settings-modal-content modal-w700">
+            <div class="settings-header">
+                <h2><i class="fas fa-trophy" style="color: var(--accent-color);"></i> Twoje osiągnięcia</h2>
+                <button id="close-achievements-btn" class="settings-close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <p class="settings-desc">Zestawienie odblokowanych i zablokowanych osiągnięć w firmie.</p>
+            <div id="achievements-loader" class="loader-layout">
+                <i class="fas fa-circle-notch fa-spin fa-3x text-accent-icon"></i>
+                <p class="loader-text">Pobieranie danych...</p>
+            </div>
+            <div id="achievements-container" class="id-badges-layout hidden" style="justify-content: center; gap: 12px; margin-top: 10px;"></div>
         </div>
     </div>
 
@@ -677,6 +692,6 @@
     <div id="online-employees-widget" class="online-widget hidden"></div>
     <div id="toast-container" class="toast-container"></div>
     
-    <script src="script.js?v=3.9.6"></script>
+    <script src="script.js?v=3.9.7"></script>
 </body>
 </html>

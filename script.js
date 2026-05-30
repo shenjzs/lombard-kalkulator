@@ -1,4 +1,4 @@
-const APP_VERSION = "3.9.6";
+const APP_VERSION = "3.9.7";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const DISCORD_WEBHOOK_URL_SKUP = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/skup"; 
@@ -1922,7 +1922,6 @@ window.openIdCard = async function() {
         document.getElementById('id-card-level-text').innerText = "Analiza danych...";
         document.getElementById('id-card-xp-text').innerText = "Wczytywanie XP...";
         document.getElementById('id-progress-bar-fill').style.width = "0%";
-        document.getElementById('id-badges-container').innerHTML = '<i class="fas fa-circle-notch fa-spin fa-fw text-secondary"></i> Pobieranie osiągnięć...';
     }
     
     document.getElementById('id-card-modal').classList.add('active');
@@ -1933,18 +1932,15 @@ window.openIdCard = async function() {
         const myData = rawData.filter(row => row.employee === currentEmployeeName);
         let totalXP = 0; let txSet = new Set();
         myData.forEach(row => { totalXP += row.total; if(row.report_id) txSet.add(row.report_id); });
-        let txCount = txSet.size || (myData.length > 0 ? 1 : 0);
         
-        // Dodaliśmy tutaj rawData jako czwarty argument, by móc sprawdzić obecność szefa!
-        renderGamification(totalXP, txCount, myData, rawData);
+        renderGamification(totalXP);
     } catch (e) {
         document.getElementById('id-card-level-text').innerText = "Błąd pobierania danych";
         document.getElementById('id-card-xp-text').innerText = "Brak połączenia";
-        document.getElementById('id-badges-container').innerHTML = '';
     }
 }
 
-function renderGamification(totalXP, txCount, myData = [], rawData = []) {
+function renderGamification(totalXP) {
     const levels = [
         { lvl: 1, max: 50000, name: "Rekrut" },
         { lvl: 2, max: 150000, name: "Praktykant" },
@@ -1987,7 +1983,38 @@ function renderGamification(totalXP, txCount, myData = [], rawData = []) {
     document.getElementById('id-card-level-text').innerText = `Poziom ${currentLvl} - ${levels[currentLvl-1].name}`;
     document.getElementById('id-card-xp-text').innerText = currentLvl === maxLevel ? `MAX LEVEL (${totalXP.toLocaleString()}$)` : `${totalXP.toLocaleString()}$ / ${currentMax.toLocaleString()}$`;
     setTimeout(() => { document.getElementById('id-progress-bar-fill').style.width = `${progressPercent}%`; }, 100);
+}
+
+window.closeIdCard = function() { document.getElementById('id-card-modal').classList.remove('active'); }
+
+window.openAchievements = async function() {
+    document.getElementById('user-dropdown').classList.remove('active');
+    document.getElementById('achievements-modal').classList.add('active');
+    document.getElementById('achievements-loader').classList.remove('hidden');
+    document.getElementById('achievements-container').classList.add('hidden');
     
+    try {
+        const rawData = await window.preloadReportsData();
+        const myData = rawData.filter(row => row.employee === currentEmployeeName);
+        let totalXP = 0; let txSet = new Set();
+        myData.forEach(row => { totalXP += row.total; if(row.report_id) txSet.add(row.report_id); });
+        let txCount = txSet.size || (myData.length > 0 ? 1 : 0);
+        
+        renderBadges(totalXP, txCount, myData, rawData);
+        
+        document.getElementById('achievements-loader').classList.add('hidden');
+        document.getElementById('achievements-container').classList.remove('hidden');
+    } catch (e) {
+        document.getElementById('achievements-loader').innerHTML = '<p class="text-danger-icon" style="text-align:center;"><i class="fas fa-exclamation-triangle"></i> Błąd pobierania danych.</p>';
+    }
+}
+
+window.closeAchievements = function() { 
+    document.getElementById('achievements-modal').classList.remove('active'); 
+    document.getElementById('achievements-loader').innerHTML = `<i class="fas fa-circle-notch fa-spin fa-3x text-accent-icon"></i><p class="loader-text">Pobieranie danych...</p>`;
+}
+
+function renderBadges(totalXP, txCount, myData = [], rawData = []) {
     let maxSingleTx = 0;
     let maxSingleBuyTx = 0; 
     let nightShiftCount = 0;
@@ -2032,7 +2059,6 @@ function renderGamification(totalXP, txCount, myData = [], rawData = []) {
         }
         
         // --- SPRAWDZANIE "PRAWEJ RĘKI SZEFA" ---
-        // Sprawdzamy czy szef zrobił coś w systemie do 60 minut przed lub po tej transakcji pracownika
         if (!servedWhileBossOnline && txTime > 0) {
             if (bossTimestamps.some(bTime => Math.abs(bTime - txTime) <= 60 * 60 * 1000)) {
                 servedWhileBossOnline = true;
@@ -2058,36 +2084,62 @@ function renderGamification(totalXP, txCount, myData = [], rawData = []) {
     });
 
     const badges = [
-        { icon: "fa-tint", name: "Pierwsza krew", color: "#ef4444", condition: txCount >= 1, desc: "Zrealizuj swoją pierwszą transakcję w firmie." },
-        { icon: "fa-handshake", name: "Solidna firma", color: "#a855f7", condition: txCount >= 150, desc: "Zrealizuj 150 udanych transakcji z klientami." },
-        { icon: "fa-fish", name: "Rekin biznesu", color: "#38bdf8", condition: totalXP >= 500000, desc: "Wygeneruj ponad 500 000$ obrotu." },
-        { icon: "fa-medal", name: "Stary wyga", color: "#fbbf24", condition: txCount >= 450, desc: "Zrealizuj 450 udanych transakcji z klientami." },
-        { icon: "fa-crown", name: "Milioner", color: "#eab308", condition: totalXP >= 2000000, desc: "Wygeneruj ponad 2 000 000$ obrotu." },
-        { icon: "fa-flask", name: "Chemiczny Ali", color: "#22c55e", condition: weirdStuffCount >= 100, desc: "Przetwórz w lombardzie 100 dziwnych substancji." },
-        { icon: "fa-coins", name: "Gorączka złota", color: "#eab308", condition: goldCount >= 200, desc: "Skup lub sprzedaj 200 złotych przedmiotów." },
-        { icon: "fa-money-bill-wave", name: "Gruba ryba", color: "#e11d48", condition: maxSingleBuyTx >= 30000, desc: "Wykonaj pojedynczą transakcję skupu na kwotę minimum 30 000$." },
-        { icon: "fa-moon", name: "Nocny Marek", color: "#8b5cf6", condition: nightShiftCount >= 50, desc: "Wykonaj 50 transakcji na nocnej zmianie (0:00 - 6:00)." },
-        { icon: "fa-boxes", name: "Hurtownik", color: "#f97316", condition: maxItemsInSingleTx >= 30, desc: "Skup od klienta minimum 30 przedmiotów na jednym paragonie." },
-        { icon: "fa-laptop", name: "Elektro - śmieciarz", color: "#06b6d4", condition: electronicsCount >= 250, desc: "Skup lub sprzedaj 250 sztuk sprzętu elektronicznego." },
-        { icon: "fa-palette", name: "Koneser sztuki", color: "#d946ef", condition: artCount >= 100, desc: "Obracaj dziełami sztuki i antykami (min. 100 szt. obrazów, dywanów itp.)." },
-        { icon: "fa-truck-loading", name: "Wilk z Wall Street", color: "#10b981", condition: totalSellVolume >= 850000, desc: "Sprzedaj towar z magazynu za łączną kwotę ponad 850 000$." },
-        { icon: "fa-user-ninja", name: "Samuraj", color: "#dc2626", condition: katanaCount >= 3, desc: "Przetwórz w lombardzie co najmniej 3 katany." },
-        { icon: "fa-users", name: "Znajoma twarz", color: "#3b82f6", condition: uniqueClients.size >= 70, desc: "Obsłuż 70 unikalnych klientów (różne numery SSN)." },
-        { icon: "fa-briefcase", name: "Prawa ręka", color: "#eab308", condition: servedWhileBossOnline, desc: "Zrealizuj transakcję na tej samej zmianie z szefem." }
+        { icon: "fa-tint", name: "Pierwsza krew", color: "#ef4444", current: txCount, max: 1, desc: "Zrealizuj swoją pierwszą transakcję w firmie." },
+        { icon: "fa-handshake", name: "Solidna firma", color: "#a855f7", current: txCount, max: 150, desc: "Zrealizuj 150 udanych transakcji z klientami." },
+        { icon: "fa-fish", name: "Rekin biznesu", color: "#38bdf8", current: totalXP, max: 500000, isMoney: true, desc: "Wygeneruj ponad 500 000$ obrotu." },
+        { icon: "fa-medal", name: "Stary wyga", color: "#fbbf24", current: txCount, max: 450, desc: "Zrealizuj 450 udanych transakcji z klientami." },
+        { icon: "fa-crown", name: "Milioner", color: "#eab308", current: totalXP, max: 2000000, isMoney: true, desc: "Wygeneruj ponad 2 000 000$ obrotu." },
+        { icon: "fa-flask", name: "Chemiczny Ali", color: "#22c55e", current: weirdStuffCount, max: 100, desc: "Przetwórz w lombardzie 100 dziwnych substancji." },
+        { icon: "fa-coins", name: "Gorączka złota", color: "#eab308", current: goldCount, max: 200, desc: "Skup lub sprzedaj 200 złotych przedmiotów." },
+        { icon: "fa-money-bill-wave", name: "Gruba ryba", color: "#e11d48", current: maxSingleBuyTx, max: 30000, isMoney: true, desc: "Wykonaj pojedynczą transakcję skupu na kwotę minimum 30 000$." },
+        { icon: "fa-moon", name: "Nocny Marek", color: "#8b5cf6", current: nightShiftCount, max: 50, desc: "Wykonaj 50 transakcji na nocnej zmianie (0:00 - 6:00)." },
+        { icon: "fa-boxes", name: "Hurtownik", color: "#f97316", current: maxItemsInSingleTx, max: 30, desc: "Skup od klienta minimum 30 przedmiotów na jednym paragonie." },
+        { icon: "fa-laptop", name: "Elektro - śmieciarz", color: "#06b6d4", current: electronicsCount, max: 250, desc: "Skup lub sprzedaj 250 sztuk sprzętu elektronicznego." },
+        { icon: "fa-palette", name: "Koneser sztuki", color: "#d946ef", current: artCount, max: 100, desc: "Obracaj dziełami sztuki i antykami (min. 100 szt.)." },
+        { icon: "fa-truck-loading", name: "Wilk z Wall Street", color: "#10b981", current: totalSellVolume, max: 850000, isMoney: true, desc: "Sprzedaj towar z magazynu za łączną kwotę ponad 850 000$." },
+        { icon: "fa-user-ninja", name: "Samuraj", color: "#dc2626", current: katanaCount, max: 3, desc: "Przetwórz w lombardzie co najmniej 3 katany." },
+        { icon: "fa-users", name: "Znajoma twarz", color: "#3b82f6", current: uniqueClients.size, max: 70, desc: "Obsłuż 70 unikalnych klientów (różne numery SSN)." },
+        { icon: "fa-briefcase", name: "Prawa ręka", color: "#eab308", current: servedWhileBossOnline ? 1 : 0, max: 1, desc: "Zrealizuj transakcję na tej samej zmianie z szefem." }
     ];
     
-    const container = document.getElementById('id-badges-container');
+    const container = document.getElementById('achievements-container');
     container.innerHTML = '';
+    container.className = 'achievements-grid hidden'; 
+    container.style = ''; 
+
     badges.forEach(b => {
+        const displayCurrent = Math.min(b.current, b.max);
+        const isUnlocked = displayCurrent >= b.max;
+        const percentage = (displayCurrent / b.max) * 100;
+        
+        const currentText = b.isMoney ? window.formatMoney(displayCurrent) + '$' : displayCurrent;
+        const maxText = b.isMoney ? window.formatMoney(b.max) + '$' : b.max;
+
         const badgeEl = document.createElement('div');
-        badgeEl.className = `gamification-badge ${b.condition ? 'badge-unlocked' : 'badge-locked'}`;
-        badgeEl.title = b.desc;
-        badgeEl.innerHTML = `<i class="fas ${b.icon}" style="color: ${b.color}; font-size: 1.1rem;"></i> <span class="text-white-inline">${b.name}</span>`;
+        badgeEl.className = `achievement-card ${isUnlocked ? 'unlocked' : 'locked'}`;
+        
+        badgeEl.innerHTML = `
+            <div class="achievement-header">
+                <div class="achievement-icon" style="color: ${isUnlocked ? b.color : 'var(--text-secondary)'}; border-color: ${isUnlocked ? b.color : 'transparent'}; box-shadow: ${isUnlocked ? '0 0 15px ' + b.color + '40' : 'none'};">
+                    <i class="fas ${b.icon}"></i>
+                </div>
+                <div class="achievement-info">
+                    <div class="achievement-title" style="color: ${isUnlocked ? '#fff' : 'var(--text-secondary)'}">${b.name}</div>
+                    <div class="achievement-desc">${b.desc}</div>
+                </div>
+            </div>
+            <div class="achievement-progress-wrapper">
+                <div class="achievement-progress-text">
+                    ${isUnlocked ? `<span style="color: ${b.color}"><i class="fas fa-check-circle"></i> Odblokowane</span>` : `<span>${currentText} / ${maxText}</span>`}
+                </div>
+                <div class="achievement-progress-container">
+                    <div class="achievement-progress-fill" style="width: ${percentage}%; background: ${isUnlocked ? b.color : 'var(--accent-color)'};"></div>
+                </div>
+            </div>
+        `;
         container.appendChild(badgeEl);
     });
 }
-
-window.closeIdCard = function() { document.getElementById('id-card-modal').classList.remove('active'); }
 
 window.showNotice = function(msg, type = 'info') {
     const container = document.getElementById('toast-container');
@@ -2421,6 +2473,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const achBtn = document.getElementById('menu-achievements');
+    if (achBtn) {
+        achBtn.addEventListener('click', openAchievements);
+        achBtn.addEventListener('mouseenter', () => window.preloadReportsData());
+    }
+
+    document.getElementById('close-achievements-btn')?.addEventListener('click', closeAchievements);
     document.getElementById('menu-changelog')?.addEventListener('click', openChangelog);
     document.getElementById('admin-changelog-btn')?.addEventListener('click', openAdminChangelog);
     document.getElementById('admin-reports-btn')?.addEventListener('click', openAdminReports);

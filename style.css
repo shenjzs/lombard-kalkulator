@@ -2342,6 +2342,122 @@ body:has(.modal.active) .summary-bar {
 }
 
 /* ==========================================================================
+   NOWE: OSIĄGNIĘCIA (ACHIEVEMENTS MODAL)
+   ========================================================================== */
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 15px;
+    width: 100%;
+    max-height: 50vh;
+    overflow-y: auto;
+    padding-right: 10px;
+    margin-top: 15px;
+}
+
+.achievements-grid::-webkit-scrollbar {
+    width: 6px;
+}
+.achievements-grid::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.1);
+}
+.achievements-grid::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 10px;
+}
+
+.achievement-card {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: 0.3s;
+}
+
+.achievement-card.unlocked {
+    background: rgba(15, 23, 42, 0.6);
+    border-color: rgba(255,255,255,0.1);
+}
+
+.achievement-card.unlocked:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.achievement-card.locked {
+    opacity: 0.6;
+    filter: grayscale(80%);
+}
+
+.achievement-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.achievement-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.achievement-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.achievement-title {
+    font-weight: 800;
+    font-size: 0.95rem;
+}
+
+.achievement-desc {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.achievement-progress-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: auto;
+}
+
+.achievement-progress-text {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.achievement-progress-container {
+    height: 6px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.achievement-progress-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==========================================================================
    WYPROWADZONE STYLE INLINE (REFACTORING CZYSTOŚCI KODU)
    ========================================================================== */
 .profile-btn-layout { position: relative; display: flex; align-items: center; gap: 8px; }
