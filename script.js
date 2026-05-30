@@ -1935,7 +1935,8 @@ window.openIdCard = async function() {
         myData.forEach(row => { totalXP += row.total; if(row.report_id) txSet.add(row.report_id); });
         let txCount = txSet.size || (myData.length > 0 ? 1 : 0);
         
-        renderGamification(totalXP, txCount, myData);
+        // Dodaliśmy tutaj rawData jako czwarty argument, by móc sprawdzić obecność szefa!
+        renderGamification(totalXP, txCount, myData, rawData);
     } catch (e) {
         document.getElementById('id-card-level-text').innerText = "Błąd pobierania danych";
         document.getElementById('id-card-xp-text').innerText = "Brak połączenia";
@@ -1943,7 +1944,7 @@ window.openIdCard = async function() {
     }
 }
 
-function renderGamification(totalXP, txCount, myData = []) {
+function renderGamification(totalXP, txCount, myData = [], rawData = []) {
     const levels = [
         { lvl: 1, max: 50000, name: "Rekrut" },
         { lvl: 2, max: 150000, name: "Praktykant" },
@@ -1988,23 +1989,71 @@ function renderGamification(totalXP, txCount, myData = []) {
     setTimeout(() => { document.getElementById('id-progress-bar-fill').style.width = `${progressPercent}%`; }, 100);
     
     let maxSingleTx = 0;
+    let maxSingleBuyTx = 0; 
     let nightShiftCount = 0;
     let weirdStuffCount = 0;
     let goldCount = 0;
+    let maxItemsInSingleTx = 0; 
+    let electronicsCount = 0; 
+    let artCount = 0; 
+    let totalSellVolume = 0; 
+    let katanaCount = 0;
+    let uniqueClients = new Set();
+    
+    // --- NOWA LOGIKA: ZNAJDŹ AKTYWNOŚĆ SZEFÓW ---
+    let servedWhileBossOnline = false;
+    const bosses = window.currentEmployeesList.filter(e => e.role && e.role.toLowerCase() === 'szef').map(e => e.name);
+    let bossTimestamps = [];
+    
+    if (rawData && rawData.length > 0) {
+        rawData.forEach(row => {
+            if (bosses.includes(row.employee) && row.date) {
+                bossTimestamps.push(parseDate(row.date).getTime());
+            }
+        });
+    }
 
     myData.forEach(tx => {
         if (tx.total > maxSingleTx) maxSingleTx = tx.total;
+        if (tx.type === 'skup' && tx.total > maxSingleBuyTx) maxSingleBuyTx = tx.total;
+        if (tx.type === 'sprzedaz') totalSellVolume += tx.total;
+        if (tx.type === 'skup' && tx.qty > maxItemsInSingleTx) maxItemsInSingleTx = tx.qty;
 
+        if (tx.ssn && String(tx.ssn).trim() !== "") {
+            uniqueClients.add(String(tx.ssn).trim());
+        }
+
+        let txTime = 0;
         if (tx.date) {
             const txDate = parseDate(tx.date);
+            txTime = txDate.getTime();
             const hour = txDate.getHours();
             if (hour >= 0 && hour <= 5) nightShiftCount++;
+        }
+        
+        // --- SPRAWDZANIE "PRAWEJ RĘKI SZEFA" ---
+        // Sprawdzamy czy szef zrobił coś w systemie do 60 minut przed lub po tej transakcji pracownika
+        if (!servedWhileBossOnline && txTime > 0) {
+            if (bossTimestamps.some(bTime => Math.abs(bTime - txTime) <= 60 * 60 * 1000)) {
+                servedWhileBossOnline = true;
+            }
         }
 
         if (tx.name) {
             const nameLow = tx.name.toLowerCase();
+            
             if (nameLow.includes('dziwna substancja')) weirdStuffCount += (tx.qty || 1);
             if (nameLow.includes('złot') || nameLow.includes('sztabka')) goldCount += (tx.qty || 1);
+            
+            if (nameLow.includes('telefon') || nameLow.includes('telewizor') || nameLow.includes('konsola') || nameLow.includes('komputer') || nameLow.includes('monitor') || nameLow.includes('mikrofala')) {
+                electronicsCount += (tx.qty || 1);
+            }
+            
+            if (nameLow.includes('obraz') || nameLow.includes('książka') || nameLow.includes('dywan')) {
+                artCount += (tx.qty || 1);
+            }
+
+            if (nameLow.includes('katana')) katanaCount += (tx.qty || 1);
         }
     });
 
@@ -2015,9 +2064,16 @@ function renderGamification(totalXP, txCount, myData = []) {
         { icon: "fa-medal", name: "Stary wyga", color: "#fbbf24", condition: txCount >= 450, desc: "Zrealizuj 450 udanych transakcji z klientami." },
         { icon: "fa-crown", name: "Milioner", color: "#eab308", condition: totalXP >= 2000000, desc: "Wygeneruj ponad 2 000 000$ obrotu." },
         { icon: "fa-flask", name: "Chemiczny Ali", color: "#22c55e", condition: weirdStuffCount >= 100, desc: "Przetwórz w lombardzie 100 dziwnych substancji." },
-        { icon: "fa-coins", name: "Gorączka złota", color: "#eab308", condition: goldCount >= 50, desc: "Skup lub sprzedaj 50 złotych przedmiotów." },
-        { icon: "fa-money-bill-wave", name: "Gruba ryba", color: "#e11d48", condition: maxSingleTx >= 50000, desc: "Wykonaj pojedynczą transakcję na kwotę minimum 50 000$." },
-        { icon: "fa-moon", name: "Nocny Marek", color: "#8b5cf6", condition: nightShiftCount >= 50, desc: "Wykonaj 50 transakcji na nocnej zmianie (0:00 - 6:00)." }
+        { icon: "fa-coins", name: "Gorączka złota", color: "#eab308", condition: goldCount >= 200, desc: "Skup lub sprzedaj 200 złotych przedmiotów." },
+        { icon: "fa-money-bill-wave", name: "Gruba ryba", color: "#e11d48", condition: maxSingleBuyTx >= 30000, desc: "Wykonaj pojedynczą transakcję skupu na kwotę minimum 30 000$." },
+        { icon: "fa-moon", name: "Nocny Marek", color: "#8b5cf6", condition: nightShiftCount >= 50, desc: "Wykonaj 50 transakcji na nocnej zmianie (0:00 - 6:00)." },
+        { icon: "fa-boxes", name: "Hurtownik", color: "#f97316", condition: maxItemsInSingleTx >= 30, desc: "Skup od klienta minimum 30 przedmiotów na jednym paragonie." },
+        { icon: "fa-laptop", name: "Elektro - śmieciarz", color: "#06b6d4", condition: electronicsCount >= 250, desc: "Skup lub sprzedaj 250 sztuk sprzętu elektronicznego." },
+        { icon: "fa-palette", name: "Koneser sztuki", color: "#d946ef", condition: artCount >= 100, desc: "Obracaj dziełami sztuki i antykami (min. 100 szt. obrazów, dywanów itp.)." },
+        { icon: "fa-truck-loading", name: "Wilk z Wall Street", color: "#10b981", condition: totalSellVolume >= 850000, desc: "Sprzedaj towar z magazynu za łączną kwotę ponad 850 000$." },
+        { icon: "fa-user-ninja", name: "Samuraj", color: "#dc2626", condition: katanaCount >= 3, desc: "Przetwórz w lombardzie co najmniej 3 katany." },
+        { icon: "fa-users", name: "Znajoma twarz", color: "#3b82f6", condition: uniqueClients.size >= 70, desc: "Obsłuż 70 unikalnych klientów (różne numery SSN)." },
+        { icon: "fa-briefcase", name: "Prawa ręka", color: "#eab308", condition: servedWhileBossOnline, desc: "Zrealizuj transakcję na tej samej zmianie z szefem." }
     ];
     
     const container = document.getElementById('id-badges-container');
