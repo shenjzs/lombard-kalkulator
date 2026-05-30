@@ -1,4 +1,4 @@
-const APP_VERSION = "3.9.7";
+const APP_VERSION = "3.9.6";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const DISCORD_WEBHOOK_URL_SKUP = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/skup"; 
