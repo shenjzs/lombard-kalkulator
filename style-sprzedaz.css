@@ -2610,3 +2610,288 @@ body:has(.cart-sidebar.active) .online-widget {
     0% { opacity: 0; transform: scale(0.95) translateY(15px); }
     100% { opacity: 1; transform: scale(1) translateY(0); }
 }
+
+/* ==========================================================================
+   NAPRAWA WIDOKÓW Z SCREENSHOTÓW (TRANSAKCJE, RAPORTY, CHANGELOG)
+   ========================================================================== */
+
+/* 1. SCROLLBARY W MODALACH (Naprawa grubego pomarańczowego paska) */
+.modal-content::-webkit-scrollbar,
+.transactions-list::-webkit-scrollbar,
+#transactions-list-container::-webkit-scrollbar,
+#bonuses-list-container::-webkit-scrollbar {
+    width: 6px;
+}
+.modal-content::-webkit-scrollbar-track,
+.transactions-list::-webkit-scrollbar-track,
+#transactions-list-container::-webkit-scrollbar-track,
+#bonuses-list-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+.modal-content::-webkit-scrollbar-thumb,
+.transactions-list::-webkit-scrollbar-thumb,
+#transactions-list-container::-webkit-scrollbar-thumb,
+#bonuses-list-container::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 10px;
+}
+
+/* 2. KARTY "MOJE TRANSAKCJE" I "MOJE PREMIE" */
+.transaction-item-card {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 15px;
+    transition: 0.3s;
+}
+.transaction-item-card:hover {
+    border-color: var(--accent-color);
+    box-shadow: 0 4px 15px rgba(243, 156, 18, 0.15); /* Delikatna pomarańczowa poświata */
+}
+.transaction-header-type {
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.transaction-date {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+}
+.transaction-body-layout { margin-top: 15px; }
+.transaction-items-list {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+.transaction-total-amount {
+    font-weight: 800;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+.transaction-actions-layout {
+    margin-top: 15px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+    padding-top: 15px;
+    display: flex;
+    justify-content: flex-start;
+}
+.report-error-btn {
+    background: rgba(231, 76, 60, 0.1) !important;
+    color: var(--danger) !important;
+    border: 1px solid rgba(231, 76, 60, 0.3) !important;
+    padding: 8px 15px !important;
+    border-radius: 10px !important;
+    cursor: pointer !important;
+    font-weight: 700 !important;
+    font-size: 0.85rem !important;
+    transition: 0.2s !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+.report-error-btn:hover {
+    background: var(--danger) !important;
+    color: white !important;
+    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3) !important;
+}
+
+/* 3. PANEL ZGŁOSZEŃ POMYŁEK (Karty Zgłoszeń) */
+.admin-report-card {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 15px;
+    width: 100%;
+    transition: 0.2s;
+}
+.admin-report-card:hover {
+    border-color: var(--accent-color);
+    box-shadow: 0 4px 15px rgba(243, 156, 18, 0.15);
+}
+.admin-report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+}
+.admin-report-id { font-weight: 800; color: var(--text-primary); font-family: monospace; font-size: 1.1rem; }
+.admin-report-emp, .admin-report-reason, .admin-report-status { margin-bottom: 8px; font-size: 0.95rem; }
+.text-white-inline { color: #fff; }
+.admin-report-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 20px;
+}
+.btn-reject {
+    background: rgba(231, 76, 60, 0.15);
+    color: var(--danger);
+    border: 1px solid rgba(231, 76, 60, 0.3);
+    padding: 10px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    transition: 0.2s;
+    flex: 1;
+}
+.btn-accept {
+    background: rgba(39, 174, 96, 0.15);
+    color: var(--success);
+    border: 1px solid rgba(39, 174, 96, 0.3);
+    padding: 10px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    transition: 0.2s;
+    flex: 1;
+}
+.btn-reject:hover { background: var(--danger); color: white; }
+.btn-accept:hover { background: var(--success); color: white; }
+
+/* 4. MODAL KREATORA CHANGELOGA */
+.modal-label {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+}
+#admin-version-input, #edit-cl-version-input {
+    width: 100%;
+    padding: 14px 18px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    outline: none;
+    font-family: inherit;
+    font-size: 0.95rem;
+    transition: 0.2s;
+}
+#admin-version-input:focus, #edit-cl-version-input:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 10px rgba(243, 156, 18, 0.15);
+}
+.admin-change-slot-layout {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+    margin-bottom: 12px;
+}
+.admin-change-select {
+    width: 140px;
+    flex-shrink: 0;
+    padding: 12px 15px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-radius: 10px;
+    outline: none;
+    font-weight: 700;
+}
+.admin-change-input {
+    flex-grow: 1;
+    padding: 12px 15px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-radius: 10px;
+    outline: none;
+}
+.admin-change-select:focus, .admin-change-input:focus {
+    border-color: var(--accent-color);
+}
+.btn-delete-slot {
+    width: 45px;
+    flex-shrink: 0;
+    background: rgba(231, 76, 60, 0.1) !important;
+    border: 1px solid rgba(231, 76, 60, 0.3) !important;
+    color: var(--danger) !important;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: 0.2s;
+    margin: 0 !important;
+}
+.btn-delete-slot:hover {
+    background: var(--danger) !important;
+    color: #fff !important;
+}
+#add-admin-change-slot-btn, #add-edit-change-slot-btn {
+    background: transparent;
+    border: 1px dashed var(--text-secondary);
+    color: var(--text-secondary);
+    padding: 12px 20px;
+    border-radius: 12px;
+    width: fit-content;
+    margin-top: 15px;
+    cursor: pointer;
+    transition: 0.2s;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+#add-admin-change-slot-btn:hover, #add-edit-change-slot-btn:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    background: rgba(243, 156, 18, 0.05);
+}
+
+/* ==========================================================================
+   5. PRZYCISKI EDYCJI I USUWANIA W CHANGELOGU (ADMIN)
+   ========================================================================== */
+.admin-controls-layout {
+    display: flex;
+    gap: 8px;
+    margin-left: 10px;
+}
+
+.btn-admin-edit, .btn-admin-del {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn-admin-edit:hover { 
+    background: var(--accent-color); 
+    color: #000; 
+    border-color: var(--accent-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(243, 156, 18, 0.3);
+}
+
+.btn-admin-del:hover { 
+    background: var(--danger); 
+    color: #fff; 
+    border-color: var(--danger);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
+}

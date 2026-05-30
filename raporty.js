@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "3.9.6"; // Normalizacja nazw produktów
+const APP_VERSION = "3.9.7"; // Normalizacja nazw produktów
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
@@ -25,6 +25,58 @@ window.globalBonuses = []; // Globalne premie
 window.globalLoyaltyData = []; // Baza klientów (pieczątki)
 let currentEmployeeName = "";
 let currentFeedLimit = 50; // LIMIT WYŚWIETLANIA DLA LIVE FEEDA
+
+// INTELIGENTNY PRE-LOADING W TLE (Predictive Fetch)
+window.reportsFetchPromise = null;
+window.bonusesFetchPromise = null;
+window.loyaltyFetchPromise = null;
+window.loyaltySettingsFetchPromise = null;
+window.employeesFetchPromise = null;
+
+window.preloadReportsData = function() {
+    if (!window.reportsFetchPromise) {
+        window.reportsFetchPromise = fetch(`${REPORTS_API_URL}?action=get_reports&t=${new Date().getTime()}`)
+            .then(res => res.json())
+            .catch(err => { window.reportsFetchPromise = null; return []; });
+    }
+    return window.reportsFetchPromise;
+};
+
+window.preloadBonusesData = function() {
+    if (!window.bonusesFetchPromise) {
+        window.bonusesFetchPromise = fetch(`${REPORTS_API_URL}?action=get_bonuses&t=${new Date().getTime()}`)
+            .then(res => res.json())
+            .catch(err => { window.bonusesFetchPromise = null; return { bonuses: [] }; });
+    }
+    return window.bonusesFetchPromise;
+};
+
+window.preloadLoyaltyData = function() {
+    if (!window.loyaltyFetchPromise) {
+        window.loyaltyFetchPromise = fetch(`${REPORTS_API_URL}?action=get_loyalty&t=${new Date().getTime()}`)
+            .then(res => res.json())
+            .catch(err => { window.loyaltyFetchPromise = null; return { loyalty: [] }; });
+    }
+    return window.loyaltyFetchPromise;
+};
+
+window.preloadLoyaltySettingsData = function() {
+    if (!window.loyaltySettingsFetchPromise) {
+        window.loyaltySettingsFetchPromise = fetch(`${REPORTS_API_URL}?action=get_loyalty_settings&t=${new Date().getTime()}`)
+            .then(res => res.json())
+            .catch(err => { window.loyaltySettingsFetchPromise = null; return {}; });
+    }
+    return window.loyaltySettingsFetchPromise;
+};
+
+window.preloadEmployeesData = function() {
+    if (!window.employeesFetchPromise) {
+        window.employeesFetchPromise = fetch(`${PIN_API_URL}?action=get_all&t=${new Date().getTime()}`)
+            .then(res => res.json())
+            .catch(err => { window.employeesFetchPromise = null; return { employees: [] }; });
+    }
+    return window.employeesFetchPromise;
+};
 
 // ==========================================
 // FUNKCJA FORMATOWANIA WALUTY (np. 150000 -> 150 000)
@@ -105,10 +157,7 @@ async function loginBoss() {
                     document.getElementById('user-profile').classList.remove('hidden');
                     showNotice(`Zalogowano pomyślnie jako ${data.name}`, "success");
                     
-                    fetch(`${PIN_API_URL}?action=get_all`)
-                        .then(res => res.json())
-                        .then(d => { if(d.employees) window.currentEmployeesList = d.employees; })
-                        .catch(() => {});
+                    window.preloadEmployeesData().then(d => { if(d.employees) window.currentEmployeesList = d.employees; });
 
                     loadRealData(); 
                     
@@ -216,6 +265,9 @@ window.applyFilter = function() {
     const btn = document.getElementById('ok-filter-btn');
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     
+    // Zmuszamy do pobrania na nowo przy filtrze
+    window.reportsFetchPromise = null;
+    
     loadRealData().then(() => {
         btn.innerHTML = 'OK';
         showNotice("Dane zostały pomyślnie przefiltrowane!", "success");
@@ -225,6 +277,12 @@ window.applyFilter = function() {
 window.refreshPage = function() {
     const icon = document.getElementById('refresh-icon');
     if(icon) icon.classList.add('fa-spin');
+    
+    // Zmuszamy do pobrania na nowo przy odświeżeniu
+    window.reportsFetchPromise = null;
+    window.bonusesFetchPromise = null;
+    window.loyaltyFetchPromise = null;
+    window.employeesFetchPromise = null;
     
     loadRealData().then(() => {
         if(icon) icon.classList.remove('fa-spin');
@@ -294,8 +352,7 @@ async function loadRealData() {
     }
 
     try {
-        const response = await fetch(`${REPORTS_API_URL}?action=get_reports&t=${new Date().getTime()}`);
-        let rawData = await response.json();
+        let rawData = await window.preloadReportsData();
         
         // NORMALIZACJA NAZW PRZEDMIOTÓW (likwidacja literówek i wielkich liter)
         rawData.forEach(row => {
@@ -309,8 +366,7 @@ async function loadRealData() {
         
         // Pobieranie premii z bazy
         try {
-            const bonusesRes = await fetch(`${REPORTS_API_URL}?action=get_bonuses&t=${new Date().getTime()}`);
-            const bonusesData = await bonusesRes.json();
+            const bonusesData = await window.preloadBonusesData();
             window.globalBonuses = bonusesData.bonuses || [];
         } catch(e) {
             window.globalBonuses = [];
@@ -318,8 +374,7 @@ async function loadRealData() {
 
         // POBIERANIE BAZY KLIENTÓW (Karty lojalnościowe)
         try {
-            const loyaltyRes = await fetch(`${REPORTS_API_URL}?action=get_loyalty&t=${new Date().getTime()}`);
-            const loyaltyData = await loyaltyRes.json();
+            const loyaltyData = await window.preloadLoyaltyData();
             window.globalLoyaltyData = loyaltyData.loyalty || [];
         } catch(e) {
             window.globalLoyaltyData = [];
@@ -928,8 +983,7 @@ async function loadEmployeesToTable() {
     tbody.innerHTML = empSkeletonHTML;
     
     try {
-        const response = await fetch(`${PIN_API_URL}?action=get_all`);
-        const data = await response.json();
+        const data = await window.preloadEmployeesData();
         
         if (data.employees && data.employees.length > 0) {
             window.currentEmployeesList = data.employees; 
@@ -1207,6 +1261,7 @@ window.saveEmployeeEdit = async function() {
         
         if (data.success) {
             showNotice("Dane pracownika zostały zaktualizowane!", "success");
+            window.employeesFetchPromise = null;
             closeEditEmployee();
             await loadEmployeesToTable();
         } else {
@@ -1251,6 +1306,7 @@ window.addNewEmployee = async function() {
         });
         
         showNotice("Przetwarzanie...", "info");
+        window.employeesFetchPromise = null;
         await loadEmployeesToTable();
         showNotice(`Dodano pracownika: ${name}`, "success");
         nameInput.value = '';
@@ -1270,6 +1326,7 @@ window.deleteEmployee = async function(pin, name) {
     try {
         showNotice("Usuwanie pracownika...", "info");
         await fetch(PIN_API_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', pin: pin }) });
+        window.employeesFetchPromise = null;
         await loadEmployeesToTable();
         showNotice("Pracownik usunięty!", "warning");
     } catch (e) { showNotice("Błąd usuwania!", "danger"); }
@@ -1279,6 +1336,7 @@ window.toggleEmployeeRole = async function(pin, newRole) {
     try {
         showNotice("Zmienianie uprawnień...", "info");
         await fetch(PIN_API_URL, { method: 'POST', body: JSON.stringify({ action: 'toggle_role', pin: pin, role: newRole }) });
+        window.employeesFetchPromise = null;
         await loadEmployeesToTable();
         showNotice("Zmieniono uprawnienia!", "success");
     } catch (e) { showNotice("Błąd zmiany uprawnień!", "danger"); }
@@ -1287,8 +1345,12 @@ window.toggleEmployeeRole = async function(pin, newRole) {
 // ==========================================
 // ZARZĄDZANIE KLIENTAMI (KARTY LOJALNOŚCIOWE)
 // ==========================================
-window.openClientsManager = function() {
+window.openClientsManager = async function() {
     document.getElementById('clients-manager-modal').classList.remove('hidden');
+    
+    // Używamy pre-ładowanej bazy klientów w panelu szefa
+    const data = await window.preloadLoyaltyData();
+    window.globalLoyaltyData = data.loyalty || [];
     window.renderClientsTable();
 }
 
@@ -1389,8 +1451,8 @@ window.confirmResetStamps = async function() {
                     showNotice(`Wyzerowano punkty klienta ${ssn}!`, "success");
                     closeResetStampsModal();
                     
-                    const loyaltyRes = await fetch(`${REPORTS_API_URL}?action=get_loyalty&t=${new Date().getTime()}`);
-                    const loyaltyData = await loyaltyRes.json();
+                    window.loyaltyFetchPromise = null;
+                    const loyaltyData = await window.preloadLoyaltyData();
                     window.globalLoyaltyData = loyaltyData.loyalty || [];
                     window.renderClientsTable();
                 } else {
@@ -1430,8 +1492,7 @@ async function loadLoyaltySettings() {
     tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Ładowanie danych...</td></tr>';
     
     try {
-        const res = await fetch(`${REPORTS_API_URL}?action=get_loyalty_settings&t=${new Date().getTime()}`);
-        const data = await res.json();
+        const data = await window.preloadLoyaltySettingsData();
         
         if(data.rate) {
             rateInput.value = data.rate;
@@ -1475,6 +1536,7 @@ window.saveLoyaltyRate = async function() {
         });
         if(res.ok) {
             showNotice("Przelicznik zapisany pomyślnie!", "success");
+            window.loyaltySettingsFetchPromise = null;
         } else {
             throw new Error();
         }
@@ -1511,6 +1573,7 @@ window.addLoyaltyReward = async function() {
             showNotice("Nagroda dodana!", "success");
             nameInput.value = "";
             costInput.value = "";
+            window.loyaltySettingsFetchPromise = null;
             await loadLoyaltySettings();
         } else {
             throw new Error();
@@ -1532,6 +1595,7 @@ window.deleteLoyaltyReward = async function(name) {
             body: JSON.stringify({ action: 'delete_loyalty_reward', name: name })
         });
         showNotice("Usunięto nagrodę!", "warning");
+        window.loyaltySettingsFetchPromise = null;
         await loadLoyaltySettings();
     } catch(e) {
         showNotice("Błąd usuwania nagrody!", "danger");
@@ -1567,8 +1631,7 @@ async function loadBonusesToTable() {
     tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Ładowanie danych...</td></tr>';
     
     try {
-        const res = await fetch(`${REPORTS_API_URL}?action=get_bonuses&t=${new Date().getTime()}`);
-        const data = await res.json();
+        const data = await window.preloadBonusesData();
         window.globalBonuses = data.bonuses || [];
 
         if (window.globalBonuses.length > 0) {
@@ -1624,7 +1687,9 @@ window.addBonus = async function() {
         });
 
         showNotice("Przetwarzanie...", "info");
+        window.bonusesFetchPromise = null;
         await loadBonusesToTable();
+        window.reportsFetchPromise = null;
         await loadRealData(); 
         showNotice(`Wypłacono premię dla: ${employee}`, "success");
 
@@ -1787,6 +1852,23 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.renderLiveFeed) window.renderLiveFeed();
         });
     }
+
+    // Podpięcie predictive fetch dla analityki w panelu szefa
+    const attachPreload = (id, preloader) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('mouseenter', preloader);
+    };
+
+    // Nasłuch na ikonki/przyciski menadżerskie (na starcie i w trakcie używania)
+    document.querySelectorAll('.manage-emp-btn').forEach(btn => {
+        btn.addEventListener('mouseenter', () => {
+            const onclickCode = btn.getAttribute('onclick') || '';
+            if (onclickCode.includes('openEmployeeManager')) window.preloadEmployeesData();
+            if (onclickCode.includes('openBonusesManager')) window.preloadBonusesData();
+            if (onclickCode.includes('openClientsManager')) window.preloadLoyaltyData();
+            if (onclickCode.includes('openLoyaltySettings')) window.preloadLoyaltySettingsData();
+        });
+    });
 
     // ==========================================
     // SCROLL TO TOP BUTTON WSTRZYKIWANIE

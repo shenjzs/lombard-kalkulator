@@ -1,4 +1,4 @@
-const APP_VERSION = "3.9.6";
+const APP_VERSION = "3.9.7";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const DISCORD_WEBHOOK_URL_SKUP = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/skup"; 
@@ -22,9 +22,36 @@ let currentReportReceiptId = "";
 // Zmienna przechowująca dane wyszukanego klienta (Karty Lojalnościowe)
 let currentLoyaltyCustomer = null;
 
-// ZMIENNE DLA WIDŻETU ONLINE
+// ZMIENNE DLA WIDŻETU ONLINE I INTELIGENTNEGO PRE-LOADINGU
 let onlineCheckInterval = null;
 window.currentEmployeesList = [];
+window.reportsFetchPromise = null;
+window.bonusesFetchPromise = null;
+
+// Funkcje inteligentnego pobierania danych w tle (Predictive Fetch)
+window.preloadReportsData = function() {
+    if (!window.reportsFetchPromise) {
+        window.reportsFetchPromise = fetch(`${REPORTS_API_URL}?action=get_reports&t=${new Date().getTime()}`)
+            .then(res => res.json())
+            .catch(err => {
+                window.reportsFetchPromise = null;
+                return [];
+            });
+    }
+    return window.reportsFetchPromise;
+};
+
+window.preloadBonusesData = function() {
+    if (!window.bonusesFetchPromise) {
+        window.bonusesFetchPromise = fetch(`${REPORTS_API_URL}?action=get_bonuses&t=${new Date().getTime()}`)
+            .then(res => res.json())
+            .catch(err => {
+                window.bonusesFetchPromise = null;
+                return { bonuses: [] };
+            });
+    }
+    return window.bonusesFetchPromise;
+};
 
 window.formatMoney = function(amount) {
     if (isNaN(amount)) return "0";
@@ -375,8 +402,8 @@ window.toggleUserMenu = function() {
 
 async function checkEmployeeBonuses() {
     try {
-        const res = await fetch(`${REPORTS_API_URL}?action=get_bonuses&t=${new Date().getTime()}`);
-        const data = await res.json();
+        const res = await window.preloadBonusesData();
+        const data = res;
         
         if (data.bonuses && data.bonuses.length > 0) {
             const myUnreadBonuses = data.bonuses.filter(b => b.employee === currentEmployeeName && b.status === "Nieodebrane");
@@ -726,6 +753,10 @@ window.sendToDiscord = async function() {
     const area = document.getElementById('receipt-capture-area');
     if(!area || !btn) return;
     
+    // ANTI-SPAM GUARD
+    if (window.isSkupProcessing) return;
+    window.isSkupProcessing = true;
+    
     const receiptIDDisplay = document.getElementById('receipt-id-display');
     const receiptID = receiptIDDisplay ? receiptIDDisplay.innerText.replace('NR: ', '') : '';
     const employee = currentEmployeeName; 
@@ -800,14 +831,30 @@ window.sendToDiscord = async function() {
                 showNotice("Wysłano na Discord i zaktualizowano obrót!", "success");
                 resetCartAndInventory();
                 closeModal();
+                
+                // Inwalidacja cache po dodaniu nowego wpisu
+                window.reportsFetchPromise = null;
+                window.bonusesFetchPromise = null;
                 updateOnlineEmployees(); 
             } else throw new Error();
         }, "image/png");
     } catch (e) {
         showNotice("Błąd Webhooka!", "danger");
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fab fa-discord"></i> Wyślij na Discord';
+        // VISUAL COOLDOWN ANTYSZPAMOWY (2 SEKUNDY)
+        let cooldownTime = 2;
+        btn.innerHTML = `<i class="fas fa-lock"></i> Cooldown (${cooldownTime}s)`;
+        const interval = setInterval(() => {
+            cooldownTime--;
+            if (cooldownTime <= 0) {
+                clearInterval(interval);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fab fa-discord"></i> Wyślij na Discord';
+                window.isSkupProcessing = false;
+            } else {
+                btn.innerHTML = `<i class="fas fa-lock"></i> Cooldown (${cooldownTime}s)`;
+            }
+        }, 1000);
     }
 }
 
@@ -1132,6 +1179,10 @@ window.sendToDiscordExport = async function() {
     const area = document.getElementById('receipt-capture-area-export');
     if (!area || !btn) return;
 
+    // ANTI-SPAM GUARD EXPORT
+    if (window.isExportProcessing) return;
+    window.isExportProcessing = true;
+
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PRZETWARZANIE...';
 
@@ -1185,6 +1236,10 @@ window.sendToDiscordExport = async function() {
                 showNotice("Wysłano raport na Discord!", "success");
                 closeModalExport();
                 resetCartAndInventoryExport();
+                
+                // Inwalidacja cache po dodaniu nowego wpisu
+                window.reportsFetchPromise = null;
+                window.bonusesFetchPromise = null;
                 updateOnlineEmployees(); 
             } else {
                 showNotice("Błąd Webhooka!", "danger");
@@ -1193,8 +1248,20 @@ window.sendToDiscordExport = async function() {
     } catch (e) {
         showNotice("Błąd generatora obrazu!", "danger");
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fab fa-discord"></i> Wyślij raport na Discord';
+        // VISUAL COOLDOWN ANTYSZPAMOWY EXPORT (2 SEKUNDY)
+        let cooldownTime = 2;
+        btn.innerHTML = `<i class="fas fa-lock"></i> Cooldown (${cooldownTime}s)`;
+        const interval = setInterval(() => {
+            cooldownTime--;
+            if (cooldownTime <= 0) {
+                clearInterval(interval);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fab fa-discord"></i> Wyślij raport na Discord';
+                window.isExportProcessing = false;
+            } else {
+                btn.innerHTML = `<i class="fas fa-lock"></i> Cooldown (${cooldownTime}s)`;
+            }
+        }, 1000);
     }
 }
 
@@ -1494,8 +1561,8 @@ window.openMyStats = async function() {
     document.getElementById('my-stats-content').classList.add('hidden');
     
     try {
-        const response = await fetch(`${REPORTS_API_URL}?action=get_reports&t=${new Date().getTime()}`);
-        myStatsRawData = (await response.json()).filter(row => row.employee === currentEmployeeName);
+        const data = await window.preloadReportsData();
+        myStatsRawData = data.filter(row => row.employee === currentEmployeeName);
         document.getElementById('my-stats-time-filter').value = 'today';
         currentStatsType = currentActiveView === 'export' ? 'sprzedaz' : 'skup';
         currentStatsRange = 'today';
@@ -1598,9 +1665,9 @@ window.openMyTransactions = async function() {
     document.getElementById('my-transactions-content').classList.add('hidden');
     
     try {
-        const [reportsRes, bonusesRes] = await Promise.all([ fetch(`${REPORTS_API_URL}?action=get_reports&t=${new Date().getTime()}`), fetch(`${REPORTS_API_URL}?action=get_bonuses&t=${new Date().getTime()}`) ]);
-        myStatsRawData = (await reportsRes.json()).filter(row => row.employee === currentEmployeeName);
-        myBonusesRawData = ((await bonusesRes.json()).bonuses || []).filter(b => b.employee === currentEmployeeName);
+        const [reportsRes, bonusesRes] = await Promise.all([ window.preloadReportsData(), window.preloadBonusesData() ]);
+        myStatsRawData = reportsRes.filter(row => row.employee === currentEmployeeName);
+        myBonusesRawData = (bonusesRes.bonuses || []).filter(b => b.employee === currentEmployeeName);
         switchTransView('historia');
         document.getElementById('my-transactions-loader').classList.add('hidden');
         document.getElementById('my-transactions-content').classList.remove('hidden');
@@ -2139,8 +2206,9 @@ setTimeout(checkUpdates, 3000);
 // ==========================================
 window.updateOnlineEmployees = async function() {
     try {
-        const response = await fetch(`${REPORTS_API_URL}?action=get_reports&t=${new Date().getTime()}`);
-        const data = await response.json();
+        // Wymuszamy odświeżenie pamięci podręcznej przy cyklicznym sprawdzaniu tła
+        window.reportsFetchPromise = null;
+        const data = await window.preloadReportsData();
         
         const now = new Date().getTime();
         const startOfToday = new Date().setHours(0, 0, 0, 0); // Północ dzisiejszego dnia
@@ -2166,7 +2234,6 @@ window.updateOnlineEmployees = async function() {
             let firstSeen = times[0];
             
             for (let i = 1; i < times.length; i++) {
-                // Jeśli przerwa między paragonami jest mniejsza niż 60 min, uznajemy że ciągle był w pracy
                 if (firstSeen - times[i] <= 60 * 60 * 1000) { 
                     firstSeen = times[i];
                 } else {
@@ -2281,8 +2348,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('profile-toggle-btn')?.addEventListener('click', toggleUserMenu);
     document.getElementById('menu-id-card')?.addEventListener('click', openIdCard);
-    document.getElementById('menu-my-stats')?.addEventListener('click', openMyStats);
-    document.getElementById('menu-my-trans')?.addEventListener('click', openMyTransactions);
+    
+    // Podłączenie wyzwalaczy inteligentnego pobierania danych w tle (Predictive Fetch) po najechaniu myszką
+    const statsBtn = document.getElementById('menu-my-stats');
+    if (statsBtn) {
+        statsBtn.addEventListener('click', openMyStats);
+        statsBtn.addEventListener('mouseenter', () => window.preloadReportsData());
+    }
+
+    const transBtn = document.getElementById('menu-my-trans');
+    if (transBtn) {
+        transBtn.addEventListener('click', openMyTransactions);
+        transBtn.addEventListener('mouseenter', () => {
+            window.preloadReportsData();
+            window.preloadBonusesData();
+        });
+    }
+
     document.getElementById('menu-changelog')?.addEventListener('click', openChangelog);
     document.getElementById('admin-changelog-btn')?.addEventListener('click', openAdminChangelog);
     document.getElementById('admin-reports-btn')?.addEventListener('click', openAdminReports);
