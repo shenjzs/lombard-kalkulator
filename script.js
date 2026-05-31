@@ -2861,7 +2861,7 @@ window.openPagerPrompt = function() {
     
     const targetSelect = document.getElementById('pager-target-input');
     if (targetSelect) {
-        targetSelect.innerHTML = '<option value="ALL">Wszyscy (Globalny)</option>';
+        targetSelect.innerHTML = '<option value="ALL">Wszyscy</option>';
         if (window.currentEmployeesList && window.currentEmployeesList.length > 0) {
             window.currentEmployeesList.forEach(emp => {
                 const cleanEmpName = String(emp.name).replace(/\s*\([^)]+\)/g, '').trim();
