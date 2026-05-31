@@ -1,4 +1,4 @@
-const APP_VERSION = "3.9.7";
+const APP_VERSION = "3.9.8";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const DISCORD_WEBHOOK_URL_SKUP = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/skup"; 
@@ -57,6 +57,41 @@ window.formatMoney = function(amount) {
     if (isNaN(amount)) return "0";
     return Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 };
+
+// --- EFEKTY CYFROWEGO ODLICZANIA I PULSOWANIA ---
+window.animateValue = function(element, start, end, duration) {
+    if (!element) return;
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        const easeProgress = 1 - Math.pow(1 - progress, 5); // Płynne zwalnianie na końcu
+        const currentVal = Math.floor(easeProgress * (end - start) + start);
+        element.innerText = currentVal + '$';
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        } else {
+            element.innerText = end + '$';
+        }
+    };
+    window.requestAnimationFrame(step);
+};
+
+window.triggerPulseEffect = function(totalId, badgeId) {
+    const totalEl = document.getElementById(totalId);
+    const badgeEl = badgeId ? document.getElementById(badgeId) : null;
+    if (totalEl) {
+        totalEl.classList.remove('pulse-anim');
+        void totalEl.offsetWidth; // Wymuszenie resetu animacji w CSS
+        totalEl.classList.add('pulse-anim');
+    }
+    if (badgeEl) {
+        badgeEl.classList.remove('pulse-anim');
+        void badgeEl.offsetWidth;
+        badgeEl.classList.add('pulse-anim');
+    }
+};
+// ------------------------------------------------
 
 function isTravisVance() {
     return currentEmployeeName && currentEmployeeName.trim().toLowerCase() === "travis vance";
@@ -241,7 +276,7 @@ window.login = async function() {
         const data = await response.json();
 
         if (data.isValid) {
-            window.mySessionStart = new Date().getTime(); // Zapisanie czasu wejścia
+            window.mySessionStart = new Date().getTime();
             currentEmployeeName = data.name;
             currentEmployeeRank = data.rank || "Pracownik"; 
             currentEmployeeSsn = data.ssn || "---"; 
@@ -289,51 +324,70 @@ window.login = async function() {
                 dropDefaultIcon.classList.remove('hidden');
             }
 
-            // --- ANIMACJA LOGOWANIA ---
-            const loginCard = document.querySelector('.login-card');
-            loginCard.classList.add('login-zoom-in');
-            
+            // --- EFEKT FACE ID (otwieranie kłódki) ---
+            const mainIcon = document.querySelector('.login-icon');
+            if (mainIcon) {
+                mainIcon.classList.remove('fa-lock', 'fa-user-lock');
+                mainIcon.classList.add('fa-unlock', 'icon-unlock-anim');
+            }
+
             setTimeout(() => {
-                document.getElementById('login-screen').classList.remove('active');
-                loginCard.classList.remove('login-zoom-in');
-                btn.disabled = false;
-                btn.innerHTML = 'Odblokuj system <i class="fas fa-unlock"></i>';
+                const loginCard = document.querySelector('.login-card');
+                loginCard.classList.add('login-zoom-in');
                 
-                const mainApp = document.getElementById('main-app');
-                mainApp.classList.remove('hidden');
-                mainApp.classList.add('app-zoom-out');
-                
-                document.getElementById('user-profile').classList.remove('hidden');
-                
-                const banner = document.getElementById('announcement-banner');
-                if(banner) banner.classList.remove('hidden');
+                setTimeout(() => {
+                    document.getElementById('login-screen').classList.remove('active');
+                    loginCard.classList.remove('login-zoom-in');
+                    btn.disabled = false;
+                    btn.innerHTML = 'Odblokuj system <i class="fas fa-unlock"></i>';
+                    
+                    const mainApp = document.getElementById('main-app');
+                    mainApp.classList.remove('hidden');
+                    mainApp.classList.add('app-zoom-out');
+                    
+                    document.getElementById('user-profile').classList.remove('hidden');
+                    
+                    const banner = document.getElementById('announcement-banner');
+                    if(banner) banner.classList.remove('hidden');
 
-                showNotice(`Rozpoczęto zmianę: ${data.name}`, "success");
-                
-                initSkup();
-                initExport();
-                fetchChangelogData();
-                switchView('skup');
-                checkEmployeeBonuses();
+                    showNotice(`Rozpoczęto zmianę: ${data.name}`, "success");
+                    
+                    initSkup();
+                    initExport();
+                    fetchChangelogData();
+                    switchView('skup');
+                    checkEmployeeBonuses();
 
-                // WIDŻET ONLINE
-                fetch(`${PIN_API_URL}?action=get_all`)
-                    .then(res => res.json())
-                    .then(d => { 
-                        if(d.employees) window.currentEmployeesList = d.employees; 
-                        updateOnlineEmployees(); 
-                    })
-                    .catch(e => console.error(e));
-                
-                onlineCheckInterval = setInterval(updateOnlineEmployees, 60000);
-                
-                setTimeout(() => { mainApp.classList.remove('app-zoom-out'); }, 600);
-            }, 400);
+                    fetch(`${PIN_API_URL}?action=get_all`)
+                        .then(res => res.json())
+                        .then(d => { 
+                            if(d.employees) window.currentEmployeesList = d.employees; 
+                            updateOnlineEmployees(); 
+                        })
+                        .catch(e => console.error(e));
+                    
+                    onlineCheckInterval = setInterval(updateOnlineEmployees, 60000);
+                    
+                    setTimeout(() => { mainApp.classList.remove('app-zoom-out'); }, 600);
+                }, 400);
 
-        } else {
+            }, 600);
+
+       } else {
             showNotice("Nieprawidłowy PIN!", "danger");
             btn.disabled = false;
             btn.innerHTML = 'Odblokuj system <i class="fas fa-unlock"></i>';
+
+            // --- EFEKT BŁĘDNEGO PINU (trzęsienie kłódki) ---
+            const mainIcon = document.querySelector('.login-icon');
+            if (mainIcon) {
+                mainIcon.classList.add('icon-shake-anim');
+                
+                // Usuwamy klasę po zakończeniu animacji, by mogła odpalić się ponownie
+                setTimeout(() => {
+                    mainIcon.classList.remove('icon-shake-anim');
+                }, 400);
+            }
         }
     } catch (error) {
         showNotice("Błąd połączenia z bazą PIN!", "danger");
@@ -344,56 +398,79 @@ window.login = async function() {
 }
 
 window.logout = function() {
-    currentEmployeeName = "";
-    currentEmployeeRank = "Pracownik";
-    currentEmployeeSsn = "---";
-    currentEmployeeDateZatrudnienia = "---";
-    currentEmployeePhoto = ""; 
-    document.getElementById('employee-login-pin').value = "";
-    document.getElementById('logged-user-name').innerText = "---";
-    document.getElementById('dropdown-user-name').innerText = "---";
-    document.getElementById('dropdown-user-rank').innerText = "---";
-    
-    const navAvatar = document.getElementById('nav-user-avatar');
-    const navDefaultIcon = document.getElementById('nav-user-default-icon');
-    const dropAvatar = document.getElementById('dropdown-user-avatar');
-    const dropDefaultIcon = document.getElementById('dropdown-user-default-icon');
-    
-    if(navAvatar) navAvatar.classList.add('hidden');
-    if(navDefaultIcon) navDefaultIcon.classList.remove('hidden');
-    if(dropAvatar) dropAvatar.classList.add('hidden');
-    if(dropDefaultIcon) dropDefaultIcon.classList.remove('hidden');
+    const mainApp = document.getElementById('main-app');
+    const loginScreen = document.getElementById('login-screen');
+    const loginCard = document.querySelector('.login-card');
+    const mainIcon = document.querySelector('.login-icon');
 
-    document.getElementById('login-screen').classList.add('active');
-    document.getElementById('main-app').classList.add('hidden');
-    document.getElementById('user-profile').classList.add('hidden');
     document.getElementById('user-dropdown').classList.remove('active');
-    
-    const adminChangelogBtn = document.getElementById('admin-changelog-btn');
-    const adminReportsBtn = document.getElementById('admin-reports-btn');
-    if(adminChangelogBtn) adminChangelogBtn.classList.add('hidden');
-    if(adminReportsBtn) adminReportsBtn.classList.add('hidden');
-
-    const loyaltyBtn = document.getElementById('loyalty-floating-btn');
-    if (loyaltyBtn) {
-        loyaltyBtn.classList.add('hidden');
-    }
-    
+    document.getElementById('user-profile').classList.add('hidden');
     const banner = document.getElementById('announcement-banner');
     if(banner) banner.classList.add('hidden');
 
-    const clContainer = document.getElementById('dynamic-changelog-container');
-    if (clContainer) clContainer.innerHTML = '';
+    mainApp.classList.remove('app-zoom-out');
+    mainApp.classList.add('app-zoom-in');
 
-    resetCartAndInventory();
-    resetCartAndInventoryExport();
-    
-    // CZYSZCZENIE WIDŻETU ONLINE
-    clearInterval(onlineCheckInterval);
-    const widget = document.getElementById('online-employees-widget');
-    if (widget) widget.classList.add('hidden');
+    setTimeout(() => {
+        mainApp.classList.add('hidden');
+        mainApp.classList.remove('app-zoom-in');
 
-    showNotice("Zakończono zmianę. Wylogowano.", "info");
+        loginScreen.classList.add('active');
+        loginCard.classList.add('login-zoom-out');
+
+        // Zostawiamy otwartą kłódkę na czas wjazdu karty
+        if (mainIcon) {
+            mainIcon.className = 'fas fa-unlock login-icon';
+            
+            // Wydłużone opóźnienie: czeka aż karta w pełni wyląduje (550ms)
+            setTimeout(() => {
+                mainIcon.className = 'fas fa-lock login-icon icon-lock-anim';
+                setTimeout(() => mainIcon.classList.remove('icon-lock-anim'), 500);
+            }, 550);
+        }
+
+        // Czyszczenie danych sesji
+        currentEmployeeName = "";
+        currentEmployeeRank = "Pracownik";
+        currentEmployeeSsn = "---";
+        currentEmployeeDateZatrudnienia = "---";
+        currentEmployeePhoto = ""; 
+        document.getElementById('employee-login-pin').value = "";
+        document.getElementById('logged-user-name').innerText = "---";
+        document.getElementById('dropdown-user-name').innerText = "---";
+        document.getElementById('dropdown-user-rank').innerText = "---";
+        
+        const navAvatar = document.getElementById('nav-user-avatar');
+        const navDefaultIcon = document.getElementById('nav-user-default-icon');
+        const dropAvatar = document.getElementById('dropdown-user-avatar');
+        const dropDefaultIcon = document.getElementById('dropdown-user-default-icon');
+        
+        if(navAvatar) navAvatar.classList.add('hidden');
+        if(navDefaultIcon) navDefaultIcon.classList.remove('hidden');
+        if(dropAvatar) dropAvatar.classList.add('hidden');
+        if(dropDefaultIcon) dropDefaultIcon.classList.remove('hidden');
+
+        const adminChangelogBtn = document.getElementById('admin-changelog-btn');
+        const adminReportsBtn = document.getElementById('admin-reports-btn');
+        if(adminChangelogBtn) adminChangelogBtn.classList.add('hidden');
+        if(adminReportsBtn) adminReportsBtn.classList.add('hidden');
+
+        const loyaltyBtn = document.getElementById('loyalty-floating-btn');
+        if (loyaltyBtn) loyaltyBtn.classList.add('hidden');
+
+        const clContainer = document.getElementById('dynamic-changelog-container');
+        if (clContainer) clContainer.innerHTML = '';
+
+        resetCartAndInventory();
+        resetCartAndInventoryExport();
+        
+        clearInterval(onlineCheckInterval);
+        const widget = document.getElementById('online-employees-widget');
+        if (widget) widget.classList.add('hidden');
+
+        setTimeout(() => loginCard.classList.remove('login-zoom-out'), 450);
+        showNotice("Zakończono zmianę. Wylogowano.", "info");
+    }, 400);
 }
 
 window.toggleUserMenu = function() {
@@ -579,11 +656,13 @@ window.updateCount = function(index, change) {
         if (input) input.value = counts[index];
     }
     calculateTotal();
+    window.triggerPulseEffect('total-price', 'cart-badge');
 }
 
 window.handleInput = function(index, value) {
     counts[index] = Math.max(0, parseInt(value) || 0);
     calculateTotal();
+    window.triggerPulseEffect('total-price', 'cart-badge');
 }
 
 function calculateTotal() {
@@ -592,10 +671,13 @@ function calculateTotal() {
         min += item.min * (counts[index] || 0);
         max += item.max * (counts[index] || 0);
     });
+    const prevMin = currentMinTotal || 0;
     currentMinTotal = min; 
     currentMaxTotal = max; 
     const totalPriceEl = document.getElementById('total-price');
-    if(totalPriceEl) totalPriceEl.innerText = min + '$';
+    if(totalPriceEl) {
+        window.animateValue(totalPriceEl, prevMin, currentMinTotal, 400);
+    }
     updateCartView();
 }
 
@@ -1023,17 +1105,22 @@ window.updateCountExport = function(index, change) {
         if (input) input.value = countsExport[index];
     }
     calculateTotalExport();
+    window.triggerPulseEffect('total-price-export', 'cart-badge-export');
 }
 
 window.handleInputExport = function(i, value) {
     countsExport[i] = Math.max(0, parseInt(value) || 0);
     calculateTotalExport();
+    window.triggerPulseEffect('total-price-export', 'cart-badge-export');
 }
 
 function calculateTotalExport() {
+    const prevTotal = currentTotalExport || 0;
     currentTotalExport = exportInventory.reduce((sum, item, i) => sum + (item.price * (countsExport[i] || 0)), 0);
     const totalDisplay = document.getElementById('total-price-export');
-    if (totalDisplay) totalDisplay.innerText = currentTotalExport + '$';
+    if (totalDisplay) {
+        window.animateValue(totalDisplay, prevTotal, currentTotalExport, 400);
+    }
     updateCartViewExport();
 }
 
@@ -2154,7 +2241,7 @@ function renderBadges(totalXP, txCount, myData = [], rawData = [], myErrors = 0)
         { icon: "fa-truck-loading", name: "Wilk z Wall Street", desc: "Sprzedaj towar z magazynu (eksport).", current: totalSellVolume, isMoney: true, 
           tiers: [{ max: 100000, color: tierColors[0] }, { max: 400000, color: tierColors[1] }, { max: 850000, color: tierColors[2] }] },
           
-        { icon: "fa-users", name: "Znajoma twarz", desc: "Obsłuż unikalnych klientów (różne numery SSN).", current: uniqueClients.size, 
+        { icon: "fa-users", name: "Znajoma twarz", desc: "Obsłuż unikal klientów (różne numery SSN).", current: uniqueClients.size, 
           tiers: [{ max: 20, color: tierColors[0] }, { max: 40, color: tierColors[1] }, { max: 70, color: tierColors[2] }] },
           
         { icon: "fa-fire", name: "Pracoholik", desc: "Zrealizuj przynajmniej jedną transakcję dziennie pod rząd.", current: maxStreak, 

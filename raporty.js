@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "3.9.7"; // Normalizacja nazw produktów
+const APP_VERSION = "3.9.8"; // Normalizacja nazw produktów
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
@@ -136,40 +136,64 @@ async function loginBoss() {
         
         if (data.isValid) { 
             if (data.role && data.role.toLowerCase().trim() === 'szef') {
-                currentEmployeeName = data.name;
-                document.getElementById('logged-boss-name').innerText = currentEmployeeName.toUpperCase();
                 
-                // --- ANIMACJA LOGOWANIA ---
-                const loginCard = document.querySelector('.login-card');
-                loginCard.classList.add('login-zoom-in');
-                
-                setTimeout(() => {
-                    document.getElementById('login-screen').classList.remove('active');
-                    loginCard.classList.remove('login-zoom-in');
-                    btn.disabled = false;
-                    btn.innerHTML = 'Zaloguj <i class="fas fa-unlock"></i>';
-                    
-                    // Wejście głównego panelu
-                    const dashboard = document.getElementById('dashboard-screen');
-                    dashboard.classList.remove('hidden');
-                    dashboard.classList.add('app-zoom-out');
-                    
-                    document.getElementById('user-profile').classList.remove('hidden');
-                    showNotice(`Zalogowano pomyślnie jako ${data.name}`, "success");
-                    
-                    window.preloadEmployeesData().then(d => { if(d.employees) window.currentEmployeesList = d.employees; });
+                // --- EFEKT FACE ID (otwieranie kłódki) ---
+                const mainIcon = document.querySelector('.login-icon');
+                if (mainIcon) {
+                    mainIcon.classList.remove('fa-lock', 'fa-user-shield');
+                    mainIcon.classList.add('fa-unlock', 'icon-unlock-anim');
+                }
 
-                    loadRealData(); 
+                setTimeout(() => {
+                    currentEmployeeName = data.name;
+                    document.getElementById('logged-boss-name').innerText = currentEmployeeName.toUpperCase();
                     
-                    setTimeout(() => { dashboard.classList.remove('app-zoom-out'); }, 600);
-                }, 400);
+                    // --- ANIMACJA LOGOWANIA ---
+                    const loginCard = document.querySelector('.login-card');
+                    loginCard.classList.add('login-zoom-in');
+                    
+                    setTimeout(() => {
+                        document.getElementById('login-screen').classList.remove('active');
+                        loginCard.classList.remove('login-zoom-in');
+                        btn.disabled = false;
+                        btn.innerHTML = 'Zaloguj <i class="fas fa-unlock"></i>';
+                        
+                        // Wejście głównego panelu
+                        const dashboard = document.getElementById('dashboard-screen');
+                        dashboard.classList.remove('hidden');
+                        dashboard.classList.add('app-zoom-out');
+                        
+                        document.getElementById('user-profile').classList.remove('hidden');
+                        showNotice(`Zalogowano pomyślnie jako ${data.name}`, "success");
+                        
+                        window.preloadEmployeesData().then(d => { if(d.employees) window.currentEmployeesList = d.employees; });
+
+                        loadRealData(); 
+                        
+                        setTimeout(() => { dashboard.classList.remove('app-zoom-out'); }, 600);
+                    }, 400);
+                }, 600);
                 
             } else {
                 showNotice("Odmowa! Brak uprawnień zarządcy.", "danger");
                 document.getElementById('boss-pin-input').value = ""; 
+                
+                // --- EFEKT BŁĘDNEGO PINU (trzęsienie) ---
+                const mainIcon = document.querySelector('.login-icon');
+                if (mainIcon) {
+                    mainIcon.classList.add('icon-shake-anim');
+                    setTimeout(() => mainIcon.classList.remove('icon-shake-anim'), 400);
+                }
             }
         } else {
             showNotice("Nieprawidłowy PIN!", "danger");
+            
+            // --- EFEKT BŁĘDNEGO PINU (trzęsienie) ---
+            const mainIcon = document.querySelector('.login-icon');
+            if (mainIcon) {
+                mainIcon.classList.add('icon-shake-anim');
+                setTimeout(() => mainIcon.classList.remove('icon-shake-anim'), 400);
+            }
         }
     } catch (e) {
         showNotice("Błąd połączenia z bazą PIN!", "danger");
@@ -183,13 +207,42 @@ async function loginBoss() {
 }
 
 window.logoutBoss = function() {
-    currentEmployeeName = "";
-    document.getElementById('boss-pin-input').value = "";
-    document.getElementById('logged-boss-name').innerText = "---";
-    document.getElementById('dashboard-screen').classList.add('hidden');
-    document.getElementById('user-profile').classList.add('hidden');
-    document.getElementById('login-screen').classList.add('active');
+    const dashboard = document.getElementById('dashboard-screen');
+    const loginScreen = document.getElementById('login-screen');
+    const loginCard = document.querySelector('.login-card');
+    const mainIcon = document.querySelector('.login-icon');
+
     document.getElementById('user-dropdown').classList.remove('active');
+    document.getElementById('user-profile').classList.add('hidden');
+
+    dashboard.classList.remove('app-zoom-out');
+    dashboard.classList.add('app-zoom-in');
+
+    setTimeout(() => {
+        dashboard.classList.add('hidden');
+        dashboard.classList.remove('app-zoom-in');
+
+        loginScreen.classList.add('active');
+        loginCard.classList.add('login-zoom-out');
+
+        // Zostawiamy otwartą kłódkę na czas wjazdu karty
+        if (mainIcon) {
+            mainIcon.className = 'fas fa-unlock login-icon';
+            
+            // Wydłużone opóźnienie: czeka aż karta w pełni wyląduje (550ms)
+            setTimeout(() => {
+                mainIcon.className = 'fas fa-lock login-icon icon-lock-anim';
+                setTimeout(() => mainIcon.classList.remove('icon-lock-anim'), 500);
+            }, 550);
+        }
+
+        currentEmployeeName = "";
+        document.getElementById('boss-pin-input').value = "";
+        document.getElementById('logged-boss-name').innerText = "---";
+
+        setTimeout(() => loginCard.classList.remove('login-zoom-out'), 450);
+        showNotice("Pomyślnie wylogowano z systemu.", "info");
+    }, 400);
 }
 
 window.toggleUserMenu = function() {

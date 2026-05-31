@@ -1,4 +1,4 @@
-const APP_VERSION = "3.9.7";
+const APP_VERSION = "3.9.8";
 
 // ==========================================
 // KONFIGURACJA
@@ -20,6 +20,34 @@ const PRICE_PER_GOLD_BAR = 15000;
 let currentEmployeeName = "";
 let currentCounts = {};
 let isBoss = false;
+
+// --- EFEKTY CYFROWEGO ODLICZANIA I PULSOWANIA ---
+let previousTotalCost = 0;
+
+window.animateValue = function(element, start, end, duration) {
+    if (!element) return;
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        const easeProgress = 1 - Math.pow(1 - progress, 5);
+        const currentVal = Math.floor(easeProgress * (end - start) + start);
+        element.innerText = currentVal + '$';
+        if (progress < 1) window.requestAnimationFrame(step);
+        else element.innerText = end + '$';
+    };
+    window.requestAnimationFrame(step);
+};
+
+window.triggerPulseEffect = function(totalId, badgeId) {
+    const totalEl = document.getElementById(totalId);
+    if (totalEl) {
+        totalEl.classList.remove('pulse-anim');
+        void totalEl.offsetWidth;
+        totalEl.classList.add('pulse-anim');
+    }
+};
+// ------------------------------------------------
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
@@ -61,33 +89,55 @@ async function login() {
 
         if (data.isValid) {
             if (data.role && data.role.toLowerCase() === 'szef') {
-                currentEmployeeName = data.name;
-                isBoss = true;
-                
-                document.getElementById('logged-user-name').innerText = currentEmployeeName.toUpperCase();
-                document.getElementById('login-screen').classList.remove('active');
-                document.getElementById('main-app').style.display = 'block';
-                document.getElementById('user-profile').style.display = 'block';
-                document.getElementById('header-date').innerText = getFormattedDate();
-                
-                renderGoldItems();
-                loadWarehouseData();
+                // --- EFEKT FACE ID (otwieranie kłódki) ---
+                const mainIcon = document.querySelector('.login-icon');
+                if (mainIcon) {
+                    mainIcon.classList.remove('fa-lock');
+                    mainIcon.classList.add('fa-unlock', 'icon-unlock-anim');
+                }
 
-                document.getElementById('boss-stats-section').style.display = 'block';
-                document.getElementById('admin-tools-trigger').style.display = 'block';
-                loadGoldStats(); 
-                
-                showNotice(`Witaj w odlewni ${data.name}!`, "success");
+                // Opóźnienie na zjazd ekranu, by było widać animację
+                setTimeout(() => {
+                    currentEmployeeName = data.name;
+                    isBoss = true;
+                    
+                    document.getElementById('logged-user-name').innerText = currentEmployeeName.toUpperCase();
+                    document.getElementById('login-screen').classList.remove('active');
+                    document.getElementById('main-app').style.display = 'block';
+                    document.getElementById('user-profile').style.display = 'block';
+                    document.getElementById('header-date').innerText = getFormattedDate();
+                    
+                    renderGoldItems();
+                    loadWarehouseData();
+
+                    document.getElementById('boss-stats-section').style.display = 'block';
+                    document.getElementById('admin-tools-trigger').style.display = 'block';
+                    loadGoldStats(); 
+                    
+                    showNotice(`Witaj w odlewni ${data.name}!`, "success");
+                    btn.disabled = false;
+                    btn.innerHTML = 'Zaloguj <i class="fas fa-lock"></i>';
+                }, 600);
             } else {
                 showNotice("Nie jesteś uprawniony, aby się zalogować.", "danger");
                 document.getElementById('employee-login-pin').value = "";
+                btn.disabled = false;
+                btn.innerHTML = 'Zaloguj <i class="fas fa-lock"></i>';
             }
         } else {
             showNotice("Nieprawidłowy PIN!", "danger");
+            btn.disabled = false;
+            btn.innerHTML = 'Zaloguj <i class="fas fa-lock"></i>';
+
+            // --- EFEKT BŁĘDNEGO PINU (trzęsienie) ---
+            const mainIcon = document.querySelector('.login-icon');
+            if (mainIcon) {
+                mainIcon.classList.add('icon-shake-anim');
+                setTimeout(() => mainIcon.classList.remove('icon-shake-anim'), 400);
+            }
         }
     } catch (error) {
         showNotice("Błąd bazy PIN!", "danger");
-    } finally {
         btn.disabled = false;
         btn.innerHTML = 'Zaloguj <i class="fas fa-lock"></i>';
     }
@@ -268,11 +318,13 @@ window.updateCount = function(i, change) {
     currentCounts[i] = Math.max(0, currentCounts[i] + change);
     document.getElementById(`count-${i}`).value = currentCounts[i];
     calculateZloto();
+    window.triggerPulseEffect('total-cost', null);
 }
 
 window.handleInput = function(i, val) {
     currentCounts[i] = Math.max(0, parseInt(val) || 0);
     calculateZloto();
+    window.triggerPulseEffect('total-cost', null);
 }
 
 function calculateZloto() {
@@ -294,13 +346,20 @@ function calculateZloto() {
     let barValue = possibleBars * PRICE_PER_GOLD_BAR;
     let pureProfit = barValue - totalSpent;
 
-    document.getElementById('total-cost').innerText = totalSpent + '$';
+    const totalCostEl = document.getElementById('total-cost');
+    if(totalCostEl) {
+        window.animateValue(totalCostEl, previousTotalCost, totalSpent, 400);
+        previousTotalCost = totalSpent;
+    }
+
     document.getElementById('possible-bars').innerText = possibleBars + ' szt.';
     document.getElementById('gold-bar-value').innerText = barValue + '$';
 
     const pureEl = document.getElementById('pure-profit');
-    pureEl.innerText = (pureProfit >= 0 ? '+' : '') + pureProfit + '$';
-    pureEl.style.color = pureProfit >= 0 ? 'var(--success)' : 'var(--danger)';
+    if(pureEl) {
+        pureEl.innerText = (pureProfit >= 0 ? '+' : '') + pureProfit + '$';
+        pureEl.style.color = pureProfit >= 0 ? 'var(--success)' : 'var(--danger)';
+    }
 }
 
 async function processSmelting() {
@@ -485,7 +544,37 @@ window.loadGoldStats = async function() {
 }
 
 function logout() {
-    location.reload();
+    const mainApp = document.getElementById('main-app');
+    const loginScreen = document.getElementById('login-screen');
+    const loginCard = document.querySelector('.login-card');
+    const mainIcon = document.querySelector('.login-icon');
+
+    document.getElementById('user-dropdown').classList.remove('active');
+    document.getElementById('user-profile').style.display = 'none';
+
+    mainApp.classList.add('app-zoom-in');
+
+    setTimeout(() => {
+        mainApp.style.display = 'none';
+        
+        loginScreen.classList.add('active');
+        loginCard.classList.add('login-zoom-out');
+
+        // Zostawiamy otwartą kłódkę na czas wjazdu karty
+        if (mainIcon) {
+            mainIcon.className = 'fas fa-unlock login-icon';
+            
+            // Wydłużone opóźnienie: czeka aż karta w pełni wyląduje (550ms)
+            setTimeout(() => {
+                mainIcon.className = 'fas fa-lock login-icon icon-lock-anim';
+            }, 550);
+        }
+
+        // Wydłużamy czas do restartu strony (550ms czekania + 500ms animacji = ok. 1200ms całkowitego czasu)
+        setTimeout(() => {
+            location.reload();
+        }, 1200);
+    }, 400);
 }
 
 function toggleUserMenu() {
