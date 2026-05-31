@@ -27,6 +27,7 @@ let onlineCheckInterval = null;
 window.currentEmployeesList = [];
 window.reportsFetchPromise = null;
 window.bonusesFetchPromise = null;
+window.errorReportsFetchPromise = null;
 
 // Funkcje inteligentnego pobierania danych w tle (Predictive Fetch)
 window.preloadReportsData = function() {
@@ -51,6 +52,18 @@ window.preloadBonusesData = function() {
             });
     }
     return window.bonusesFetchPromise;
+};
+
+window.preloadErrorReportsData = function() {
+    if (!window.errorReportsFetchPromise) {
+        window.errorReportsFetchPromise = fetch(`${REPORTS_API_URL}?action=get_error_reports&t=${new Date().getTime()}`)
+            .then(res => res.json())
+            .catch(err => {
+                window.errorReportsFetchPromise = null;
+                return [];
+            });
+    }
+    return window.errorReportsFetchPromise;
 };
 
 window.formatMoney = function(amount) {
@@ -422,11 +435,11 @@ window.logout = function() {
         if (mainIcon) {
             mainIcon.className = 'fas fa-unlock login-icon';
             
-            // Wydłużone opóźnienie: czeka aż karta w pełni wyląduje (550ms)
+            // Dopiero gdy karta wyląduje, trzasnąć kłódką
             setTimeout(() => {
                 mainIcon.className = 'fas fa-lock login-icon icon-lock-anim';
                 setTimeout(() => mainIcon.classList.remove('icon-lock-anim'), 500);
-            }, 550);
+            }, 550); // To jest to magiczne opóźnienie
         }
 
         // Czyszczenie danych sesji
@@ -917,6 +930,7 @@ window.sendToDiscord = async function() {
                 // Inwalidacja cache po dodaniu nowego wpisu
                 window.reportsFetchPromise = null;
                 window.bonusesFetchPromise = null;
+                window.errorReportsFetchPromise = null;
                 updateOnlineEmployees(); 
             } else throw new Error();
         }, "image/png");
@@ -1327,6 +1341,7 @@ window.sendToDiscordExport = async function() {
                 // Inwalidacja cache po dodaniu nowego wpisu
                 window.reportsFetchPromise = null;
                 window.bonusesFetchPromise = null;
+                window.errorReportsFetchPromise = null;
                 updateOnlineEmployees(); 
             } else {
                 showNotice("Błąd Webhooka!", "danger");
@@ -2081,22 +2096,19 @@ window.openAchievements = async function() {
     document.getElementById('achievements-container').classList.add('hidden');
     
     try {
-        const rawData = await window.preloadReportsData();
-        
-        // NOWE: Pobieranie raportów o pomyłkach dla "Czystego Sumienia"
-        const errorReportsRes = await fetch(`${REPORTS_API_URL}?action=get_error_reports&t=${new Date().getTime()}`);
-        const errorReportsData = await errorReportsRes.json();
+        // Pobieramy zbuforowane dane jednocześnie!
+        const [rawData, errorReportsData] = await Promise.all([
+            window.preloadReportsData(),
+            window.preloadErrorReportsData()
+        ]);
         
         const myData = rawData.filter(row => row.employee === currentEmployeeName);
-        
-        // NOWE: Zliczanie błędów przypisanych do pracownika
-        const myErrors = errorReportsData.filter(row => row.employee === currentEmployeeName).length;
+        const myErrors = (Array.isArray(errorReportsData) ? errorReportsData : []).filter(row => row.employee === currentEmployeeName).length;
         
         let totalXP = 0; let txSet = new Set();
         myData.forEach(row => { totalXP += row.total; if(row.report_id) txSet.add(row.report_id); });
         let txCount = txSet.size || (myData.length > 0 ? 1 : 0);
         
-        // NOWE: Przekazanie parametru myErrors
         renderBadges(totalXP, txCount, myData, rawData, myErrors);
         
         document.getElementById('achievements-loader').classList.add('hidden');
@@ -2111,7 +2123,6 @@ window.closeAchievements = function() {
     document.getElementById('achievements-loader').innerHTML = `<i class="fas fa-circle-notch fa-spin fa-3x text-accent-icon"></i><p class="loader-text">Pobieranie danych...</p>`;
 }
 
-// Zaktualizowana funkcja z poziomami odznak i osiągnięciem "Szybka Fucha"
 function renderBadges(totalXP, txCount, myData = [], rawData = [], myErrors = 0) {
     let maxSingleTx = 0;
     let maxSingleBuyTx = 0; 
@@ -2214,7 +2225,7 @@ function renderBadges(totalXP, txCount, myData = [], rawData = [], myErrors = 0)
     }
 
     // Definicja poziomów (Brąz, Srebro, Złoto)
-    const tierColors = ["#cd7f32", "#c0c0c0", "#fbbf24"]; // Brązowy, Srebrny, Złoty
+    const tierColors = ["#cd7f32", "#c0c0c0", "#fbbf24"]; 
 
     const badges = [
         { icon: "fa-handshake", name: "Solidna firma", desc: "Zrealizuj udane transakcje z klientami.", current: txCount, 
@@ -2280,7 +2291,6 @@ function renderBadges(totalXP, txCount, myData = [], rawData = [], myErrors = 0)
         const currentText = b.isMoney ? window.formatMoney(displayCurrent) + '$' : displayCurrent;
         const maxText = b.isMoney ? window.formatMoney(currentTierInfo.max) + '$' : currentTierInfo.max;
 
-        // Generowanie kropek poziomów
         let dotsHtml = '';
         if (b.tiers.length > 1) {
             dotsHtml = '<div style="display:flex; gap:3px; margin-top:5px;">';
@@ -2490,20 +2500,17 @@ setTimeout(checkUpdates, 3000);
 // ==========================================
 window.updateOnlineEmployees = async function() {
     try {
-        // Wymuszamy odświeżenie pamięci podręcznej przy cyklicznym sprawdzaniu tła
         window.reportsFetchPromise = null;
         const data = await window.preloadReportsData();
         
         const now = new Date().getTime();
-        const startOfToday = new Date().setHours(0, 0, 0, 0); // Północ dzisiejszego dnia
+        const startOfToday = new Date().setHours(0, 0, 0, 0); 
         
         const empStats = new Map();
 
-        // 1. Zbieramy dzisiejsze transakcje i grupujemy po pracowniku
         const userTransactions = {};
         data.forEach(row => {
             if (row.employee && row.date && row.employee !== "System") {
-                // FIX: Usuwamy z nazwy ewentualne dopiski w nawiasach np. "(zarząd)" i " (Szef)"
                 const cleanName = String(row.employee).replace(/\s*\([^)]+\)/g, '').trim();
                 
                 const txTime = parseDate(row.date).getTime();
@@ -2514,9 +2521,8 @@ window.updateOnlineEmployees = async function() {
             }
         });
 
-        // 2. Szukamy początku "obecnej" sesji u innych pracowników
         for (const [emp, times] of Object.entries(userTransactions)) {
-            times.sort((a, b) => b - a); // Sortowanie od najnowszej
+            times.sort((a, b) => b - a); 
             let lastSeen = times[0];
             let firstSeen = times[0];
             
@@ -2524,13 +2530,12 @@ window.updateOnlineEmployees = async function() {
                 if (firstSeen - times[i] <= 60 * 60 * 1000) { 
                     firstSeen = times[i];
                 } else {
-                    break; // Długa przerwa = wcześniejsze transakcje to inna zmiana
+                    break; 
                 }
             }
             empStats.set(emp, { lastSeen, firstSeen });
         }
 
-        // 3. Wymuszenie DOKŁADNEGO czasu tylko dla nas (od wpisania pinu)
         const myCurrentCleanName = currentEmployeeName ? String(currentEmployeeName).replace(/\s*\([^)]+\)/g, '').trim() : "";
         
         if (myCurrentCleanName) {
@@ -2540,13 +2545,12 @@ window.updateOnlineEmployees = async function() {
             } else {
                 const stats = empStats.get(myCurrentCleanName);
                 stats.lastSeen = now; 
-                stats.firstSeen = window.mySessionStart; // Odrzuca stare dane z bazy na rzecz obecnego logowania!
+                stats.firstSeen = window.mySessionStart; 
             }
         }
 
         const onlineData = [];
         empStats.forEach((stats, name) => {
-            // Online jeśli wystawił coś max 15 minut temu, lub to my
             if (now - stats.lastSeen <= 15 * 60 * 1000 || name === myCurrentCleanName) {
                 const diffMs = Math.max(0, now - stats.firstSeen);
                 const diffMins = Math.floor(diffMs / 60000);
@@ -2604,68 +2608,80 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginPinInput = document.getElementById('employee-login-pin');
     if (loginPinInput) loginPinInput.addEventListener('keypress', function(e) { if (e.key === 'Enter') login(); });
 
-    document.getElementById('nav-skup-btn')?.addEventListener('click', (e) => { e.preventDefault(); switchView('skup'); });
-    document.getElementById('nav-export-btn')?.addEventListener('click', (e) => { e.preventDefault(); switchView('export'); });
-
-    document.getElementById('loyalty-floating-btn')?.addEventListener('click', async (e) => { 
-        e.preventDefault(); 
-        switchView('loyalty'); 
-        showNotice("UWAGA: System lojalnościowy jest w fazie testów i aktualnie nie obowiązuje w grze!", "warning");
-        
-        const display = document.getElementById('current-loyalty-rate-display');
-        if (display && display.textContent.includes('Ładowanie') && typeof REPORTS_API_URL !== 'undefined') {
-            try {
-                const res = await fetch(REPORTS_API_URL + "?action=get_loyalty_settings&t=" + new Date().getTime());
-                const data = await res.json();
-                if (data.rate) {
-                    display.innerText = data.rate + "$ = 1 pieczątka";
-                } else {
-                    display.innerText = "Brak danych";
-                }
-            } catch(e) {
-                display.innerText = "Błąd API";
-            }
-        }
+    document.querySelectorAll('#nav-skup-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => { e.preventDefault(); switchView('skup'); });
     });
 
-    document.getElementById('check-loyalty-btn')?.addEventListener('click', window.checkLoyaltyCustomer);
-    document.getElementById('loyalty-search-ssn')?.addEventListener('keypress', function(e) { if (e.key === 'Enter') window.checkLoyaltyCustomer(); });
+    document.querySelectorAll('#nav-export-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => { e.preventDefault(); switchView('export'); });
+        btn.addEventListener('mouseenter', () => {
+            window.preloadReportsData();
+            window.preloadErrorReportsData();
+        });
+    });
+
+    document.querySelectorAll('#loyalty-floating-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => { 
+            e.preventDefault(); 
+            switchView('loyalty'); 
+            showNotice("UWAGA: System lojalnościowy jest w fazie testów i aktualnie nie obowiązuje w grze!", "warning");
+            
+            const display = document.getElementById('current-loyalty-rate-display');
+            if (display && display.textContent.includes('Ładowanie') && typeof REPORTS_API_URL !== 'undefined') {
+                try {
+                    const res = await fetch(REPORTS_API_URL + "?action=get_loyalty_settings&t=" + new Date().getTime());
+                    const data = await res.json();
+                    if (data.rate) {
+                        display.innerText = data.rate + "$ = 1 pieczątka";
+                    } else {
+                        display.innerText = "Brak danych";
+                    }
+                } catch(e) {
+                    display.innerText = "Błąd API";
+                }
+            }
+        });
+    });
+
+    document.querySelectorAll('#check-loyalty-btn').forEach(btn => btn.addEventListener('click', window.checkLoyaltyCustomer));
+    document.querySelectorAll('#loyalty-search-ssn').forEach(input => input.addEventListener('keypress', function(e) { if (e.key === 'Enter') window.checkLoyaltyCustomer(); }));
 
     document.querySelectorAll('.claim-reward-btn').forEach(btn => {
         btn.addEventListener('click', (e) => window.claimReward(e.currentTarget));
     });
 
-    document.getElementById('profile-toggle-btn')?.addEventListener('click', toggleUserMenu);
-    document.getElementById('menu-id-card')?.addEventListener('click', openIdCard);
+    // PODPIĘCIE MENU DLA WSZYSTKICH WIDOKÓW (SKUP, EKSPORT, ZŁOTO)
+    document.querySelectorAll('#profile-toggle-btn').forEach(btn => btn.addEventListener('click', toggleUserMenu));
+    document.querySelectorAll('#menu-id-card').forEach(btn => btn.addEventListener('click', openIdCard));
     
-    // Podłączenie wyzwalaczy inteligentnego pobierania danych w tle (Predictive Fetch) po najechaniu myszką
-    const statsBtn = document.getElementById('menu-my-stats');
-    if (statsBtn) {
-        statsBtn.addEventListener('click', openMyStats);
-        statsBtn.addEventListener('mouseenter', () => window.preloadReportsData());
-    }
+    document.querySelectorAll('#menu-my-stats').forEach(btn => {
+        btn.addEventListener('click', openMyStats);
+        btn.addEventListener('mouseenter', () => window.preloadReportsData());
+    });
 
-    const transBtn = document.getElementById('menu-my-trans');
-    if (transBtn) {
-        transBtn.addEventListener('click', openMyTransactions);
-        transBtn.addEventListener('mouseenter', () => {
+    document.querySelectorAll('#menu-my-trans').forEach(btn => {
+        btn.addEventListener('click', openMyTransactions);
+        btn.addEventListener('mouseenter', () => {
             window.preloadReportsData();
             window.preloadBonusesData();
         });
-    }
+    });
 
-    const achBtn = document.getElementById('menu-achievements');
-    if (achBtn) {
-        achBtn.addEventListener('click', openAchievements);
-        achBtn.addEventListener('mouseenter', () => window.preloadReportsData());
-    }
+    document.querySelectorAll('#menu-achievements').forEach(btn => {
+        btn.addEventListener('click', openAchievements);
+        btn.addEventListener('mouseenter', () => {
+            window.preloadReportsData();
+            window.preloadErrorReportsData();
+        });
+    });
 
-    document.getElementById('close-achievements-btn')?.addEventListener('click', closeAchievements);
-    document.getElementById('menu-changelog')?.addEventListener('click', openChangelog);
-    document.getElementById('admin-changelog-btn')?.addEventListener('click', openAdminChangelog);
-    document.getElementById('admin-reports-btn')?.addEventListener('click', openAdminReports);
-    document.getElementById('menu-settings')?.addEventListener('click', openSettings);
-    document.getElementById('menu-logout')?.addEventListener('click', logout);
+    document.querySelectorAll('#close-achievements-btn').forEach(btn => btn.addEventListener('click', closeAchievements));
+    document.querySelectorAll('#menu-changelog').forEach(btn => btn.addEventListener('click', openChangelog));
+    document.querySelectorAll('#admin-changelog-btn').forEach(btn => btn.addEventListener('click', openAdminChangelog));
+    document.querySelectorAll('#admin-reports-btn').forEach(btn => btn.addEventListener('click', openAdminReports));
+    document.querySelectorAll('#menu-settings').forEach(btn => btn.addEventListener('click', openSettings));
+    document.querySelectorAll('#menu-logout').forEach(btn => btn.addEventListener('click', logout));
+    
     document.getElementById('login-btn-action')?.addEventListener('click', login);
 
     document.getElementById('search-input')?.addEventListener('input', applyFilters);
