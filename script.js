@@ -1995,12 +1995,22 @@ window.openAchievements = async function() {
     
     try {
         const rawData = await window.preloadReportsData();
+        
+        // NOWE: Pobieranie raportów o pomyłkach dla "Czystego Sumienia"
+        const errorReportsRes = await fetch(`${REPORTS_API_URL}?action=get_error_reports&t=${new Date().getTime()}`);
+        const errorReportsData = await errorReportsRes.json();
+        
         const myData = rawData.filter(row => row.employee === currentEmployeeName);
+        
+        // NOWE: Zliczanie błędów przypisanych do pracownika
+        const myErrors = errorReportsData.filter(row => row.employee === currentEmployeeName).length;
+        
         let totalXP = 0; let txSet = new Set();
         myData.forEach(row => { totalXP += row.total; if(row.report_id) txSet.add(row.report_id); });
         let txCount = txSet.size || (myData.length > 0 ? 1 : 0);
         
-        renderBadges(totalXP, txCount, myData, rawData);
+        // NOWE: Przekazanie parametru myErrors
+        renderBadges(totalXP, txCount, myData, rawData, myErrors);
         
         document.getElementById('achievements-loader').classList.add('hidden');
         document.getElementById('achievements-container').classList.remove('hidden');
@@ -2014,7 +2024,8 @@ window.closeAchievements = function() {
     document.getElementById('achievements-loader').innerHTML = `<i class="fas fa-circle-notch fa-spin fa-3x text-accent-icon"></i><p class="loader-text">Pobieranie danych...</p>`;
 }
 
-function renderBadges(totalXP, txCount, myData = [], rawData = []) {
+// Zaktualizowana funkcja z poziomami odznak i osiągnięciem "Szybka Fucha"
+function renderBadges(totalXP, txCount, myData = [], rawData = [], myErrors = 0) {
     let maxSingleTx = 0;
     let maxSingleBuyTx = 0; 
     let nightShiftCount = 0;
@@ -2027,7 +2038,7 @@ function renderBadges(totalXP, txCount, myData = [], rawData = []) {
     let katanaCount = 0;
     let uniqueClients = new Set();
     
-    // --- NOWA LOGIKA: ZNAJDŹ AKTYWNOŚĆ SZEFÓW ---
+    // --- ZNAJDŹ AKTYWNOŚĆ SZEFÓW ---
     let servedWhileBossOnline = false;
     const bosses = window.currentEmployeesList.filter(e => e.role && e.role.toLowerCase() === 'szef').map(e => e.name);
     let bossTimestamps = [];
@@ -2039,6 +2050,10 @@ function renderBadges(totalXP, txCount, myData = [], rawData = []) {
             }
         });
     }
+
+    // --- LOGIKA DLA SZYBKIEJ FUCHY I PRACOHOLIKA ---
+    let txTimestamps = [];
+    let uniqueDays = new Set();
 
     myData.forEach(tx => {
         if (tx.total > maxSingleTx) maxSingleTx = tx.total;
@@ -2053,12 +2068,18 @@ function renderBadges(totalXP, txCount, myData = [], rawData = []) {
         let txTime = 0;
         if (tx.date) {
             const txDate = parseDate(tx.date);
-            txTime = txDate.getTime();
-            const hour = txDate.getHours();
-            if (hour >= 0 && hour <= 5) nightShiftCount++;
+            if (txDate && !isNaN(txDate.getTime())) {
+                txTime = txDate.getTime();
+                txTimestamps.push(txTime);
+                
+                const hour = txDate.getHours();
+                if (hour >= 0 && hour <= 5) nightShiftCount++;
+                
+                const dayString = `${txDate.getFullYear()}-${String(txDate.getMonth() + 1).padStart(2, '0')}-${String(txDate.getDate()).padStart(2, '0')}`;
+                uniqueDays.add(dayString);
+            }
         }
         
-        // --- SPRAWDZANIE "PRAWEJ RĘKI SZEFA" ---
         if (!servedWhileBossOnline && txTime > 0) {
             if (bossTimestamps.some(bTime => Math.abs(bTime - txTime) <= 60 * 60 * 1000)) {
                 servedWhileBossOnline = true;
@@ -2067,39 +2088,87 @@ function renderBadges(totalXP, txCount, myData = [], rawData = []) {
 
         if (tx.name) {
             const nameLow = tx.name.toLowerCase();
-            
             if (nameLow.includes('dziwna substancja')) weirdStuffCount += (tx.qty || 1);
             if (nameLow.includes('złot') || nameLow.includes('sztabka')) goldCount += (tx.qty || 1);
-            
             if (nameLow.includes('telefon') || nameLow.includes('telewizor') || nameLow.includes('konsola') || nameLow.includes('komputer') || nameLow.includes('monitor') || nameLow.includes('mikrofala')) {
                 electronicsCount += (tx.qty || 1);
             }
-            
             if (nameLow.includes('obraz') || nameLow.includes('książka') || nameLow.includes('dywan')) {
                 artCount += (tx.qty || 1);
             }
-
             if (nameLow.includes('katana')) katanaCount += (tx.qty || 1);
         }
     });
 
+    // WYLICZANIE: Pracoholik (ciąg dni)
+    let maxStreak = 0, currentStreak = 0, previousDateStr = null;
+    const sortedDays = Array.from(uniqueDays).sort((a, b) => new Date(a) - new Date(b));
+    sortedDays.forEach(dayStr => {
+        const currentDate = new Date(dayStr);
+        if (!previousDateStr) {
+            currentStreak = 1;
+        } else {
+            const diffDays = Math.round(Math.abs(currentDate - new Date(previousDateStr)) / (1000 * 60 * 60 * 24));
+            if (diffDays === 1) currentStreak++;
+            else currentStreak = 1;
+        }
+        if (currentStreak > maxStreak) maxStreak = currentStreak;
+        previousDateStr = dayStr;
+    });
+
+    // WYLICZANIE: Szybka Fucha (5 transakcji w < 10 min)
+    let fastHustleAchieved = 0;
+    txTimestamps.sort((a, b) => a - b);
+    for (let i = 0; i <= txTimestamps.length - 5; i++) {
+        if (txTimestamps[i + 4] - txTimestamps[i] <= 10 * 60 * 1000) {
+            fastHustleAchieved = 1;
+            break;
+        }
+    }
+
+    // Definicja poziomów (Brąz, Srebro, Złoto)
+    const tierColors = ["#cd7f32", "#c0c0c0", "#fbbf24"]; // Brązowy, Srebrny, Złoty
+
     const badges = [
-        { icon: "fa-tint", name: "Pierwsza krew", color: "#ef4444", current: txCount, max: 1, desc: "Zrealizuj swoją pierwszą transakcję w firmie." },
-        { icon: "fa-handshake", name: "Solidna firma", color: "#a855f7", current: txCount, max: 150, desc: "Zrealizuj 150 udanych transakcji z klientami." },
-        { icon: "fa-fish", name: "Rekin biznesu", color: "#38bdf8", current: totalXP, max: 500000, isMoney: true, desc: "Wygeneruj ponad 500 000$ obrotu." },
-        { icon: "fa-medal", name: "Stary wyga", color: "#fbbf24", current: txCount, max: 450, desc: "Zrealizuj 450 udanych transakcji z klientami." },
-        { icon: "fa-crown", name: "Milioner", color: "#eab308", current: totalXP, max: 2000000, isMoney: true, desc: "Wygeneruj ponad 2 000 000$ obrotu." },
-        { icon: "fa-flask", name: "Chemiczny Ali", color: "#22c55e", current: weirdStuffCount, max: 100, desc: "Przetwórz w lombardzie 100 dziwnych substancji." },
-        { icon: "fa-coins", name: "Gorączka złota", color: "#eab308", current: goldCount, max: 200, desc: "Skup lub sprzedaj 200 złotych przedmiotów." },
-        { icon: "fa-money-bill-wave", name: "Gruba ryba", color: "#e11d48", current: maxSingleBuyTx, max: 30000, isMoney: true, desc: "Wykonaj pojedynczą transakcję skupu na kwotę minimum 30 000$." },
-        { icon: "fa-moon", name: "Nocny Marek", color: "#8b5cf6", current: nightShiftCount, max: 50, desc: "Wykonaj 50 transakcji na nocnej zmianie (0:00 - 6:00)." },
-        { icon: "fa-boxes", name: "Hurtownik", color: "#f97316", current: maxItemsInSingleTx, max: 30, desc: "Skup od klienta minimum 30 przedmiotów na jednym paragonie." },
-        { icon: "fa-laptop", name: "Elektro - śmieciarz", color: "#06b6d4", current: electronicsCount, max: 250, desc: "Skup lub sprzedaj 250 sztuk sprzętu elektronicznego." },
-        { icon: "fa-palette", name: "Koneser sztuki", color: "#d946ef", current: artCount, max: 100, desc: "Obracaj dziełami sztuki i antykami (min. 100 szt.)." },
-        { icon: "fa-truck-loading", name: "Wilk z Wall Street", color: "#10b981", current: totalSellVolume, max: 850000, isMoney: true, desc: "Sprzedaj towar z magazynu za łączną kwotę ponad 850 000$." },
-        { icon: "fa-user-ninja", name: "Samuraj", color: "#dc2626", current: katanaCount, max: 3, desc: "Przetwórz w lombardzie co najmniej 3 katany." },
-        { icon: "fa-users", name: "Znajoma twarz", color: "#3b82f6", current: uniqueClients.size, max: 70, desc: "Obsłuż 70 unikalnych klientów (różne numery SSN)." },
-        { icon: "fa-briefcase", name: "Prawa ręka", color: "#eab308", current: servedWhileBossOnline ? 1 : 0, max: 1, desc: "Zrealizuj transakcję na tej samej zmianie z szefem." }
+        { icon: "fa-handshake", name: "Solidna firma", desc: "Zrealizuj udane transakcje z klientami.", current: txCount, 
+          tiers: [{ max: 50, color: tierColors[0] }, { max: 150, color: tierColors[1] }, { max: 450, color: tierColors[2] }] },
+          
+        { icon: "fa-fish", name: "Rekin biznesu", desc: "Wygeneruj obrót w firmie.", current: totalXP, isMoney: true, 
+          tiers: [{ max: 100000, color: tierColors[0] }, { max: 500000, color: tierColors[1] }, { max: 2000000, color: tierColors[2] }] },
+          
+        { icon: "fa-flask", name: "Chemiczny Ali", desc: "Przetwórz dziwne substancje.", current: weirdStuffCount, 
+          tiers: [{ max: 25, color: tierColors[0] }, { max: 50, color: tierColors[1] }, { max: 100, color: tierColors[2] }] },
+          
+        { icon: "fa-coins", name: "Gorączka złota", desc: "Skup lub sprzedaj złote przedmioty.", current: goldCount, 
+          tiers: [{ max: 50, color: tierColors[0] }, { max: 100, color: tierColors[1] }, { max: 200, color: tierColors[2] }] },
+          
+        { icon: "fa-moon", name: "Nocny Marek", desc: "Wykonaj transakcje na nocnej zmianie (0:00 - 6:00).", current: nightShiftCount, 
+          tiers: [{ max: 10, color: tierColors[0] }, { max: 25, color: tierColors[1] }, { max: 50, color: tierColors[2] }] },
+          
+        { icon: "fa-boxes", name: "Hurtownik", desc: "Skup określoną ilość przedmiotów na jednym paragonie.", current: maxItemsInSingleTx, 
+          tiers: [{ max: 10, color: tierColors[0] }, { max: 20, color: tierColors[1] }, { max: 30, color: tierColors[2] }] },
+          
+        { icon: "fa-laptop", name: "Elektro-śmieciarz", desc: "Obracaj sprzętem elektronicznym.", current: electronicsCount, 
+          tiers: [{ max: 50, color: tierColors[0] }, { max: 150, color: tierColors[1] }, { max: 250, color: tierColors[2] }] },
+          
+        { icon: "fa-truck-loading", name: "Wilk z Wall Street", desc: "Sprzedaj towar z magazynu (eksport).", current: totalSellVolume, isMoney: true, 
+          tiers: [{ max: 100000, color: tierColors[0] }, { max: 400000, color: tierColors[1] }, { max: 850000, color: tierColors[2] }] },
+          
+        { icon: "fa-users", name: "Znajoma twarz", desc: "Obsłuż unikalnych klientów (różne numery SSN).", current: uniqueClients.size, 
+          tiers: [{ max: 20, color: tierColors[0] }, { max: 40, color: tierColors[1] }, { max: 70, color: tierColors[2] }] },
+          
+        { icon: "fa-fire", name: "Pracoholik", desc: "Zrealizuj przynajmniej jedną transakcję dziennie pod rząd.", current: maxStreak, 
+          tiers: [{ max: 3, color: tierColors[0] }, { max: 7, color: tierColors[1] }, { max: 14, color: tierColors[2] }] },
+
+        // --- OSIĄGNIĘCIA JEDNOPOZIOMOWE (Unikalne) ---
+        { icon: "fa-bolt", name: "Szybka Fucha", desc: "Zrealizuj 5 transakcji w czasie poniżej 10 minut.", current: fastHustleAchieved, 
+          tiers: [{ max: 1, color: "#f97316" }] },
+          
+        { icon: "fa-briefcase", name: "Prawa ręka", desc: "Zrealizuj transakcję na tej samej zmianie z szefem.", current: servedWhileBossOnline ? 1 : 0, 
+          tiers: [{ max: 1, color: "#eab308" }] },
+          
+        { icon: "fa-feather", name: "Czyste Sumienie", desc: "Zrealizuj minimum 50 transakcji nie mając żadnej pomyłki.", current: (txCount >= 50 && myErrors === 0) ? 1 : 0, 
+          tiers: [{ max: 1, color: "#14b8a6" }] }
     ];
     
     const container = document.getElementById('achievements-container');
@@ -2108,32 +2177,52 @@ function renderBadges(totalXP, txCount, myData = [], rawData = []) {
     container.style = ''; 
 
     badges.forEach(b => {
-        const displayCurrent = Math.min(b.current, b.max);
-        const isUnlocked = displayCurrent >= b.max;
-        const percentage = (displayCurrent / b.max) * 100;
+        let completedTiers = 0;
+        for (let i = 0; i < b.tiers.length; i++) {
+            if (b.current >= b.tiers[i].max) completedTiers++;
+        }
+        
+        const isMaxed = completedTiers === b.tiers.length;
+        const currentTierInfo = isMaxed ? b.tiers[b.tiers.length - 1] : b.tiers[completedTiers];
+        const activeColor = completedTiers > 0 ? b.tiers[completedTiers - 1].color : "var(--text-secondary)";
+        const hasStarted = b.current > 0;
+        
+        const displayCurrent = Math.min(b.current, currentTierInfo.max);
+        const percentage = (displayCurrent / currentTierInfo.max) * 100;
         
         const currentText = b.isMoney ? window.formatMoney(displayCurrent) + '$' : displayCurrent;
-        const maxText = b.isMoney ? window.formatMoney(b.max) + '$' : b.max;
+        const maxText = b.isMoney ? window.formatMoney(currentTierInfo.max) + '$' : currentTierInfo.max;
+
+        // Generowanie kropek poziomów
+        let dotsHtml = '';
+        if (b.tiers.length > 1) {
+            dotsHtml = '<div style="display:flex; gap:3px; margin-top:5px;">';
+            for (let i = 0; i < b.tiers.length; i++) {
+                dotsHtml += `<i class="fas fa-star" style="font-size: 0.6rem; color: ${i < completedTiers ? b.tiers[i].color : 'rgba(255,255,255,0.1)'}"></i>`;
+            }
+            dotsHtml += '</div>';
+        }
 
         const badgeEl = document.createElement('div');
-        badgeEl.className = `achievement-card ${isUnlocked ? 'unlocked' : 'locked'}`;
+        badgeEl.className = `achievement-card ${hasStarted ? 'unlocked' : 'locked'}`;
         
         badgeEl.innerHTML = `
             <div class="achievement-header">
-                <div class="achievement-icon" style="color: ${isUnlocked ? b.color : 'var(--text-secondary)'}; border-color: ${isUnlocked ? b.color : 'transparent'}; box-shadow: ${isUnlocked ? '0 0 15px ' + b.color + '40' : 'none'};">
+                <div class="achievement-icon" style="color: ${activeColor}; border-color: ${activeColor !== 'var(--text-secondary)' ? activeColor : 'transparent'}; box-shadow: ${activeColor !== 'var(--text-secondary)' ? '0 0 15px ' + activeColor + '40' : 'none'};">
                     <i class="fas ${b.icon}"></i>
                 </div>
                 <div class="achievement-info">
-                    <div class="achievement-title" style="color: ${isUnlocked ? '#fff' : 'var(--text-secondary)'}">${b.name}</div>
+                    <div class="achievement-title" style="color: ${hasStarted ? '#fff' : 'var(--text-secondary)'}">${b.name}</div>
                     <div class="achievement-desc">${b.desc}</div>
+                    ${dotsHtml}
                 </div>
             </div>
             <div class="achievement-progress-wrapper">
                 <div class="achievement-progress-text">
-                    ${isUnlocked ? `<span style="color: ${b.color}"><i class="fas fa-check-circle"></i> Odblokowane</span>` : `<span>${currentText} / ${maxText}</span>`}
+                    ${isMaxed ? `<span style="color: ${activeColor}"><i class="fas fa-check-circle"></i> Ukończono na maxa</span>` : `<span>${currentText} / ${maxText}</span>`}
                 </div>
                 <div class="achievement-progress-container">
-                    <div class="achievement-progress-fill" style="width: ${percentage}%; background: ${isUnlocked ? b.color : 'var(--accent-color)'};"></div>
+                    <div class="achievement-progress-fill" style="width: ${isMaxed ? 100 : percentage}%; background: ${isMaxed ? activeColor : 'var(--accent-color)'};"></div>
                 </div>
             </div>
         `;
@@ -2327,10 +2416,13 @@ window.updateOnlineEmployees = async function() {
         const userTransactions = {};
         data.forEach(row => {
             if (row.employee && row.date && row.employee !== "System") {
+                // FIX: Usuwamy z nazwy ewentualne dopiski w nawiasach np. "(zarząd)" i " (Szef)"
+                const cleanName = String(row.employee).replace(/\s*\([^)]+\)/g, '').trim();
+                
                 const txTime = parseDate(row.date).getTime();
                 if (!isNaN(txTime) && txTime >= startOfToday) {
-                    if (!userTransactions[row.employee]) userTransactions[row.employee] = [];
-                    userTransactions[row.employee].push(txTime);
+                    if (!userTransactions[cleanName]) userTransactions[cleanName] = [];
+                    userTransactions[cleanName].push(txTime);
                 }
             }
         });
@@ -2352,12 +2444,14 @@ window.updateOnlineEmployees = async function() {
         }
 
         // 3. Wymuszenie DOKŁADNEGO czasu tylko dla nas (od wpisania pinu)
-        if (currentEmployeeName) {
+        const myCurrentCleanName = currentEmployeeName ? String(currentEmployeeName).replace(/\s*\([^)]+\)/g, '').trim() : "";
+        
+        if (myCurrentCleanName) {
             if (!window.mySessionStart) window.mySessionStart = now;
-            if (!empStats.has(currentEmployeeName)) {
-                empStats.set(currentEmployeeName, { lastSeen: now, firstSeen: window.mySessionStart });
+            if (!empStats.has(myCurrentCleanName)) {
+                empStats.set(myCurrentCleanName, { lastSeen: now, firstSeen: window.mySessionStart });
             } else {
-                const stats = empStats.get(currentEmployeeName);
+                const stats = empStats.get(myCurrentCleanName);
                 stats.lastSeen = now; 
                 stats.firstSeen = window.mySessionStart; // Odrzuca stare dane z bazy na rzecz obecnego logowania!
             }
@@ -2366,7 +2460,7 @@ window.updateOnlineEmployees = async function() {
         const onlineData = [];
         empStats.forEach((stats, name) => {
             // Online jeśli wystawił coś max 15 minut temu, lub to my
-            if (now - stats.lastSeen <= 15 * 60 * 1000 || name === currentEmployeeName) {
+            if (now - stats.lastSeen <= 15 * 60 * 1000 || name === myCurrentCleanName) {
                 const diffMs = Math.max(0, now - stats.firstSeen);
                 const diffMins = Math.floor(diffMs / 60000);
                 const hours = Math.floor(diffMins / 60);
