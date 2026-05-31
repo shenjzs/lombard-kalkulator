@@ -3344,3 +3344,90 @@ body:has(.cart-sidebar.active) .online-widget {
     50% { transform: scale(1.15); filter: brightness(1.5); color: #fff; }
     100% { transform: scale(1); filter: brightness(1); }
 }
+
+/* ==========================================================================
+   DYNAMICZNY CZAS TRWANIA DLA POWIADOMIEŃ PAGER
+   ========================================================================== */
+.toast.custom-toast::after {
+    animation-duration: var(--toast-duration, 3s) !important;
+}
+
+/* ==========================================================================
+   POWIADOMIENIA (TOASTS) Z NOWYM PASKIEM POSTĘPU (NAPRAWA KOLORÓW)
+   ========================================================================== */
+.toast-container { 
+    position: fixed; 
+    top: 120px; 
+    right: 30px; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 15px; 
+    z-index: 100000; 
+}
+
+.toast { 
+    background: var(--card-bg); 
+    padding: 20px 35px; 
+    border-radius: 16px; 
+    color: white; 
+    border-left: 6px solid var(--accent-color); 
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6); 
+    animation: slideIn 0.3s ease-out;
+    position: relative;
+    overflow: hidden;
+    transition: opacity 0.3s ease-out;
+}
+
+/* Kolory bocznych ramek dymków */
+.toast.success { border-left-color: var(--success) !important; }
+.toast.danger { border-left-color: var(--danger) !important; }
+.toast.warning { border-left-color: #f59e0b !important; } /* Wbity na sztywno piękny pomarańczowo-żółty */
+.toast.info { border-left-color: var(--accent-color) !important; }
+
+/* Usunięcie starego, zacinającego się paska postępu CSS */
+.toast::after {
+    display: none !important;
+}
+
+/* Nowy, fizyczny pasek postępu sterowany przez skrypt JS */
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    width: 100%;
+    animation: toastProgress linear forwards;
+}
+
+/* Kolory pasków odliczania na dole dymka */
+.toast.success .toast-progress { background: var(--success); }
+.toast.danger .toast-progress { background: var(--danger); }
+.toast.warning .toast-progress { background: #f59e0b; }
+.toast.info .toast-progress { background: var(--accent-color); }
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes toastProgress {
+    0% { width: 100%; }
+    100% { width: 0%; }
+}
+
+ /* Unifikacja i naprawa paska odliczania dla dynamicznych czasów (10s, 15s itd.) */
+        .toast::after {
+            display: none !important;
+        }
+        .toast-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            width: 100%;
+            animation: toastProgress linear forwards;
+        }
+        .toast.success .toast-progress { background: var(--success); }
+        .toast.danger .toast-progress { background: var(--danger); }
+        .toast.warning .toast-progress { background: var(--warning); }
+        .toast.info .toast-progress { background: var(--accent-color); }

@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Kasa fiskalna</title>
-    <link id="theme-style" rel="stylesheet" href="style.css?v=3.9.8">
+    <link id="theme-style" rel="stylesheet" href="style.css?v=3.9.9">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -57,6 +57,9 @@
                     <div id="menu-achievements" class="dropdown-item"><i class="fas fa-trophy" style="color: var(--accent-color);"></i> Osiągnięcia</div>
                     <div id="menu-my-stats" class="dropdown-item"><i class="fas fa-chart-pie"></i> Moje statystyki</div>
                     <div id="menu-my-trans" class="dropdown-item"><i class="fas fa-list"></i> Moje transakcje</div>
+                    
+                    <div id="menu-pager" class="dropdown-item hidden" style="color: var(--accent-color);"><i class="fas fa-broadcast-tower"></i> Nadaj Komunikat</div>
+                    
                     <div id="menu-changelog" class="dropdown-item flex-between-center">
                         <span class="flex-align-center-gap12"><i class="fas fa-clipboard-list"></i> Dziennik zmian</span>
                         <span id="dropdown-notification-dot" class="notification-dot hidden static-dot"></span>
@@ -689,9 +692,53 @@
             </div>
         </div>
     </div>
+
+    <div id="pager-modal" class="modal z-10000">
+        <div class="modal-content settings-modal-content modal-w480">
+            <div class="settings-header">
+                <h2><i class="fas fa-broadcast-tower" style="color: var(--accent-color);"></i> Nadaj komunikat</h2>
+                <button id="close-pager-modal-btn" class="settings-close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <p class="settings-desc mb-20">Wiadomość wyświetli się wybranym pracownikom.</p>
+            <div class="settings-form">
+                <div class="input-group">
+                    <label>Treść komunikatu</label>
+                    <textarea id="pager-msg-input" class="custom-input report-textarea" placeholder="Wpisz treść..." style="height: 80px;"></textarea>
+                </div>
+                <div class="input-group">
+                    <label>Odbiorca</label>
+                    <select id="pager-target-input" class="custom-input">
+                        <option value="ALL">Wszyscy</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Kolor / Typ</label>
+                    <select id="pager-color-input" class="custom-input">
+                        <option value="info">Niebieski (zwykła informacja)</option>
+                        <option value="success">Zielony (sukces)</option>
+                        <option value="warning">Żółty (ostrzeżenie)</option>
+                        <option value="danger">Czerwony (pilne)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Czas wyświetlania na ekranie</label>
+                    <select id="pager-duration-input" class="custom-input">
+                        <option value="3000">3 sekundy</option>
+                        <option value="5000" selected>5 sekund</option>
+                        <option value="10000">10 sekund</option>
+                        <option value="15000">15 sekund</option>
+                    </select>
+                </div>
+                <button id="submit-pager-btn" class="settings-save-btn btn-accent-submit" style="margin-top: 15px;">
+                    <i class="fas fa-paper-plane"></i> Wyślij
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="online-employees-widget" class="online-widget hidden"></div>
     <div id="toast-container" class="toast-container"></div>
     
-    <script src="script.js?v=3.9.8"></script>
+    <script src="script.js?v=3.9.9"></script>
 </body>
 </html>

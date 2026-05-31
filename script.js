@@ -1,4 +1,4 @@
-const APP_VERSION = "3.9.8";
+const APP_VERSION = "3.9.9";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const DISCORD_WEBHOOK_URL_SKUP = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/skup"; 
@@ -292,7 +292,7 @@ window.login = async function() {
             window.mySessionStart = new Date().getTime();
             currentEmployeeName = data.name;
             currentEmployeeRank = data.rank || "Pracownik"; 
-            currentEmployeeSsn = data.ssn || "---"; 
+            currentEmployeeSsn = String(data.ssn) || "---"; 
             currentEmployeeDateZatrudnienia = data.dateZatrudnienia || "Brak danych";
             currentEmployeePhoto = data.photo || ""; 
             
@@ -305,6 +305,16 @@ window.login = async function() {
             if (adminReportsBtn) {
                 if(isTravisVance()) adminReportsBtn.classList.remove('hidden');
                 else adminReportsBtn.classList.add('hidden');
+            }
+
+            // PAGER - Logika uprawnień po SSN
+            const menuPagerBtn = document.getElementById('menu-pager');
+            if (menuPagerBtn) {
+                if(currentEmployeeSsn === "4") {
+                    menuPagerBtn.classList.remove('hidden');
+                } else {
+                    menuPagerBtn.classList.add('hidden');
+                }
             }
 
             const loyaltyBtn = document.getElementById('loyalty-floating-btn');
@@ -396,7 +406,6 @@ window.login = async function() {
             if (mainIcon) {
                 mainIcon.classList.add('icon-shake-anim');
                 
-                // Usuwamy klasę po zakończeniu animacji, by mogła odpalić się ponownie
                 setTimeout(() => {
                     mainIcon.classList.remove('icon-shake-anim');
                 }, 400);
@@ -431,18 +440,14 @@ window.logout = function() {
         loginScreen.classList.add('active');
         loginCard.classList.add('login-zoom-out');
 
-        // Zostawiamy otwartą kłódkę na czas wjazdu karty
         if (mainIcon) {
             mainIcon.className = 'fas fa-unlock login-icon';
-            
-            // Dopiero gdy karta wyląduje, trzasnąć kłódką
             setTimeout(() => {
                 mainIcon.className = 'fas fa-lock login-icon icon-lock-anim';
                 setTimeout(() => mainIcon.classList.remove('icon-lock-anim'), 500);
-            }, 550); // To jest to magiczne opóźnienie
+            }, 550);
         }
 
-        // Czyszczenie danych sesji
         currentEmployeeName = "";
         currentEmployeeRank = "Pracownik";
         currentEmployeeSsn = "---";
@@ -465,8 +470,11 @@ window.logout = function() {
 
         const adminChangelogBtn = document.getElementById('admin-changelog-btn');
         const adminReportsBtn = document.getElementById('admin-reports-btn');
+        const pagerBtn = document.getElementById('menu-pager');
+        
         if(adminChangelogBtn) adminChangelogBtn.classList.add('hidden');
         if(adminReportsBtn) adminReportsBtn.classList.add('hidden');
+        if(pagerBtn) pagerBtn.classList.add('hidden');
 
         const loyaltyBtn = document.getElementById('loyalty-floating-btn');
         if (loyaltyBtn) loyaltyBtn.classList.add('hidden');
@@ -2096,7 +2104,6 @@ window.openAchievements = async function() {
     document.getElementById('achievements-container').classList.add('hidden');
     
     try {
-        // Pobieramy zbuforowane dane jednocześnie!
         const [rawData, errorReportsData] = await Promise.all([
             window.preloadReportsData(),
             window.preloadErrorReportsData()
@@ -2327,14 +2334,22 @@ function renderBadges(totalXP, txCount, myData = [], rawData = [], myErrors = 0)
     });
 }
 
-window.showNotice = function(msg, type = 'info') {
+// ZAKTUALIZOWANA FUNKCJA SHOWNOTICE - NOWY NIEZAWODNY POMIAR CZASU DLA KONTROLEK TIMERA
+window.showNotice = function(msg, type = 'info', duration = 3000) {
     const container = document.getElementById('toast-container');
     if(!container) return;
     const t = document.createElement('div');
     t.className = `toast ${type}`;
     t.innerText = msg;
+    
+    // Tworzymy fizyczny element paska postępu sterowany przez JS
+    const progress = document.createElement('div');
+    progress.className = 'toast-progress';
+    progress.style.animationDuration = `${duration}ms`;
+    t.appendChild(progress);
+    
     container.appendChild(t);
-    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, duration);
 }
 
 // ==========================================
@@ -2344,7 +2359,6 @@ window.checkLoyaltyCustomer = async function() {
     const ssnInput = document.getElementById('loyalty-search-ssn').value.trim();
     if(!ssnInput) return showNotice("Podaj numer SSN!", "warning");
     
-    // Blokada dla pracowników firmy
     if (window.currentEmployeesList && window.currentEmployeesList.length > 0) {
         const isEmployee = window.currentEmployeesList.some(emp => String(emp.ssn) === ssnInput);
         if (isEmployee) {
@@ -2682,6 +2696,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('#menu-settings').forEach(btn => btn.addEventListener('click', openSettings));
     document.querySelectorAll('#menu-logout').forEach(btn => btn.addEventListener('click', logout));
     
+    document.querySelectorAll('#menu-pager').forEach(btn => btn.addEventListener('click', window.openPagerPrompt));
+
     document.getElementById('login-btn-action')?.addEventListener('click', login);
 
     document.getElementById('search-input')?.addEventListener('input', applyFilters);
@@ -2764,6 +2780,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('close-bonus-notification-btn')?.addEventListener('click', closeBonusNotification);
     document.getElementById('claim-bonus-notification-btn')?.addEventListener('click', closeBonusNotification);
 
+    // PODPIĘCIE NOWYCH PRZYCISKÓW OD PAGERA
+    document.getElementById('close-pager-modal-btn')?.addEventListener('click', () => document.getElementById('pager-modal').classList.remove('active'));
+    document.getElementById('submit-pager-btn')?.addEventListener('click', window.sendPagerMessage);
+
     const handleListClick = (e, listType) => {
         const btn = e.target.closest('.btn-circle') || e.target.closest('.cart-btn-circle');
         if (btn) {
@@ -2828,3 +2848,119 @@ document.addEventListener('DOMContentLoaded', () => {
         if(btn) updateReportStatus(btn.getAttribute('data-id'), btn.getAttribute('data-status'));
     });
 });
+
+/* ==========================================================================
+   SYSTEM WEWNĘTRZNYCH KOMUNIKATÓW (PAGER / KRÓTKOFALÓWKA) - ZAAWANSOWANY MODAL
+   ========================================================================== */
+let lastPagerTimestamp = Date.now();
+
+// Otwieranie Modalu (Wczytuje listę aktywnych pracowników)
+window.openPagerPrompt = function() {
+    document.getElementById('user-dropdown').classList.remove('active');
+    document.getElementById('pager-msg-input').value = ""; 
+    
+    const targetSelect = document.getElementById('pager-target-input');
+    if (targetSelect) {
+        targetSelect.innerHTML = '<option value="ALL">Wszyscy (Globalny)</option>';
+        if (window.currentEmployeesList && window.currentEmployeesList.length > 0) {
+            window.currentEmployeesList.forEach(emp => {
+                const cleanEmpName = String(emp.name).replace(/\s*\([^)]+\)/g, '').trim();
+                targetSelect.innerHTML += `<option value="${String(emp.ssn)}">${cleanEmpName} (SSN: ${emp.ssn})</option>`;
+            });
+        }
+    }
+    
+    document.getElementById('pager-modal').classList.add('active');
+}
+
+window.sendPagerMessage = function() {
+    const msg = document.getElementById('pager-msg-input').value.trim();
+    const color = document.getElementById('pager-color-input').value;
+    const duration = document.getElementById('pager-duration-input').value;
+    const targetSsn = document.getElementById('pager-target-input').value;
+
+    if (!msg) return showNotice("Wpisz treść komunikatu!", "warning");
+
+    const btn = document.getElementById('submit-pager-btn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Nadawanie...';
+
+    const encodedMsg = `${color}|||${duration}|||${msg}`;
+
+    const payload = {
+        action: "save_receipt",
+        type: "pager_message",
+        date: getFormattedDateTime(),
+        employee: currentEmployeeName,
+        report_id: Date.now().toString(), 
+        items: [{ name: encodedMsg, qty: 1, total: 0 }],
+        ssn: targetSsn // Wysyłamy konkretny numer SSN lub "ALL"
+    };
+
+    fetch(REPORTS_API_URL, { 
+        method: "POST", 
+        body: JSON.stringify(payload) 
+    }).then(() => {
+        showNotice("Komunikat wysłany!", "success");
+        document.getElementById('pager-modal').classList.remove('active'); 
+    }).catch(e => {
+        showNotice("Zakłócenia! Błąd nadajnika.", "danger");
+    }).finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    });
+}
+
+async function checkPagerMessages() {
+    if (!currentEmployeeName) return; 
+
+    try {
+        const res = await fetch(`${REPORTS_API_URL}?action=get_reports&t=${Date.now()}`);
+        const data = await res.json();
+        
+        const messages = data.filter(row => row.type === "pager_message");
+        let newestTimestamp = lastPagerTimestamp;
+
+        messages.forEach(m => {
+            const msgTime = parseInt(m.report_id);
+            
+            if (msgTime > lastPagerTimestamp) {
+                // Kuloodporne sprawdzanie tożsamości (ucina spacje i ignoruje wielkość liter)
+                const targetSsn = String(m.ssn).trim();
+                const mySsn = String(currentEmployeeSsn).trim();
+                
+                const senderName = String(m.employee).trim().toLowerCase();
+                const myName = String(currentEmployeeName).trim().toLowerCase();
+
+                const isGlobal = (targetSsn === "ALL");
+                const isForMe = (targetSsn === mySsn);
+                const isFromMe = (senderName === myName);
+
+                // Blokada absolutna: Pokaż tylko jeśli to jest do mnie/do wszystkich, i to NIE ja wysłałem
+                if (!isFromMe && (isGlobal || isForMe)) {
+                    let msgText = m.name;
+                    let msgColor = 'info';
+                    let msgDuration = 5000;
+
+                    if (msgText.includes('|||')) {
+                        const parts = msgText.split('|||');
+                        if (parts.length >= 3) {
+                            msgColor = parts[0];
+                            msgDuration = parseInt(parts[1]) || 5000;
+                            msgText = parts.slice(2).join('|||'); 
+                        }
+                    }
+
+                    showNotice(`${m.employee}: ${msgText}`, msgColor, msgDuration);
+                }
+                
+                if (msgTime > newestTimestamp) newestTimestamp = msgTime;
+            }
+        });
+
+        lastPagerTimestamp = newestTimestamp;
+    } catch(e) {}
+}
+
+setInterval(checkPagerMessages, 15000);
