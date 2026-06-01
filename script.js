@@ -2937,8 +2937,9 @@ async function checkPagerMessages() {
                 const isForMe = (targetSsn === mySsn);
                 const isFromMe = (senderName === myName);
 
-                // Blokada absolutna: Pokaż tylko jeśli to jest do mnie/do wszystkich, i to NIE ja wysłałem
-                if (!isFromMe && (isGlobal || isForMe)) {
+                // NOWA LOGIKA: Pokaż, jeśli komunikat jest globalny (nawet od Ciebie) 
+                // LUB jeśli jest skierowany bezpośrednio do Ciebie od kogoś innego
+                if (isGlobal || (isForMe && !isFromMe)) {
                     let msgText = m.name;
                     let msgColor = 'info';
                     let msgDuration = 5000;
