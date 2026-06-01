@@ -2269,7 +2269,7 @@ function renderBadges(totalXP, txCount, myData = [], rawData = [], myErrors = 0)
         { icon: "fa-truck-loading", name: "Wilk z Wall Street", desc: "Sprzedaj towar z magazynu (eksport).", current: totalSellVolume, isMoney: true, 
           tiers: [{ max: 100000, color: tierColors[0] }, { max: 400000, color: tierColors[1] }, { max: 850000, color: tierColors[2] }] },
           
-        { icon: "fa-users", name: "Znajoma twarz", desc: "Obsłuż unikal klientów (różne numery SSN).", current: uniqueClients.size, 
+        { icon: "fa-users", name: "Znajoma twarz", desc: "Obsłuż unikalnych klientów (różne numery SSN).", current: uniqueClients.size, 
           tiers: [{ max: 20, color: tierColors[0] }, { max: 40, color: tierColors[1] }, { max: 70, color: tierColors[2] }] },
           
         { icon: "fa-fire", name: "Pracoholik", desc: "Zrealizuj przynajmniej jedną transakcję dziennie pod rząd.", current: maxStreak, 
