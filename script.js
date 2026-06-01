@@ -1,4 +1,4 @@
-const APP_VERSION = "4.0.0";
+const APP_VERSION = "4.0.1";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const DISCORD_WEBHOOK_URL_SKUP = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/skup"; 
@@ -909,7 +909,28 @@ window.sendToDiscord = async function() {
     };
 
     try {
-        const canvas = await html2canvas(area, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
+        const canvas = await html2canvas(area, { 
+            scale: 2, 
+            backgroundColor: "#ffffff", 
+            useCORS: true,
+            onclone: (clonedDoc) => {
+                const clonedArea = clonedDoc.getElementById('receipt-capture-area');
+                if (clonedArea) {
+                    const receiptEl = clonedArea.querySelector('.receipt');
+                    const stampEl = clonedArea.querySelector('.receipt-stamp');
+                    if (receiptEl) {
+                        receiptEl.style.setProperty('animation', 'none', 'important');
+                        receiptEl.style.setProperty('transform', 'translate(0, 0)', 'important');
+                    }
+                    if (stampEl) {
+                        stampEl.style.setProperty('animation', 'none', 'important');
+                        stampEl.style.setProperty('transform', 'scale(1) rotate(-15deg)', 'important');
+                        stampEl.style.setProperty('opacity', '0.8', 'important');
+                    }
+                }
+            }
+        });
+
         canvas.toBlob(async (blob) => {
             const formData = new FormData();
             formData.append("file", blob, "paragon.png");
@@ -981,7 +1002,28 @@ window.copyReceiptToClipboard = async function() {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generowanie...';
 
     try {
-        const canvas = await html2canvas(area, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
+        const canvas = await html2canvas(area, { 
+            scale: 2, 
+            backgroundColor: "#ffffff", 
+            useCORS: true,
+            onclone: (clonedDoc) => {
+                const clonedArea = clonedDoc.getElementById('receipt-capture-area');
+                if (clonedArea) {
+                    const receiptEl = clonedArea.querySelector('.receipt');
+                    const stampEl = clonedArea.querySelector('.receipt-stamp');
+                    if (receiptEl) {
+                        receiptEl.style.setProperty('animation', 'none', 'important');
+                        receiptEl.style.setProperty('transform', 'translate(0, 0)', 'important');
+                    }
+                    if (stampEl) {
+                        stampEl.style.setProperty('animation', 'none', 'important');
+                        stampEl.style.setProperty('transform', 'scale(1) rotate(-15deg)', 'important');
+                        stampEl.style.setProperty('opacity', '0.8', 'important');
+                    }
+                }
+            }
+        });
+
         canvas.toBlob(async (blob) => {
             try {
                 const data = [new ClipboardItem({ [blob.type]: blob })];
@@ -1324,7 +1366,28 @@ window.sendToDiscordExport = async function() {
     };
 
     try {
-        const canvas = await html2canvas(area, { scale: 3, backgroundColor: "#ffffff", useCORS: true });
+        const canvas = await html2canvas(area, { 
+            scale: 3, 
+            backgroundColor: "#ffffff", 
+            useCORS: true,
+            onclone: (clonedDoc) => {
+                const clonedArea = clonedDoc.getElementById('receipt-capture-area-export');
+                if (clonedArea) {
+                    const receiptEl = clonedArea.querySelector('.receipt');
+                    const stampEl = clonedArea.querySelector('.receipt-stamp');
+                    if (receiptEl) {
+                        receiptEl.style.setProperty('animation', 'none', 'important');
+                        receiptEl.style.setProperty('transform', 'translate(0, 0)', 'important');
+                    }
+                    if (stampEl) {
+                        stampEl.style.setProperty('animation', 'none', 'important');
+                        stampEl.style.setProperty('transform', 'scale(1) rotate(-15deg)', 'important');
+                        stampEl.style.setProperty('opacity', '0.8', 'important');
+                    }
+                }
+            }
+        });
+
         canvas.toBlob(async (blob) => {
             const formData = new FormData();
             formData.append("file", blob, "raport.png");
@@ -2629,7 +2692,7 @@ function renderOnlineWidget(onlineData) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-	// --- GENERATOR AMBIENTOWEGO TŁA ---
+    // --- GENERATOR AMBIENTOWEGO TŁA ---
     const ambientContainer = document.createElement('div');
     ambientContainer.id = 'ambient-background';
     document.body.prepend(ambientContainer);
