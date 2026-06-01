@@ -1,4 +1,4 @@
-const APP_VERSION = "3.9.9";
+const APP_VERSION = "4.0.0";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const DISCORD_WEBHOOK_URL_SKUP = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/skup"; 
@@ -849,6 +849,16 @@ function finalizeQuote(employeeName, finalPrice) {
 
     const quoteModal = document.getElementById('quote-modal');
     if(quoteModal) quoteModal.classList.add('active');
+	// --- DODANE: Restart animacji pieczątki i trzęsienia ---
+    const receiptBox = document.getElementById('receipt');
+    const stampBox = document.querySelector('#receipt .receipt-stamp');
+    if (receiptBox && stampBox) {
+        receiptBox.classList.remove('receipt-shake');
+        stampBox.style.animation = 'none';
+        void receiptBox.offsetWidth; // Magiczna sztuczka wymuszająca reflow w przeglądarce
+        receiptBox.classList.add('receipt-shake');
+        stampBox.style.animation = '';
+    }
 }
 
 window.sendToDiscord = async function() {
@@ -1240,7 +1250,7 @@ window.finalizeQuoteExport = function(employeeName) {
     if (currentCustomerSSNExport !== "") employeeText += `<br>KLIENT (SSN): ${currentCustomerSSNExport}`;
 
     const receiptHTML = `
-        <div class="receipt">
+        <div class="receipt receipt-shake">
             <div class="receipt-header">
                 <h2>EL CARTEL EXPORT</h2>
                 <p class="receipt-meta">Raport sprzedaży przedmiotów</p>
@@ -2619,6 +2629,32 @@ function renderOnlineWidget(onlineData) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+	// --- GENERATOR AMBIENTOWEGO TŁA ---
+    const ambientContainer = document.createElement('div');
+    ambientContainer.id = 'ambient-background';
+    document.body.prepend(ambientContainer);
+
+    // Generujemy 40 losowych cząsteczek
+    for (let i = 0; i < 50; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'ambient-particle';
+        
+        // Losowy rozmiar (od 1px do 3px)
+        const size = Math.random() * 2 + 1; 
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        
+        // Losowa pozycja na szerokości ekranu
+        particle.style.left = `${Math.random() * 100}vw`;
+        
+        // Losowy czas lotu do góry (od 10 do 25 sekund)
+        particle.style.animationDuration = `${Math.random() * 15 + 10}s`; 
+        
+        // Losowe opóźnienie startu (żeby nie wyleciały wszystkie naraz)
+        particle.style.animationDelay = `${Math.random() * 10}s`;
+        
+        ambientContainer.appendChild(particle);
+    }
     const loginPinInput = document.getElementById('employee-login-pin');
     if (loginPinInput) loginPinInput.addEventListener('keypress', function(e) { if (e.key === 'Enter') login(); });
 
@@ -2847,6 +2883,39 @@ document.addEventListener('DOMContentLoaded', () => {
         const btn = e.target.closest('[data-action="admin-status"]');
         if(btn) updateReportStatus(btn.getAttribute('data-id'), btn.getAttribute('data-status'));
     });
+
+    // --- HOLOGRAFICZNY EFEKT 3D NA IDENTYFIKATORZE ---
+    const tiltCard = document.getElementById('tilt-card-element');
+    const glare = document.querySelector('.id-card-glare');
+
+    if (tiltCard) {
+        tiltCard.addEventListener('mousemove', (e) => {
+            const rect = tiltCard.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            
+            const rotateY = ((x - centerX) / centerX) * 12;
+            const rotateX = ((centerY - y) / centerY) * 12;
+
+            tiltCard.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            tiltCard.style.boxShadow = `${-rotateY}px ${rotateX}px 40px rgba(0, 0, 0, 0.7)`;
+            
+            if (glare) {
+                glare.style.opacity = '1';
+                glare.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(255,255,255,0.3) 0%, transparent 60%)`;
+            }
+        });
+
+        tiltCard.addEventListener('mouseleave', () => {
+            tiltCard.style.transform = `rotateX(0deg) rotateY(0deg)`;
+            tiltCard.style.boxShadow = `0 10px 30px rgba(0,0,0,0.5)`;
+            if (glare) glare.style.opacity = '0';
+        });
+    }
+
 });
 
 /* ==========================================================================

@@ -656,7 +656,7 @@ header p {
 
 .item-card {
     background: var(--card-bg);
-    padding: 25px;
+    padding: 15px 20px;
     border-radius: 20px;
     display: flex;
     justify-content: space-between;
@@ -665,6 +665,8 @@ header p {
     transition: var(--transition-normal);
     position: relative;
     overflow: hidden;
+    min-height: 105px;
+    height: 100%;
 }
 
 .item-card.hidden {
@@ -732,7 +734,9 @@ header p {
 .item-info {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    justify-content: center;
+    gap: 6px;
+    max-width: 60%;
 }
 
 .item-name {
@@ -3431,3 +3435,110 @@ body:has(.cart-sidebar.active) .online-widget {
         .toast.danger .toast-progress { background: var(--danger); }
         .toast.warning .toast-progress { background: var(--warning); }
         .toast.info .toast-progress { background: var(--accent-color); }
+
+        
+/* ==========================================================================
+   ANIMACJA UDERZENIA PIECZĄTKI I TRZĘSIENIA PARAGONU
+   ========================================================================== */
+.receipt-stamp {
+    opacity: 0;
+    /* Używamy agresywnej krzywej, żeby uderzenie miało "zryw" */
+    animation: stampHit 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.27) forwards;
+    animation-delay: 0.15s; /* Dajemy ułamek sekundy na otwarcie się modala */
+}
+
+.receipt-shake {
+    animation: receiptShake 0.3s ease-in-out forwards;
+    animation-delay: 0.15s; /* Trzęsienie zsynchronizowane z momentem uderzenia */
+}
+
+@keyframes stampHit {
+    0% { opacity: 0; transform: scale(3.5) rotate(-35deg); }
+    50% { opacity: 1; transform: scale(0.85) rotate(-10deg); }
+    100% { opacity: 1; transform: scale(1) rotate(-15deg); } /* Docelowy kąt Twojej pieczątki */
+}
+
+@keyframes receiptShake {
+    0% { transform: translate(0, 0); }
+    20% { transform: translate(-4px, 4px) rotate(-1deg); }
+    40% { transform: translate(4px, -2px) rotate(1deg); }
+    60% { transform: translate(-2px, 2px) rotate(0deg); }
+    80% { transform: translate(2px, -1px) rotate(0deg); }
+    100% { transform: translate(0, 0); }
+}
+
+/* ==========================================================================
+   HOLOGRAFICZNY EFEKT 3D NA IDENTYFIKATORZE (OSTATECZNA NAPRAWA)
+   ========================================================================== */
+/* 1. Ukrywamy tło głównego kontenera modala, żeby uniknąć "podwójnych ramek" */
+.id-modal-content {
+    perspective: 1200px; /* Dodaje głębię */
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+/* 2. Cała fizyka, obrót i wygląd spadają bezpośrednio na kartę */
+#tilt-card-element {
+    transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
+    position: relative;
+    overflow: hidden; /* Przycina wszystko do ramki */
+    will-change: transform;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    border-radius: 16px; 
+    background: var(--card-bg); /* Przywraca tło karty */
+    
+    /* Magiczne linijki naprawiające kanciaste krawędzie i bugi 3D (antyaliasing) */
+    transform: translateZ(0); 
+    -webkit-font-smoothing: antialiased;
+    backface-visibility: hidden;
+}
+
+/* 3. Holograficzny odblask podążający za myszką */
+.id-card-glare {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.15), transparent 60%);
+    opacity: 0; 
+    pointer-events: none; 
+    z-index: 100;
+    transition: opacity 0.3s ease;
+    mix-blend-mode: overlay; 
+}
+
+/* ==========================================================================
+   AMBIENTOWE TŁO (UNOSZĄCY SIĘ PYŁ / ISKRY)
+   ========================================================================== */
+#ambient-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -10; /* Głęboko w tle, pod wszystkim */
+    pointer-events: none; /* Nie blokuje klikania w aplikację */
+    overflow: hidden;
+}
+
+.ambient-particle {
+    position: absolute;
+    bottom: -20px;
+    background-color: var(--accent-color);
+    border-radius: 50%;
+    opacity: 0;
+    animation: floatUp linear infinite;
+    /* Lekka poświata wokół każdej drobinki */
+    box-shadow: 0 0 6px var(--accent-color);
+}
+
+/* Fizyka unoszenia i zanikania */
+@keyframes floatUp {
+    0% { transform: translateY(0) scale(1); opacity: 0; }
+    10% { opacity: 0.3; } /* Delikatnie się pojawia */
+    80% { opacity: 0.1; } /* Powoli przygasa wyżej */
+    100% { transform: translateY(-100vh) scale(0.5); opacity: 0; }
+}
