@@ -115,6 +115,8 @@ body:has(.login-container.active) .summary-bar {
     align-items: center;
     gap: 10px;
     letter-spacing: 1px;
+    white-space: nowrap; /* KLUCZOWE: Zabrania przenoszenia "SYSTEM" do nowej linii */
+    flex-shrink: 0; /* KLUCZOWE: Zabrania zgniatania logo przez inne elementy */
 }
 
 .nav-logo i {
@@ -145,6 +147,7 @@ body:has(.login-container.active) .summary-bar {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     overflow: hidden;
+    white-space: nowrap; /* Zabrania łamania tekstów również na przyciskach */
 }
 
 .nav-link-btn i {
