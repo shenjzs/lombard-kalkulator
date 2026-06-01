@@ -3248,23 +3248,34 @@ body:has(.cart-sidebar.active) .online-widget {
 }
 
 /* ==========================================================================
-   ZAGĘSZCZENIE MENU DLA EKRANÓW LAPTOPÓW (np. MACBOOK)
+   ZAGĘSZCZENIE MENU DLA EKRANÓW LAPTOPÓW (np. MACBOOK) - POPRAWKA 2.0
    ========================================================================== */
 @media (max-width: 1440px) {
     .navbar {
-        padding: 15px 20px; /* Zmniejsza boczne marginesy całego paska */
+        padding: 12px 15px; /* Minimalne marginesy boczne */
+        width: 100%;
+        max-width: 100vw; /* Żelazna blokada wyjeżdżania za ekran */
+        box-sizing: border-box;
     }
     
     .nav-links, .nav-left, .nav-right {
-        gap: 8px; /* Zmniejsza odstępy między poszczególnymi przyciskami */
+        gap: 6px; /* Mniejsze odstępy między guzikami */
     }
     
-    .nav-link-btn {
-        padding: 10px 14px; /* Odchudza przyciski w środku */
-        font-size: 0.85rem; /* Delikatnie zmniejsza czcionkę na przyciskach */
+    /* TU BYŁ PIES POGRZEBANY: Dodano .user-profile-btn do kompresji */
+    .nav-link-btn, .user-profile-btn {
+        padding: 8px 12px; /* Ciasne przyciski w środku */
+        font-size: 0.8rem; /* Mniejsza czcionka dla przycisków */
+        gap: 6px; /* Mniejszy odstęp między ikonką a tekstem */
     }
     
     .nav-logo {
-        font-size: 1.1rem; /* Delikatnie mniejsze logo */
+        font-size: 1.05rem; 
+        gap: 6px;
+    }
+
+    .avatar-sm {
+        width: 24px;
+        height: 24px;
     }
 }
