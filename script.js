@@ -2276,13 +2276,13 @@ function renderBadges(totalXP, txCount, myData = [], rawData = [], myErrors = 0)
           tiers: [{ max: 3, color: tierColors[0] }, { max: 7, color: tierColors[1] }, { max: 14, color: tierColors[2] }] },
 
         // --- OSIĄGNIĘCIA JEDNOPOZIOMOWE (Unikalne) ---
-        { icon: "fa-bolt", name: "Szybka Fucha", desc: "Zrealizuj 5 transakcji w czasie poniżej 10 minut.", current: fastHustleAchieved, 
+        { icon: "fa-bolt", name: "Szybka fucha", desc: "Zrealizuj 5 transakcji w czasie poniżej 10 minut.", current: fastHustleAchieved, 
           tiers: [{ max: 1, color: "#f97316" }] },
           
         { icon: "fa-briefcase", name: "Prawa ręka", desc: "Zrealizuj transakcję na tej samej zmianie z szefem.", current: servedWhileBossOnline ? 1 : 0, 
           tiers: [{ max: 1, color: "#eab308" }] },
           
-        { icon: "fa-feather", name: "Czyste Sumienie", desc: "Zrealizuj minimum 50 transakcji nie mając żadnej pomyłki.", current: (txCount >= 50 && myErrors === 0) ? 1 : 0, 
+        { icon: "fa-feather", name: "Czyste sumienie", desc: "Zrealizuj minimum 50 transakcji nie mając żadnej pomyłki.", current: (txCount >= 50 && myErrors === 0) ? 1 : 0, 
           tiers: [{ max: 1, color: "#14b8a6" }] }
     ];
     
