@@ -3562,3 +3562,25 @@ body:has(.cart-sidebar.active) .online-widget {
 .disable-animations.receipt-shake {
     transform: translate(0, 0) !important; /* Blokuje wykrzywienie całego paragonu na screenie */
 }
+
+/* ==========================================================================
+   ZAGĘSZCZENIE MENU DLA EKRANÓW LAPTOPÓW (np. MACBOOK)
+   ========================================================================== */
+@media (max-width: 1440px) {
+    .navbar {
+        padding: 15px 20px; /* Zmniejsza boczne marginesy całego paska */
+    }
+    
+    .nav-links, .nav-left, .nav-right {
+        gap: 8px; /* Zmniejsza odstępy między poszczególnymi przyciskami */
+    }
+    
+    .nav-link-btn {
+        padding: 10px 14px; /* Odchudza przyciski w środku */
+        font-size: 0.85rem; /* Delikatnie zmniejsza czcionkę na przyciskach */
+    }
+    
+    .nav-logo {
+        font-size: 1.1rem; /* Delikatnie mniejsze logo */
+    }
+}
