@@ -15,12 +15,14 @@ let topItemsChartInstance = null;
 let cashflowChartInstance = null;
 let peakHoursChartInstance = null; 
 let bonusesChartInstance = null;
+let productDetailsChartInstance = null; // Wykres w oknie produktu
 window.currentGlobalGoal = 0;
 
 // Globalna zmienna przechowująca przetworzone dane dla wyszukiwarki
 window.globalSortedTransactions = [];
 window.currentEmployeesList = []; // Lista pracowników do edycji
 window.globalRawFeed = []; // Globalne logi do profili pracownika
+window.currentFilteredFeed = []; // Tabela z danymi tylko z obecnego filtru (do statystyk przedmiotów)
 window.globalBonuses = []; // Globalne premie
 window.globalLoyaltyData = []; // Baza klientów (pieczątki)
 let currentEmployeeName = "";
@@ -567,6 +569,8 @@ async function loadRealData() {
             }
         });
         
+        window.currentFilteredFeed = rawFeed;
+
         // Odjęcie wypłaconych premii od zysku netto
         totalProfit -= totalBonuses;
 
@@ -595,8 +599,8 @@ async function loadRealData() {
             }
             
             tbody.innerHTML = items.map(item => `
-                <tr>
-                    <td>${item.name}</td>
+                <tr onclick="window.openProductStats('${item.name.replace(/'/g, "\\'")}')" style="cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'" title="Kliknij, aby otworzyć statystyki produktu">
+                    <td style="color: var(--accent-color); font-weight: 800;"><i class="fas fa-box" style="margin-right: 8px; opacity: 0.7;"></i> ${item.name}</td>
                     <td style="text-align: center;"><span class="qty-badge">x${item.qty}</span></td>
                     <td style="text-align: right;" class="price-val" style="color: ${isExpense ? 'var(--danger)' : 'var(--success)'}">
                         ${isExpense ? '-' : '+'}${window.formatMoney(item.total)}$
@@ -1001,6 +1005,225 @@ function renderCharts(groupedSell, dailyData, hourlyData, groupedBonuses) {
             }
         });
     }
+}
+
+// ==========================================
+// STATYSTYKI ZAAWANSOWANE PRODUKTU (MODAL)
+// ==========================================
+window.openProductStats = function(itemName) {
+    if (!window.currentFilteredFeed) return;
+
+    // Bierzemy WSZYSTKIE transakcje dla danego produktu (niezależnie czy skup czy sprzedaż)
+    const txs = window.currentFilteredFeed.filter(tx => tx.name === itemName);
+    if(txs.length === 0) return showNotice("Brak danych dla tego przedmiotu w obecnym widoku.", "warning");
+
+    let buyQty = 0, buyVal = 0, buyMax = 0, buyMin = Infinity;
+    let sellQty = 0, sellVal = 0, sellMax = 0, sellMin = Infinity;
+
+    // Dane do wykresu z podziałem na dni/czas
+    let chartDataMap = {}; 
+
+    const sortedTxs = [...txs].sort((a, b) => parseDate(a.date).getTime() - parseDate(b.date).getTime());
+
+    sortedTxs.forEach(tx => {
+        const qty = tx.qty || 1;
+        const val = tx.total || 0;
+        const unitPrice = qty > 0 ? val / qty : 0;
+        const isBuy = tx.type === 'skup';
+
+        if (isBuy) {
+            buyQty += qty;
+            buyVal += val;
+            if(unitPrice > buyMax) buyMax = unitPrice;
+            if(unitPrice < buyMin) buyMin = unitPrice;
+        } else {
+            sellQty += qty;
+            sellVal += val;
+            if(unitPrice > sellMax) sellMax = unitPrice;
+            if(unitPrice < sellMin) sellMin = unitPrice;
+        }
+
+        let displayDate = tx.date;
+        if (typeof displayDate === 'string' && displayDate.includes('T')) {
+            const d = new Date(displayDate);
+            displayDate = d.toLocaleDateString('pl-PL') + ' ' + d.toLocaleTimeString('pl-PL', {hour: '2-digit', minute:'2-digit'});
+        } else if (typeof displayDate === 'string') {
+            const parts = displayDate.split(' ');
+            if (parts.length > 1) {
+                displayDate = parts[0] + ' ' + parts[1].substring(0, 5);
+            }
+        }
+
+        if(!chartDataMap[displayDate]) {
+            chartDataMap[displayDate] = { volume: 0, buyCount: 0, sellCount: 0, buySum: 0, sellSum: 0 };
+        }
+        
+        chartDataMap[displayDate].volume += qty;
+        
+        if(isBuy) {
+            chartDataMap[displayDate].buySum += val;
+            chartDataMap[displayDate].buyCount += qty;
+        } else {
+            chartDataMap[displayDate].sellSum += val;
+            chartDataMap[displayDate].sellCount += qty;
+        }
+    });
+
+    if(buyMin === Infinity) buyMin = 0;
+    if(sellMin === Infinity) sellMin = 0;
+
+    const buyAvg = buyQty > 0 ? buyVal / buyQty : 0;
+    const sellAvg = sellQty > 0 ? sellVal / sellQty : 0;
+    
+    // Obliczanie zysku na czysto - na bazie średniej ceny kupna względem sprzedanych sztuk
+    const estimatedProfit = (sellQty * sellAvg) - (sellQty * buyAvg);
+
+    // Podstawianie danych do UI
+    document.getElementById('ps-item-name').innerText = itemName;
+    document.getElementById('ps-total-profit').innerText = window.formatMoney(estimatedProfit) + '$';
+
+    document.getElementById('ps-buy-qty').innerText = buyQty + ' szt.';
+    document.getElementById('ps-buy-val').innerText = window.formatMoney(buyVal) + '$';
+    document.getElementById('ps-buy-avg').innerText = window.formatMoney(buyAvg) + '$';
+    document.getElementById('ps-buy-minmax').innerText = window.formatMoney(buyMin) + '$ / ' + window.formatMoney(buyMax) + '$';
+
+    document.getElementById('ps-sell-qty').innerText = sellQty + ' szt.';
+    document.getElementById('ps-sell-val').innerText = window.formatMoney(sellVal) + '$';
+    document.getElementById('ps-sell-avg').innerText = window.formatMoney(sellAvg) + '$';
+    document.getElementById('ps-sell-minmax').innerText = window.formatMoney(sellMin) + '$ / ' + window.formatMoney(sellMax) + '$';
+
+    document.getElementById('product-stats-modal').classList.remove('hidden');
+
+    // Przygotowanie tablic do rysowania wykresu
+    let labels = [];
+    let buyPrices = [];
+    let sellPrices = [];
+    let volumes = [];
+
+    for (const [dateStr, data] of Object.entries(chartDataMap)) {
+        labels.push(dateStr);
+        volumes.push(data.volume);
+        
+        let curBuy = data.buyCount > 0 ? data.buySum / data.buyCount : null;
+        let curSell = data.sellCount > 0 ? data.sellSum / data.sellCount : null;
+
+        buyPrices.push(curBuy);
+        sellPrices.push(curSell);
+    }
+
+    const ctx = document.getElementById('productDetailsChart');
+    if (ctx) {
+        if (productDetailsChartInstance) {
+            productDetailsChartInstance.destroy();
+        }
+
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
+        Chart.defaults.font.family = "'Inter', sans-serif";
+
+        productDetailsChartInstance = new Chart(ctx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Średnia cena SKUPU ($)',
+                        data: buyPrices,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        spanGaps: true, // Łączy punkty nawet, jeśli w danym dniu nie było operacji skupu
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Średnia cena SPRZEDAŻY ($)',
+                        data: sellPrices,
+                        borderColor: '#22c55e',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        spanGaps: true, // Łączy punkty przeskakując przez luki (null)
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Wolumen (szt.)',
+                        data: volumes,
+                        type: 'bar',
+                        backgroundColor: 'rgba(56, 189, 248, 0.2)',
+                        borderColor: '#38bdf8',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: { color: '#94a3b8', font: { size: 10 } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    if (context.datasetIndex === 2) {
+                                        label += context.parsed.y + ' szt.';
+                                    } else {
+                                        label += window.formatMoney(context.parsed.y) + '$';
+                                    }
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            maxTicksLimit: 7,
+                            maxRotation: 0,
+                            autoSkip: true,
+                            font: { size: 9 }
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        beginAtZero: true,
+                        title: { display: true, text: 'Cena ($)', color: '#fff', font: {size: 10} },
+                        ticks: { font: { size: 9 } }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        beginAtZero: true,
+                        grid: { drawOnChartArea: false },
+                        title: { display: true, text: 'Wolumen (szt.)', color: '#38bdf8', font: {size: 10} },
+                        ticks: { font: { size: 9 }, stepSize: 1 }
+                    }
+                }
+            }
+        });
+    }
+}
+
+window.closeProductStats = function() {
+    document.getElementById('product-stats-modal').classList.add('hidden');
 }
 
 // ==========================================

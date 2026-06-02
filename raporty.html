@@ -527,6 +527,53 @@
         </div>
     </div>
 
+    <!-- MODAL - STATYSTYKI PRODUKTU -->
+    <div id="product-stats-modal" class="emp-modal-overlay hidden" style="z-index: 10010;">
+        <div class="emp-modal-content" style="max-width: 700px;">
+            <div class="emp-modal-header">
+                <h2 style="color: var(--accent-color);"><i class="fas fa-box-open"></i> Statystyki produktu</h2>
+                <button onclick="closeProductStats()" class="emp-close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="emp-modal-body">
+                <h3 id="ps-item-name" style="text-align: center; font-size: 1.8rem; margin-bottom: 20px; color: white;">Nazwa Produktu</h3>
+                
+                <!-- Czysty zysk i ogólne podsumowanie -->
+                <div class="p-stat-box" style="text-align: center; margin-bottom: 20px; border: 1px solid var(--warning); background: rgba(245, 158, 11, 0.05);">
+                    <div style="font-size:0.75rem; color:var(--warning); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px; font-weight: 800;">Szacowany zysk na produkcie (Netto)</div>
+                    <div class="p-stat-val" id="ps-total-profit" style="color:var(--warning); text-shadow: 0 0 10px rgba(245,158,11,0.3);">0$</div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                    <!-- Kolumna SKUP -->
+                    <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 16px; padding: 20px;">
+                        <h4 style="color: var(--danger); text-align: center; margin-bottom: 15px; font-weight: 800; font-size: 1.1rem;"><i class="fas fa-shopping-basket"></i> SKUP</h4>
+                        <div class="insight-row" style="margin-bottom: 8px;"><span class="insight-label">Wolumen</span> <span class="insight-value" id="ps-buy-qty">0 szt.</span></div>
+                        <div class="insight-row" style="margin-bottom: 8px;"><span class="insight-label">Wydano</span> <span class="insight-value" style="color: var(--danger);" id="ps-buy-val">0$</span></div>
+                        <div class="insight-row" style="margin-bottom: 8px;"><span class="insight-label">Śr. cena/szt.</span> <span class="insight-value" id="ps-buy-avg">0$</span></div>
+                        <div class="insight-row"><span class="insight-label">Min / Max</span> <span class="insight-value" id="ps-buy-minmax">0$ / 0$</span></div>
+                    </div>
+
+                    <!-- Kolumna SPRZEDAŻ -->
+                    <div style="background: rgba(34, 197, 94, 0.05); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 16px; padding: 20px;">
+                        <h4 style="color: var(--success); text-align: center; margin-bottom: 15px; font-weight: 800; font-size: 1.1rem;"><i class="fas fa-truck-loading"></i> SPRZEDAŻ</h4>
+                        <div class="insight-row" style="margin-bottom: 8px;"><span class="insight-label">Wolumen</span> <span class="insight-value" id="ps-sell-qty">0 szt.</span></div>
+                        <div class="insight-row" style="margin-bottom: 8px;"><span class="insight-label">Zarobiono</span> <span class="insight-value" style="color: var(--success);" id="ps-sell-val">0$</span></div>
+                        <div class="insight-row" style="margin-bottom: 8px;"><span class="insight-label">Śr. cena/szt.</span> <span class="insight-value" id="ps-sell-avg">0$</span></div>
+                        <div class="insight-row"><span class="insight-label">Min / Max</span> <span class="insight-value" id="ps-sell-minmax">0$ / 0$</span></div>
+                    </div>
+                </div>
+
+                <!-- NOWA SEKCJA Z WYKRESEM SPECJALNYM DLA PRODUKTU -->
+                <div style="margin-top: 25px; padding-top: 20px; border-top: 1px dashed rgba(255,255,255,0.1);">
+                    <h4 style="font-size: 0.9rem; font-weight: 800; color: var(--accent-color); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; text-align: center;"><i class="fas fa-chart-line"></i> Historia wahań ceny (Skup vs Sprzedaż)</h4>
+                    <div class="chart-wrapper" style="height: 250px; width: 100%; position: relative; padding: 0;">
+                        <canvas id="productDetailsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="report-download-zone" style="position: absolute; left: -9999px;">
         <div id="report-visual-card" class="visual-report-template">
             <div class="v-report-header">
