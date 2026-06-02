@@ -1642,16 +1642,25 @@ body:has(.modal.active) .summary-bar {
     border: 1px solid var(--border-color);
     border-radius: 14px;
     min-width: 220px;
-    display: none;
     flex-direction: column;
     overflow: hidden;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
     z-index: 1001;
+    
+    /* EFEKT ROLETY */
+    display: flex; 
+    opacity: 0;
+    visibility: hidden;
+    clip-path: inset(0 0 100% 0); /* Ucina 100% widoczności od dołu na start */
+    pointer-events: none; 
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .user-dropdown.active {
-    display: flex;
-    animation: fadeIn 0.2s ease;
+    opacity: 1;
+    visibility: visible;
+    clip-path: inset(0 0 0 0); /* Roleta zjeżdża całkowicie w dół (0% ucięcia) */
+    pointer-events: auto;
 }
 
 .dropdown-item {
