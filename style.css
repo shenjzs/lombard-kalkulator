@@ -657,19 +657,23 @@ header p {
     display: none;
 }
 
+/* TĘ CZĘŚĆ ZAKTUALIZOWANO ABY ZDJĘCIA I TEKST SIĘ NIE GNIOTŁY */
 .item-card {
     background: var(--card-bg);
     padding: 15px 20px;
     border-radius: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     border: 1px solid var(--border-color);
     transition: var(--transition-normal);
     position: relative;
     overflow: hidden;
     min-height: 105px;
     height: 100%;
+    
+    /* Zmiany dla idealnego rozłożenia */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px; /* Zmniejszono z 15px, aby dać więcej miejsca na tekst */
 }
 
 .item-card.hidden {
@@ -702,7 +706,7 @@ header p {
 
 .custom-item-name {
     width: 100%;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     font-size: 0.95rem;
     font-weight: 600;
 }
@@ -734,18 +738,29 @@ header p {
     -moz-appearance: textfield;
 }
 
+.item-left-side {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* Zmniejszono z 15px */
+    flex: 1;
+    min-width: 0; 
+}
+
 .item-info {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 6px;
-    max-width: 60%;
+    gap: 4px; /* Zmniejszono z 6px */
+    flex: 1; 
+    min-width: 0; 
 }
 
 .item-name {
-    font-size: 1.15rem;
+    font-size: 1.05rem; /* Delikatnie mniejsza czcionka, żeby uniknąć łamania */
     font-weight: 700;
     color: var(--text-primary);
+    line-height: 1.2;
+    /* USUNIĘTO word-break: break-word; żeby nie dzieliło słów w połowie! */
 }
 
 .item-price {
@@ -759,11 +774,12 @@ header p {
 .controls {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 12px; /* Zmniejszono z 15px */
     background: rgba(15, 23, 42, 0.4);
-    padding: 8px 15px;
+    padding: 6px 12px; /* Zmniejszono z 8px 15px */
     border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0; 
 }
 
 .btn-circle {
@@ -3386,6 +3402,7 @@ body:has(.cart-sidebar.active) .online-widget {
     padding: 20px 35px; 
     border-radius: 16px; 
     color: white; 
+    font-weight: 700; 
     border-left: 6px solid var(--accent-color); 
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6); 
     animation: slideIn 0.3s ease-out;
@@ -3599,4 +3616,161 @@ body:has(.cart-sidebar.active) .online-widget {
     .nav-logo i {
         font-size: 1.8rem !important; /* Sama ikonka będzie nieco większa */
     }
+}
+
+/* ==========================================================================
+   PRZEŁĄCZNIK ZDJĘĆ I STYLE OBRAZKÓW
+   ========================================================================== */
+.image-toggle-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(15, 23, 42, 0.4);
+    padding: 6px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.image-toggle-label {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+}
+
+.image-switch {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 18px;
+}
+
+.image-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.image-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.1);
+    transition: .4s;
+    border-radius: 20px;
+}
+
+.image-slider:before {
+    position: absolute;
+    content: "";
+    height: 12px;
+    width: 12px;
+    left: 3px;
+    bottom: 3px;
+    background-color: var(--text-secondary);
+    transition: .4s;
+    border-radius: 50%;
+}
+
+.image-switch input:checked + .image-slider {
+    background-color: rgba(56, 189, 248, 0.2);
+    border: 1px solid var(--accent-color);
+}
+
+.image-switch input:checked + .image-slider:before {
+    transform: translateX(16px);
+    background-color: var(--accent-color);
+}
+
+/* TĘ CZĘŚĆ ZAKTUALIZOWANO ABY ZDJĘCIA I TEKST SIĘ NIE GNIOTŁY */
+.item-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px; /* Zmniejszono z 15px, aby dać więcej miejsca na tekst */
+}
+
+.item-left-side {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* Zmniejszono z 15px */
+    flex: 1;
+    min-width: 0; 
+}
+
+.item-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px; /* Zmniejszono z 6px */
+    flex: 1; 
+    min-width: 0; 
+}
+
+.item-name {
+    font-size: 1.05rem; /* Delikatnie mniejsza czcionka, żeby uniknąć łamania */
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+    /* USUNIĘTO word-break: break-word; żeby nie dzieliło słów w połowie! */
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* Zmniejszono z 15px */
+    background: rgba(15, 23, 42, 0.4);
+    padding: 6px 12px; /* Zmniejszono z 8px 15px */
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0; 
+}
+
+/* ZMIANA DOTYCZĄCA ZDJĘĆ BEZ TŁA/RAMEK */
+.item-image {
+    width: 50px; /* Nieco mniejsze (z 55px) dla lepszego dopasowania */
+    height: 50px;
+    object-fit: contain; 
+    flex-shrink: 0;
+    display: none !important; /* DODANO !important żeby nadpisać style przeglądarki */
+    transition: transform var(--transition-normal);
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); 
+}
+
+.item-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 2rem;
+    color: var(--text-secondary);
+    opacity: 0.5;
+    flex-shrink: 0;
+    display: none !important; /* DODANO !important żeby nadpisać FontAwesome (.fas) */
+    justify-content: center;
+    align-items: center;
+    transition: transform var(--transition-normal);
+}
+
+.item-card.show-images .item-image {
+    display: block !important;
+}
+
+.item-card.show-images .item-icon {
+    display: flex !important;
+}
+
+.item-card:hover .item-image,
+.item-card:hover .item-icon {
+    transform: scale(1.1);
+}
+
+.custom-inputs-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    margin-right: 0;
 }

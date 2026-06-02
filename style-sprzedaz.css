@@ -112,7 +112,7 @@ body:has(.login-container.active) .summary-bar {
     align-items: center;
     gap: 10px;
     letter-spacing: 1px;
-	white-space: nowrap; /* Zabrania przenoszenia słowa "SYSTEM" do nowej linii */
+    white-space: nowrap; /* Zabrania przenoszenia słowa "SYSTEM" do nowej linii */
     flex-shrink: 0; /* Zabrania zgniatania logo przez resztę przycisków */
 }
 
@@ -144,7 +144,7 @@ body:has(.login-container.active) .summary-bar {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     overflow: hidden;
-	white-space: nowrap; /* Zabrania łamania tekstu na przyciskach */
+    white-space: nowrap; /* Zabrania łamania tekstu na przyciskach */
 }
 
 .nav-link-btn i {
@@ -355,9 +355,10 @@ header h1 {
 .custom-inputs-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     flex: 1;
-    margin-right: 15px;
+    min-width: 0;
+    margin-right: 0;
 }
 
 .custom-name-input {
@@ -370,7 +371,6 @@ header h1 {
     outline: none;
     transition: var(--transition-normal);
     width: 100%;
-    max-width: 180px;
 }
 
 .custom-price-input {
@@ -412,12 +412,17 @@ header h1 {
 .item-card {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    padding: 24px;
-    border-radius: 24px;
+    padding: 15px 20px;
+    border-radius: 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
     transition: var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+    min-height: 105px;
+    height: 100%;
 }
 
 .item-card:hover {
@@ -426,16 +431,29 @@ header h1 {
     background: #362121;
 }
 
+.item-left-side {
+    display: flex;
+    align-items: center;
+    gap: 12px; 
+    flex: 1;
+    min-width: 0; 
+}
+
 .item-info {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    justify-content: center;
+    gap: 4px; 
+    flex: 1; 
+    min-width: 0; 
 }
 
 .item-name {
-    font-size: 1.1rem;
+    font-size: 1.05rem; 
     font-weight: 700;
     color: var(--text-primary);
+    line-height: 1.2;
+    /* Usunięto break-word by teksty się nie łamały na siłę */
 }
 
 .item-price {
@@ -447,10 +465,11 @@ header h1 {
 .controls {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 12px;
     background: rgba(0,0,0,0.2);
-    padding: 8px 15px;
+    padding: 6px 12px;
     border-radius: 16px;
+    flex-shrink: 0; 
 }
 
 .btn-circle {
@@ -501,6 +520,43 @@ header h1 {
 }
 .quantity-input {
     -moz-appearance: textfield;
+}
+
+/* ZMIANA DOTYCZĄCA ZDJĘĆ BEZ TŁA/RAMEK DLA EKSPORTU */
+.item-image {
+    width: 50px;
+    height: 50px;
+    object-fit: contain; 
+    flex-shrink: 0;
+    display: none !important;
+    transition: transform var(--transition-normal);
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); 
+}
+
+.item-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 2rem;
+    color: var(--text-secondary);
+    opacity: 0.5;
+    flex-shrink: 0;
+    display: none !important;
+    justify-content: center;
+    align-items: center;
+    transition: transform var(--transition-normal);
+}
+
+.item-card.show-images .item-image {
+    display: block !important;
+}
+
+.item-card.show-images .item-icon {
+    display: flex !important;
+}
+
+.item-card:hover .item-image,
+.item-card:hover .item-icon {
+    transform: scale(1.1);
 }
 
 /* PASEK PODSUMOWANIA */
@@ -1101,7 +1157,7 @@ header h1 {
 .cart-footer {
     padding: 25px;
     border-top: 1px solid var(--border-color);
-    background: rgba(0,0,0,0.3);
+    background: rgba(15, 23, 42, 1);
 }
 
 .cart-total-row {
@@ -1924,14 +1980,80 @@ body:has(.modal.active) .summary-bar {
     border-radius: 10px;
 }
 
+.transaction-item-card {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 15px;
+    transition: 0.3s;
+}
+
 .transaction-item-card:hover {
-    border-color: var(--accent-color) !important;
-    box-shadow: 0 4px 15px rgba(243, 156, 18, 0.15);
+    border-color: var(--accent-color);
+    box-shadow: 0 4px 15px rgba(243, 156, 18, 0.15); /* Delikatna pomarańczowa poświata */
+}
+
+.transaction-header-type {
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.transaction-date {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.transaction-body-layout { margin-top: 15px; }
+
+.transaction-items-list {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+
+.transaction-total-amount {
+    font-weight: 800;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.transaction-actions-layout {
+    margin-top: 15px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+    padding-top: 15px;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.report-error-btn {
+    background: rgba(231, 76, 60, 0.1) !important;
+    color: var(--danger) !important;
+    border: 1px solid rgba(231, 76, 60, 0.3) !important;
+    padding: 8px 15px !important;
+    border-radius: 10px !important;
+    cursor: pointer !important;
+    font-weight: 700 !important;
+    font-size: 0.85rem !important;
+    transition: 0.2s !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
 }
 
 .report-error-btn:hover {
     background: var(--danger) !important;
     color: white !important;
+    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3) !important;
 }
 
 /* ==========================================================================
@@ -2669,8 +2791,8 @@ body:has(.cart-sidebar.active) .online-widget {
    ========================================================================== */
 #add-custom-slot-btn {
     background: transparent;
-    border: 1px dashed var(--accent-color); 
-    color: var(--accent-color); 
+    border: 1px dashed var(--accent-color); /* Na stałe niebieska ramka */
+    color: var(--accent-color); /* Na stałe niebieski tekst */
     padding: 10px 20px;
     border-radius: 12px;
     cursor: pointer;
@@ -2681,7 +2803,7 @@ body:has(.cart-sidebar.active) .online-widget {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    margin: 0 0 20px auto; 
+    margin: 0 0 20px auto; /* Trzyma przycisk idealnie po prawej stronie */
     width: fit-content;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -2689,7 +2811,7 @@ body:has(.cart-sidebar.active) .online-widget {
 
 #add-custom-slot-btn:hover {
     background: rgba(243, 156, 18, 0.05);
-    box-shadow: 0 0 15px rgba(243, 156, 18, 0.4); 
+    box-shadow: 0 0 15px rgba(243, 156, 18, 0.4); /* Efekt poświaty po najechaniu */
     transform: translateY(-2px);
 }
 
@@ -2740,292 +2862,7 @@ body:has(.cart-sidebar.active) .online-widget {
 }
 
 /* ==========================================================================
-   NAPRAWA WIDOKÓW Z SCREENSHOTÓW (TRANSAKCJE, RAPORTY, CHANGELOG)
-   ========================================================================== */
-
-/* 1. SCROLLBARY W MODALACH (Naprawa grubego pomarańczowego paska) */
-.modal-content::-webkit-scrollbar,
-.transactions-list::-webkit-scrollbar,
-#transactions-list-container::-webkit-scrollbar,
-#bonuses-list-container::-webkit-scrollbar {
-    width: 6px;
-}
-.modal-content::-webkit-scrollbar-track,
-.transactions-list::-webkit-scrollbar-track,
-#transactions-list-container::-webkit-scrollbar-track,
-#bonuses-list-container::-webkit-scrollbar-track {
-    background: transparent;
-}
-.modal-content::-webkit-scrollbar-thumb,
-.transactions-list::-webkit-scrollbar-thumb,
-#transactions-list-container::-webkit-scrollbar-thumb,
-#bonuses-list-container::-webkit-scrollbar-thumb {
-    background: var(--accent-color);
-    border-radius: 10px;
-}
-
-/* 2. KARTY "MOJE TRANSAKCJE" I "MOJE PREMIE" */
-.transaction-item-card {
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid var(--border-color);
-    border-radius: 14px;
-    padding: 20px;
-    margin-bottom: 15px;
-    transition: 0.3s;
-}
-.transaction-item-card:hover {
-    border-color: var(--accent-color);
-    box-shadow: 0 4px 15px rgba(243, 156, 18, 0.15); /* Delikatna pomarańczowa poświata */
-}
-.transaction-header-type {
-    font-weight: 800;
-    font-size: 0.95rem;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.transaction-date {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    background: rgba(255, 255, 255, 0.05);
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-weight: 600;
-}
-.transaction-body-layout { margin-top: 15px; }
-.transaction-items-list {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    line-height: 1.6;
-    margin-bottom: 10px;
-}
-.transaction-total-amount {
-    font-weight: 800;
-    color: var(--text-primary);
-    font-size: 1rem;
-}
-.transaction-actions-layout {
-    margin-top: 15px;
-    border-top: 1px dashed rgba(255, 255, 255, 0.1);
-    padding-top: 15px;
-    display: flex;
-    justify-content: flex-start;
-}
-.report-error-btn {
-    background: rgba(231, 76, 60, 0.1) !important;
-    color: var(--danger) !important;
-    border: 1px solid rgba(231, 76, 60, 0.3) !important;
-    padding: 8px 15px !important;
-    border-radius: 10px !important;
-    cursor: pointer !important;
-    font-weight: 700 !important;
-    font-size: 0.85rem !important;
-    transition: 0.2s !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-}
-.report-error-btn:hover {
-    background: var(--danger) !important;
-    color: white !important;
-    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3) !important;
-}
-
-/* 3. PANEL ZGŁOSZEŃ POMYŁEK (Karty Zgłoszeń) */
-.admin-report-card {
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid var(--border-color);
-    border-radius: 14px;
-    padding: 20px;
-    margin-bottom: 15px;
-    width: 100%;
-    transition: 0.2s;
-}
-.admin-report-card:hover {
-    border-color: var(--accent-color);
-    box-shadow: 0 4px 15px rgba(243, 156, 18, 0.15);
-}
-.admin-report-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    padding-bottom: 12px;
-    border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
-}
-.admin-report-id { font-weight: 800; color: var(--text-primary); font-family: monospace; font-size: 1.1rem; }
-.admin-report-emp, .admin-report-reason, .admin-report-status { margin-bottom: 8px; font-size: 0.95rem; }
-.text-white-inline { color: #fff; }
-.admin-report-actions {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-    margin-top: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    padding-top: 20px;
-}
-.btn-reject {
-    background: rgba(231, 76, 60, 0.15);
-    color: var(--danger);
-    border: 1px solid rgba(231, 76, 60, 0.3);
-    padding: 10px 16px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: 700;
-    transition: 0.2s;
-    flex: 1;
-}
-.btn-accept {
-    background: rgba(39, 174, 96, 0.15);
-    color: var(--success);
-    border: 1px solid rgba(39, 174, 96, 0.3);
-    padding: 10px 16px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: 700;
-    transition: 0.2s;
-    flex: 1;
-}
-.btn-reject:hover { background: var(--danger); color: white; }
-.btn-accept:hover { background: var(--success); color: white; }
-
-/* 4. MODAL KREATORA CHANGELOGA */
-.modal-label {
-    display: block;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    font-weight: 800;
-    color: var(--text-secondary);
-    margin-bottom: 8px;
-    letter-spacing: 1px;
-}
-#admin-version-input, #edit-cl-version-input {
-    width: 100%;
-    padding: 14px 18px;
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #fff;
-    border-radius: 12px;
-    margin-bottom: 25px;
-    outline: none;
-    font-family: inherit;
-    font-size: 0.95rem;
-    transition: 0.2s;
-}
-#admin-version-input:focus, #edit-cl-version-input:focus {
-    border-color: var(--accent-color);
-    box-shadow: 0 0 10px rgba(243, 156, 18, 0.15);
-}
-.admin-change-slot-layout {
-    display: flex;
-    gap: 10px;
-    align-items: stretch;
-    margin-bottom: 12px;
-}
-.admin-change-select {
-    width: 140px;
-    flex-shrink: 0;
-    padding: 12px 15px;
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #fff;
-    border-radius: 10px;
-    outline: none;
-    font-weight: 700;
-}
-.admin-change-input {
-    flex-grow: 1;
-    padding: 12px 15px;
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #fff;
-    border-radius: 10px;
-    outline: none;
-}
-.admin-change-select:focus, .admin-change-input:focus {
-    border-color: var(--accent-color);
-}
-.btn-delete-slot {
-    width: 45px;
-    flex-shrink: 0;
-    background: rgba(231, 76, 60, 0.1) !important;
-    border: 1px solid rgba(231, 76, 60, 0.3) !important;
-    color: var(--danger) !important;
-    border-radius: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    transition: 0.2s;
-    margin: 0 !important;
-}
-.btn-delete-slot:hover {
-    background: var(--danger) !important;
-    color: #fff !important;
-}
-#add-admin-change-slot-btn, #add-edit-change-slot-btn {
-    background: transparent;
-    border: 1px dashed var(--text-secondary);
-    color: var(--text-secondary);
-    padding: 12px 20px;
-    border-radius: 12px;
-    width: fit-content;
-    margin-top: 15px;
-    cursor: pointer;
-    transition: 0.2s;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-#add-admin-change-slot-btn:hover, #add-edit-change-slot-btn:hover {
-    border-color: var(--accent-color);
-    color: var(--accent-color);
-    background: rgba(243, 156, 18, 0.05);
-}
-
-/* ==========================================================================
-   5. PRZYCISKI EDYCJI I USUWANIA W CHANGELOGU (ADMIN)
-   ========================================================================== */
-.admin-controls-layout {
-    display: flex;
-    gap: 8px;
-    margin-left: 10px;
-}
-
-.btn-admin-edit, .btn-admin-del {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--text-secondary);
-    padding: 6px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.btn-admin-edit:hover { 
-    background: var(--accent-color); 
-    color: #000; 
-    border-color: var(--accent-color);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(243, 156, 18, 0.3);
-}
-
-.btn-admin-del:hover { 
-    background: var(--danger); 
-    color: #fff; 
-    border-color: var(--danger);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
-}
-
-/* ==========================================================================
-   ANIMACJA FACE ID (KŁÓDKA LOGOWANIA) I BŁĘDNEGO PINU
+   ANIMACJA FACE ID (KŁÓDKA LOGOWANIA)
    ========================================================================== */
 .icon-unlock-anim {
     animation: unlockFaceId 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
@@ -3037,30 +2874,9 @@ body:has(.cart-sidebar.active) .online-widget {
     100% { transform: scale(1.1) translateY(0); }
 }
 
-.icon-shake-anim {
-    animation: shakeError 0.4s ease-in-out;
-    color: var(--danger);
-}
-
-@keyframes shakeError {
-    0%, 100% { transform: translateX(0); }
-    20%, 60% { transform: translateX(-8px); }
-    40%, 80% { transform: translateX(8px); }
-}
-
 /* ==========================================================================
-   ANIMACJA FACE ID (KŁÓDKA LOGOWANIA) I BŁĘDNEGO PINU
+   ANIMACJA BŁĘDNEGO PINU (TRZĘSIENIE KŁÓDKI)
    ========================================================================== */
-.icon-unlock-anim {
-    animation: unlockFaceId 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-
-@keyframes unlockFaceId {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.3) translateY(-5px); }
-    100% { transform: scale(1.1) translateY(0); }
-}
-
 .icon-shake-anim {
     animation: shakeError 0.4s ease-in-out;
     color: var(--danger);
@@ -3150,6 +2966,95 @@ body:has(.cart-sidebar.active) .online-widget {
     100% { transform: scale(1); filter: brightness(1); }
 }
 
+/* ==========================================================================
+   DYNAMICZNY CZAS TRWANIA DLA POWIADOMIEŃ PAGER
+   ========================================================================== */
+.toast.custom-toast::after {
+    animation-duration: var(--toast-duration, 3s) !important;
+}
+
+/* ==========================================================================
+   POWIADOMIENIA (TOASTS) Z NOWYM PASKIEM POSTĘPU (NAPRAWA KOLORÓW)
+   ========================================================================== */
+.toast-container { 
+    position: fixed; 
+    top: 120px; 
+    right: 30px; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 15px; 
+    z-index: 100000; 
+}
+
+.toast { 
+    background: var(--card-bg); 
+    padding: 20px 35px; 
+    border-radius: 16px; 
+    color: white; 
+    font-weight: 700; 
+    border-left: 6px solid var(--accent-color); 
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6); 
+    animation: slideIn 0.3s ease-out;
+    position: relative;
+    overflow: hidden;
+    transition: opacity 0.3s ease-out;
+}
+
+/* Kolory bocznych ramek dymków */
+.toast.success { border-left-color: var(--success) !important; }
+.toast.danger { border-left-color: var(--danger) !important; }
+.toast.warning { border-left-color: #f59e0b !important; } /* Wbity na sztywno piękny pomarańczowo-żółty */
+.toast.info { border-left-color: var(--accent-color) !important; }
+
+/* Usunięcie starego, zacinającego się paska postępu CSS */
+.toast::after {
+    display: none !important;
+}
+
+/* Nowy, fizyczny pasek postępu sterowany przez skrypt JS */
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    width: 100%;
+    animation: toastProgress linear forwards;
+}
+
+/* Kolory pasków odliczania na dole dymka */
+.toast.success .toast-progress { background: var(--success); }
+.toast.danger .toast-progress { background: var(--danger); }
+.toast.warning .toast-progress { background: #f59e0b; }
+.toast.info .toast-progress { background: var(--accent-color); }
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes toastProgress {
+    0% { width: 100%; }
+    100% { width: 0%; }
+}
+
+ /* Unifikacja i naprawa paska odliczania dla dynamicznych czasów (10s, 15s itd.) */
+        .toast::after {
+            display: none !important;
+        }
+        .toast-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            width: 100%;
+            animation: toastProgress linear forwards;
+        }
+        .toast.success .toast-progress { background: var(--success); }
+        .toast.danger .toast-progress { background: var(--danger); }
+        .toast.warning .toast-progress { background: var(--warning); }
+        .toast.info .toast-progress { background: var(--accent-color); }
+
+        
 /* ==========================================================================
    ANIMACJA UDERZENIA PIECZĄTKI I TRZĘSIENIA PARAGONU
    ========================================================================== */
@@ -3257,6 +3162,23 @@ body:has(.cart-sidebar.active) .online-widget {
 }
 
 /* ==========================================================================
+   NAPRAWA RENDEROWANIA PARAGONÓW (HTML2CANVAS)
+   ========================================================================== */
+.disable-animations, .disable-animations * {
+    animation: none !important;
+    transition: none !important;
+}
+
+.disable-animations .receipt-stamp {
+    opacity: 0.8 !important; /* Wymusza widoczność pieczątki */
+    transform: scale(1) rotate(-15deg) !important; /* Sztywny, końcowy rozmiar i kąt */
+}
+
+.disable-animations.receipt-shake {
+    transform: translate(0, 0) !important; /* Blokuje wykrzywienie całego paragonu na screenie */
+}
+
+/* ==========================================================================
    UKŁAD MENU DLA EKRANÓW LAPTOPÓW (MACBOOK / MNIEJSZE EKRANY)
    ========================================================================== */
 @media (max-width: 1700px) {
@@ -3283,4 +3205,161 @@ body:has(.cart-sidebar.active) .online-widget {
     .nav-logo i {
         font-size: 1.8rem !important; /* Sama ikonka będzie nieco większa */
     }
+}
+
+/* ==========================================================================
+   PRZEŁĄCZNIK ZDJĘĆ I STYLE OBRAZKÓW
+   ========================================================================== */
+.image-toggle-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(15, 23, 42, 0.4);
+    padding: 6px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.image-toggle-label {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+}
+
+.image-switch {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 18px;
+}
+
+.image-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.image-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.1);
+    transition: .4s;
+    border-radius: 20px;
+}
+
+.image-slider:before {
+    position: absolute;
+    content: "";
+    height: 12px;
+    width: 12px;
+    left: 3px;
+    bottom: 3px;
+    background-color: var(--text-secondary);
+    transition: .4s;
+    border-radius: 50%;
+}
+
+.image-switch input:checked + .image-slider {
+    background-color: rgba(56, 189, 248, 0.2);
+    border: 1px solid var(--accent-color);
+}
+
+.image-switch input:checked + .image-slider:before {
+    transform: translateX(16px);
+    background-color: var(--accent-color);
+}
+
+/* TĘ CZĘŚĆ ZAKTUALIZOWANO ABY ZDJĘCIA I TEKST SIĘ NIE GNIOTŁY */
+.item-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px; /* Zmniejszono z 15px, aby dać więcej miejsca na tekst */
+}
+
+.item-left-side {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* Zmniejszono z 15px */
+    flex: 1;
+    min-width: 0; 
+}
+
+.item-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px; /* Zmniejszono z 6px */
+    flex: 1; 
+    min-width: 0; 
+}
+
+.item-name {
+    font-size: 1.05rem; /* Delikatnie mniejsza czcionka, żeby uniknąć łamania */
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+    /* USUNIĘTO word-break: break-word; żeby nie dzieliło słów w połowie! */
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* Zmniejszono z 15px */
+    background: rgba(15, 23, 42, 0.4);
+    padding: 6px 12px; /* Zmniejszono z 8px 15px */
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0; 
+}
+
+/* ZMIANA DOTYCZĄCA ZDJĘĆ BEZ TŁA/RAMEK */
+.item-image {
+    width: 50px; /* Nieco mniejsze (z 55px) dla lepszego dopasowania */
+    height: 50px;
+    object-fit: contain; 
+    flex-shrink: 0;
+    display: none !important; /* DODANO !important żeby nadpisać style przeglądarki */
+    transition: transform var(--transition-normal);
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); 
+}
+
+.item-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 2rem;
+    color: var(--text-secondary);
+    opacity: 0.5;
+    flex-shrink: 0;
+    display: none !important; /* DODANO !important żeby nadpisać FontAwesome (.fas) */
+    justify-content: center;
+    align-items: center;
+    transition: transform var(--transition-normal);
+}
+
+.item-card.show-images .item-image {
+    display: block !important;
+}
+
+.item-card.show-images .item-icon {
+    display: flex !important;
+}
+
+.item-card:hover .item-image,
+.item-card:hover .item-icon {
+    transform: scale(1.1);
+}
+
+.custom-inputs-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1; /* Elastyczność kontenera customowych itemów */
+    min-width: 0;
+    margin-right: 0;
 }

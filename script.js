@@ -1,4 +1,4 @@
-const APP_VERSION = "4.0.1";
+const APP_VERSION = "4.1.1";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const DISCORD_WEBHOOK_URL_SKUP = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/skup"; 
@@ -12,6 +12,9 @@ let currentEmployeeSsn = "---";
 let currentEmployeeDateZatrudnienia = "---"; 
 let currentEmployeePhoto = ""; 
 let currentActiveView = 'skup';
+
+let showImagesSkup = localStorage.getItem('elcartel_images_skup') === 'true';
+let showImagesExport = localStorage.getItem('elcartel_images_export') === 'true';
 
 let myStatsRawData = [];
 let myBonusesRawData = [];
@@ -111,34 +114,34 @@ function isTravisVance() {
 }
 
 const defaultInventory = [
-    { name: "Zdobiona książka", min: 120, max: 120, category: "inne" },
-    { name: "Dywan", min: 240, max: 240, category: "dom" },
-    { name: "Komputer (laptop)", min: 600, max: 600, category: "elektronika" },
-    { name: "Komputer (stacjonarny)", min: 680, max: 680, category: "elektronika" },
-    { name: "Konsola", min: 400, max: 400, category: "elektronika" },
-    { name: "Konsola DJ", min: 640, max: 640, category: "elektronika" },
-    { name: "Kobieca plastikowa figurka", min: 100, max: 100, category: "inne" },
-    { name: "Plastikowa figurka małpki", min: 80, max: 80, category: "inne" },
-    { name: "Kwiat", min: 65, max: 65, category: "dom" },
-    { name: "Gitara elektryczna", min: 480, max: 480, category: "elektronika" },
-    { name: "Dziwna substancja", min: 100, max: 100, category: "inne" },
-    { name: "Dziwna szara substancja", min: 160, max: 160, category: "inne" },
-    { name: "Biżuteria", min: 240, max: 240, category: "biżuteria" },
-    { name: "Brudna biżuteria", min: 150, max: 150, category: "biżuteria" },
-    { name: "Katana", min: 480, max: 480, category: "inne" },
-    { name: "Mikrofala", min: 280, max: 280, category: "dom" },
-    { name: "Mikser", min: 160, max: 160, category: "dom" },
-    { name: "Monitor", min: 150, max: 150, category: "elektronika" },
-    { name: "Obraz", min: 115, max: 115, category: "dom" },
-    { name: "Obraz ścienny", min: 180, max: 180, category: "dom" },
-    { name: "Głośnik", min: 145, max: 145, category: "elektronika" },
-    { name: "Telewizor", min: 600, max: 600, category: "elektronika" },
-    { name: "Zegarek", min: 160, max: 160, category: "biżuteria" },
-    { name: "Złota bransoletka", min: 200, max: 200, category: "biżuteria" },
-    { name: "Złota moneta", min: 200, max: 200, category: "inne" },
-    { name: "Złota moneta z prezydentem", min: 200, max: 200, category: "inne" },
-    { name: "Złote kolczyki", min: 200, max: 200, category: "biżuteria" },
-    { name: "Popsuty telefon", min: 95, max: 95, category: "elektronika" }
+    { name: "Zdobiona książka", min: 120, max: 120, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_book.webp" },
+    { name: "Dywan", min: 240, max: 240, category: "dom", image: "https://img.realmgaming.eu/onbeat/items/hr_carpet.webp" },
+    { name: "Komputer (laptop)", min: 600, max: 600, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_computer.webp" },
+    { name: "Komputer (stacjonarny)", min: 680, max: 680, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_computer2.webp" },
+    { name: "Konsola", min: 400, max: 400, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_console.webp" },
+    { name: "Konsola DJ", min: 640, max: 640, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_djconsole.webp" },
+    { name: "Kobieca plastikowa figurka", min: 100, max: 100, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_figure.webp" },
+    { name: "Plastikowa figurka małpki", min: 80, max: 80, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_figure2.webp" },
+    { name: "Kwiat", min: 65, max: 65, category: "dom", image: "https://img.realmgaming.eu/onbeat/items/hr_flower.webp" },
+    { name: "Gitara elektryczna", min: 480, max: 480, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_guitar.webp" },
+    { name: "Dziwna substancja", min: 100, max: 100, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_jerrycan.webp" },
+    { name: "Dziwna szara substancja", min: 160, max: 160, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_jerrycan2.webp" },
+    { name: "Biżuteria", min: 240, max: 240, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/hr_jewelery.webp" },
+    { name: "Brudna biżuteria", min: 150, max: 150, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/hr_jewelery.webp" },
+    { name: "Katana", min: 480, max: 480, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_katana.webp" },
+    { name: "Mikrofala", min: 280, max: 280, category: "dom", image: "https://img.realmgaming.eu/onbeat/items/hr_microwave.webp" },
+    { name: "Mikser", min: 160, max: 160, category: "dom", image: "https://img.realmgaming.eu/onbeat/items/hr_mixer.webp" },
+    { name: "Monitor", min: 150, max: 150, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_monitor.webp" },
+    { name: "Obraz", min: 115, max: 115, category: "dom", image: "https://img.realmgaming.eu/onbeat/items/hr_paiting2.webp" },
+    { name: "Obraz ścienny", min: 180, max: 180, category: "dom", image: "https://img.realmgaming.eu/onbeat/items/hr_paiting2.webp" },
+    { name: "Głośnik", min: 145, max: 145, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_speaker.webp" },
+    { name: "Telewizor", min: 600, max: 600, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_tv.webp" },
+    { name: "Zegarek", min: 160, max: 160, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/hr_watch.webp" },
+    { name: "Złota bransoletka", min: 200, max: 200, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/goldenbracelet.webp" },
+    { name: "Złota moneta", min: 200, max: 200, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/goldcoin.webp" },
+    { name: "Złota moneta z prezydentem", min: 200, max: 200, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/prescoin42.webp" },
+    { name: "Złote kolczyki", min: 200, max: 200, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/goldenearrings.webp" },
+    { name: "Popsuty telefon", min: 95, max: 95, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/brokenphone.webp" }
 ];
 
 let inventory = [];
@@ -150,33 +153,33 @@ let isStatAddedForCurrentReceipt = false;
 let currentCustomerSSN = "";
 
 const defaultExportInventory = [
-    { name: "Zdobiona książka", price: 150, category: "inne" },
-    { name: "Dywan", price: 300, category: "dom" },
-    { name: "Komputer (laptop)", price: 750, category: "elektronika" },
-    { name: "Komputer (stacjonarny)", price: 850, category: "elektronika" },
-    { name: "Konsola", price: 500, category: "elektronika" },
-    { name: "Konsola DJ", price: 800, category: "elektronika" },
-    { name: "Kobieca plastikowa figurka", price: 120, category: "inne" },
-    { name: "Stara zapalniczka", price: 22, category: "inne" },
-    { name: "Plastikowa figurka małpki", price: 100, category: "inne" },
-    { name: "Kwiat", price: 80, category: "dom" },
-    { name: "Gitara elektryczna", price: 600, category: "elektronika" },
-    { name: "Dziwna substancja", price: 120, category: "inne" },
-    { name: "Dziwna szara substancja", price: 200, category: "inne" },
-    { name: "Biżuteria", price: 300, category: "biżuteria" },
-    { name: "Brudna biżuteria", price: 180, category: "biżuteria" },
-    { name: "Katana", price: 600, category: "inne" },
-    { name: "Mikrofala", price: 350, category: "dom" },
-    { name: "Mikser", price: 200, category: "dom" },
-    { name: "Monitor", price: 180, category: "elektronika" },
-    { name: "Obraz", price: 140, category: "dom" },
-    { name: "Obraz ścienny", price: 220, category: "dom" },
-    { name: "Głośnik", price: 180, category: "elektronika" },
-    { name: "Telewizor", price: 750, category: "elektronika" },
-    { name: "Zegarek", price: 200, category: "biżuteria" },
-    { name: "Stary popsuty telefon", price: 110, category: "elektronika" },
-    { name: "Sztabka złota", price: 15000, category: "inne" },
-    { name: "Złota moneta z prezydentem", price: 250, category: "inne" }
+    { name: "Zdobiona książka", price: 150, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_book.webp" },
+    { name: "Dywan", price: 300, category: "dom", image: "https://img.realmgaming.eu/onbeat/items/hr_carpet.webp" },
+    { name: "Komputer (laptop)", price: 750, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_computer.webp" },
+    { name: "Komputer (stacjonarny)", price: 850, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_computer2.webp" },
+    { name: "Konsola", price: 500, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_console.webp" },
+    { name: "Konsola DJ", price: 800, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_djconsole.webp" },
+    { name: "Kobieca plastikowa figurka", price: 120, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_figure.webp" },
+    { name: "Stara zapalniczka", price: 22, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/metallighter.webp" },
+    { name: "Plastikowa figurka małpki", price: 100, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_figure2.webp" },
+    { name: "Kwiat", price: 80, category: "dom", image: "https://img.realmgaming.eu/onbeat/items/hr_flower.webp" },
+    { name: "Gitara elektryczna", price: 600, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_guitar.webp" },
+    { name: "Dziwna substancja", price: 120, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_jerrycan.webp" },
+    { name: "Dziwna szara substancja", price: 200, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_jerrycan2.webp" },
+    { name: "Biżuteria", price: 300, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/hr_jewelery.webp" },
+    { name: "Brudna biżuteria", price: 180, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/hr_jewelery.webp" },
+    { name: "Katana", price: 600, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_katana.webp" },
+    { name: "Mikrofala", price: 350, category: "dom", image: "https://img.realmgaming.eu/onbeat/items/hr_microwave.webp" },
+    { name: "Mikser", price: 200, category: "dom", image: "https://img.realmgaming.eu/onbeat/items/hr_mixer.webp" },
+    { name: "Monitor", price: 180, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_monitor.webp" },
+    { name: "Obraz", price: 140, category: "dom", image: "https://img.realmgaming.eu/onbeat/items/hr_paiting2.webp" },
+    { name: "Obraz ścienny", price: 220, category: "dom", image: "https://img.realmgaming.eu/onbeat/items/hr_paiting2.webp" },
+    { name: "Głośnik", price: 180, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_speaker.webp" },
+    { name: "Telewizor", price: 750, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_tv.webp" },
+    { name: "Zegarek", price: 200, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/hr_watch.webp" },
+    { name: "Stary popsuty telefon", price: 110, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/brokenphone.webp" },
+    { name: "Sztabka złota", price: 15000, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/sztabka_zlota.webp" },
+    { name: "Złota moneta z prezydentem", price: 250, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/prescoin42.webp" }
 ];
 
 let exportInventory = [];
@@ -628,16 +631,19 @@ function renderInventory() {
     inventory.forEach((item, index) => {
         if(counts[index] === undefined) counts[index] = 0;
         const card = document.createElement('div');
-        card.className = 'item-card';
+        let cardClass = showImagesSkup ? 'item-card show-images' : 'item-card';
         card.setAttribute('data-category', item.category);
         card.setAttribute('data-name', item.name.toLowerCase());
         
         if (item.isCustom) {
-            card.classList.add('custom-card-special');
+            card.className = cardClass + ' custom-card-special';
             card.innerHTML = `
-                <div class="item-info custom-inputs-wrapper">
-                    <input type="text" class="custom-item-name" data-index="${index}" placeholder="Wpisz nazwę..." value="${item.name === 'Własny przedmiot' ? '' : item.name}">
-                    <input type="number" class="custom-item-price" data-index="${index}" placeholder="Cena $" min="0" value="${item.min > 0 ? item.min : ''}">
+                <div class="item-left-side">
+                    <i class="fas fa-plus item-icon"></i>
+                    <div class="item-info custom-inputs-wrapper" style="margin-right:0;">
+                        <input type="text" class="custom-item-name" data-index="${index}" placeholder="Wpisz nazwę..." value="${item.name === 'Własny przedmiot' ? '' : item.name}">
+                        <input type="number" class="custom-item-price" data-index="${index}" placeholder="Cena $" min="0" value="${item.min > 0 ? item.min : ''}">
+                    </div>
                 </div>
                 <div class="controls">
                     <button class="btn-circle minus" data-action="minus" data-index="${index}">-</button>
@@ -647,10 +653,15 @@ function renderInventory() {
             `;
             customCards.push(card);
         } else {
+            card.className = cardClass;
+            let imageHtml = item.image ? `<img src="${item.image}" class="item-image" alt="">` : `<i class="fas fa-box-open item-icon"></i>`;
             card.innerHTML = `
-                <div class="item-info">
-                    <span class="item-name">${item.name}</span>
-                    <span class="item-price">${item.min === item.max ? item.min + '$' : item.min + '$ - ' + item.max + '$'}</span>
+                <div class="item-left-side">
+                    ${imageHtml}
+                    <div class="item-info">
+                        <span class="item-name">${item.name}</span>
+                        <span class="item-price">${item.min === item.max ? item.min + '$' : item.min + '$ - ' + item.max + '$'}</span>
+                    </div>
                 </div>
                 <div class="controls">
                     <button class="btn-circle minus" data-action="minus" data-index="${index}">-</button>
@@ -811,6 +822,15 @@ function applyFilters() {
 }
 
 window.generateQuote = async function() {
+    // WALIDACJA NIESTANDARDOWYCH PRODUKTÓW
+    for (let i = 0; i < inventory.length; i++) {
+        if (counts[i] > 0 && inventory[i].isCustom) {
+            if (inventory[i].min <= 0 || inventory[i].name === "Własny przedmiot" || inventory[i].name.trim() === "") {
+                return showNotice("Uzupełnij poprawną nazwę i cenę dla niestandardowych produktów!", "danger");
+            }
+        }
+    }
+
     const hasItems = Object.values(counts).some(c => c > 0);
     const finalPriceInput = document.getElementById('final-price-input');
     const finalPrice = finalPriceInput ? parseFloat(finalPriceInput.value) : NaN;
@@ -878,7 +898,7 @@ function finalizeQuote(employeeName, finalPrice) {
 
     const quoteModal = document.getElementById('quote-modal');
     if(quoteModal) quoteModal.classList.add('active');
-	// --- DODANE: Restart animacji pieczątki i trzęsienia ---
+    // --- DODANE: Restart animacji pieczątki i trzęsienia ---
     const receiptBox = document.getElementById('receipt');
     const stampBox = document.querySelector('#receipt .receipt-stamp');
     if (receiptBox && stampBox) {
@@ -1141,20 +1161,26 @@ function renderInventoryExport() {
     if(!list) return;
     list.innerHTML = ''; 
     
+    const customCards = [];
+    const normalCards = [];
+
     exportInventory.forEach((item, index) => {
         if(countsExport[index] === undefined) countsExport[index] = 0;
         const card = document.createElement('div');
-        card.className = 'item-card';
+        let cardClass = showImagesExport ? 'item-card show-images' : 'item-card';
         card.setAttribute('data-category', item.category);
         card.setAttribute('data-name', item.name.toLowerCase());
         
         if(item.isCustom) {
-            card.classList.add('custom-item');
+            card.className = cardClass + ' custom-item';
             card.id = `custom-card-export-${index}`;
             card.innerHTML = `
-                <div class="custom-inputs-wrapper">
-                    <input type="text" class="custom-name-input" data-index="${index}" placeholder="Wpisz nazwę..." value="${item.name === 'Własny przedmiot' ? '' : item.name}">
-                    <input type="number" class="custom-price-input" data-index="${index}" placeholder="Cena $" min="0" value="${item.price > 0 ? item.price : ''}">
+                <div class="item-left-side">
+                    <i class="fas fa-plus item-icon"></i>
+                    <div class="custom-inputs-wrapper" style="margin-right: 0;">
+                        <input type="text" class="custom-name-input" data-index="${index}" placeholder="Wpisz nazwę..." value="${item.name === 'Własny przedmiot' ? '' : item.name}">
+                        <input type="number" class="custom-price-input" data-index="${index}" placeholder="Cena $" min="0" value="${item.price > 0 ? item.price : ''}">
+                    </div>
                 </div>
                 <div class="controls">
                     <button class="btn-circle minus" data-action="minus" data-index="${index}">-</button>
@@ -1162,12 +1188,17 @@ function renderInventoryExport() {
                     <button class="btn-circle plus" data-action="add" data-index="${index}">+</button>
                 </div>
             `;
-            list.insertBefore(card, list.firstChild);
+            customCards.push(card);
         } else {
+            card.className = cardClass;
+            let imageHtml = item.image ? `<img src="${item.image}" class="item-image" alt="">` : `<i class="fas fa-box-open item-icon"></i>`;
             card.innerHTML = `
-                <div class="item-info">
-                    <span class="item-name">${item.name}</span>
-                    <span class="item-price">Sprzedaż: ${item.price}$</span>
+                <div class="item-left-side">
+                    ${imageHtml}
+                    <div class="item-info">
+                        <span class="item-name">${item.name}</span>
+                        <span class="item-price">Sprzedaż: ${item.price}$</span>
+                    </div>
                 </div>
                 <div class="controls">
                     <button class="btn-circle minus" data-action="minus" data-index="${index}">-</button>
@@ -1175,16 +1206,20 @@ function renderInventoryExport() {
                     <button class="btn-circle plus" data-action="add" data-index="${index}">+</button>
                 </div>
             `;
-            list.appendChild(card);
+            normalCards.push(card);
         }
     });
+    
+    customCards.forEach(c => list.appendChild(c));
+    normalCards.forEach(c => list.appendChild(c));
+    
     applyFiltersExport();
 }
 
 window.addCustomItemSlotExport = function() {
     const index = exportInventory.length; 
     exportInventory.push({ name: "Własny przedmiot", price: 0, category: "custom", isCustom: true });
-    countsExport[index] = 1;
+    countsExport[index] = 0;
     renderInventoryExport();
     calculateTotalExport();
     showNotice("Dodano nowe pole na własny przedmiot (Eksport)!", "success");
@@ -1295,6 +1330,15 @@ function applyFiltersExport() {
 }
 
 window.generateQuoteExport = async function() {
+    // WALIDACJA NIESTANDARDOWYCH PRODUKTÓW
+    for (let i = 0; i < exportInventory.length; i++) {
+        if (countsExport[i] > 0 && exportInventory[i].isCustom) {
+            if (exportInventory[i].price <= 0 || exportInventory[i].name === "Własny przedmiot" || exportInventory[i].name.trim() === "") {
+                return showNotice("Uzupełnij poprawną nazwę i cenę (>0$) dla niestandardowych produktów!", "danger");
+            }
+        }
+    }
+
     if (!Object.values(countsExport).some(c => c > 0)) return showNotice("Koszyk eksportu jest pusty!", "warning");
     
     const ssnInput = document.getElementById('customer-ssn-input-export');
@@ -3005,6 +3049,27 @@ document.addEventListener('DOMContentLoaded', () => {
             tiltCard.style.transform = `rotateX(0deg) rotateY(0deg)`;
             tiltCard.style.boxShadow = `0 10px 30px rgba(0,0,0,0.5)`;
             if (glare) glare.style.opacity = '0';
+        });
+    }
+
+    // --- PODPIĘCIE PRZEŁĄCZNIKÓW ZDJĘĆ ---
+    const toggleSkup = document.getElementById('toggle-images-skup');
+    if (toggleSkup) {
+        toggleSkup.checked = showImagesSkup;
+        toggleSkup.addEventListener('change', (e) => {
+            showImagesSkup = e.target.checked;
+            localStorage.setItem('elcartel_images_skup', showImagesSkup);
+            renderInventory();
+        });
+    }
+    
+    const toggleExport = document.getElementById('toggle-images-export');
+    if (toggleExport) {
+        toggleExport.checked = showImagesExport;
+        toggleExport.addEventListener('change', (e) => {
+            showImagesExport = e.target.checked;
+            localStorage.setItem('elcartel_images_export', showImagesExport);
+            renderInventoryExport();
         });
     }
 

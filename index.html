@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Kasa fiskalna</title>
-    <link id="theme-style" rel="stylesheet" href="style.css?v=4.0.1">
+    <link id="theme-style" rel="stylesheet" href="style.css?v=4.1.1">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -141,7 +141,16 @@
                 </div>
 
                 <div id="asortyment-header-wrapper" class="asortyment-header-layout">
-                    <h3 class="asortyment-title-style">Asortyment</h3>
+                    <div class="flex-align-center-gap12">
+                        <h3 class="asortyment-title-style">Asortyment</h3>
+                        <div class="image-toggle-wrapper">
+                            <label class="image-switch" title="Włącz/wyłącz zdjęcia produktów">
+                                <input type="checkbox" id="toggle-images-skup">
+                                <span class="image-slider"></span>
+                            </label>
+                            <span class="image-toggle-label"><i class="fas fa-image"></i></span>
+                        </div>
+                    </div>
                     <button id="add-custom-slot-btn" class="add-custom-slot-btn"><i class="fas fa-plus"></i> Niestandardowy produkt</button>
                 </div>
 
@@ -216,7 +225,16 @@
                 </div>
 
                 <div class="asortyment-header">
-                    <h3 class="asortyment-title">ASORTYMENT</h3>
+                    <div class="flex-align-center-gap12">
+                        <h3 class="asortyment-title">ASORTYMENT</h3>
+                        <div class="image-toggle-wrapper">
+                            <label class="image-switch" title="Włącz/wyłącz zdjęcia produktów">
+                                <input type="checkbox" id="toggle-images-export">
+                                <span class="image-slider"></span>
+                            </label>
+                            <span class="image-toggle-label"><i class="fas fa-image"></i></span>
+                        </div>
+                    </div>
                     <button id="add-custom-slot-btn-export" class="custom-product-btn">+ NIESTANDARDOWY PRODUKT</button>
                 </div>
 
@@ -740,6 +758,6 @@
     <div id="online-employees-widget" class="online-widget hidden"></div>
     <div id="toast-container" class="toast-container"></div>
     
-    <script src="script.js?v=4.0.1"></script>
+    <script src="script.js?v=4.1.1"></script>
 </body>
 </html>
