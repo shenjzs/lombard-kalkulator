@@ -230,12 +230,41 @@ function generateID() {
     return res;
 }
 
+// ==========================================================================
+// OBSŁUGA SCROLLA (ZWIJANIE NAVBARA I ZAMYKANIE MENU PROFILU)
+// ==========================================================================
 document.addEventListener('scroll', function() {
     const navbar = document.querySelector('.navbar');
     if (window.scrollY > 50) {
         navbar.classList.add('scrolled');
     } else {
         navbar.classList.remove('scrolled');
+    }
+
+    // Automatycznie zamyka rozwijane menu profilu, gdy tylko zaczniesz scrollować
+    const userDropdown = document.getElementById('user-dropdown');
+    if (userDropdown && userDropdown.classList.contains('active')) {
+        userDropdown.classList.remove('active');
+    }
+});
+
+// ==========================================================================
+// ZAMYKANIE MENU PROFILU PO KLIKNIĘCIU W TŁO (POZA MENU)
+// ==========================================================================
+document.addEventListener('click', function(event) {
+    const userDropdown = document.getElementById('user-dropdown');
+    
+    // Uruchamiamy sprawdzanie tylko, jeśli menu jest aktualnie otwarte
+    if (userDropdown && userDropdown.classList.contains('active')) {
+        // Sprawdzamy czy kliknięto wewnątrz samego menu (żeby się nie zamknęło jak klikasz opcję)
+        const isClickInsideMenu = userDropdown.contains(event.target);
+        // Sprawdzamy czy kliknięto w przycisk otwierający profil
+        const isClickOnToggleBtn = event.target.closest('#profile-toggle-btn');
+        
+        // Jeśli kliknięto gdzieś w tło okna przeglądarki - zamknij menu
+        if (!isClickInsideMenu && !isClickOnToggleBtn) {
+            userDropdown.classList.remove('active');
+        }
     }
 });
 
