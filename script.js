@@ -13,8 +13,8 @@ let currentEmployeeDateZatrudnienia = "---";
 let currentEmployeePhoto = ""; 
 let currentActiveView = 'skup';
 
-let showImagesSkup = localStorage.getItem('elcartel_images_skup') === 'true';
-let showImagesExport = localStorage.getItem('elcartel_images_export') === 'true';
+let showImagesSkup = localStorage.getItem('elcartel_images_skup') !== 'false';
+let showImagesExport = localStorage.getItem('elcartel_images_export') !== 'false';
 
 let myStatsRawData = [];
 let myBonusesRawData = [];
