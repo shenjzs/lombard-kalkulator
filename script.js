@@ -1,4 +1,4 @@
-const APP_VERSION = "4.2.1";
+const APP_VERSION = "4.2.2";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const DISCORD_WEBHOOK_URL_SKUP = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/skup"; 
@@ -154,7 +154,7 @@ const defaultInventory = [
     { name: "Komputer (stacjonarny)", min: 680, max: 680, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_computer2.webp" },
     { name: "Konsola", min: 400, max: 400, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_console.webp" },
     { name: "Konsola DJ", min: 640, max: 640, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_djconsole.webp" },
-    { name: "Kobieca plastikowa figurka", min: 100, max: 100, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_book.webp" },
+    { name: "Kobieca plastikowa figurka", min: 100, max: 100, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_figure.webp" },
     { name: "Plastikowa figurka małpki", min: 80, max: 80, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_figure2.webp" },
     { name: "Kwiat", min: 65, max: 65, category: "dom", image: "https://img.realmgaming.eu/onbeat/items/hr_flower.webp" },
     { name: "Gitara elektryczna", min: 480, max: 480, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_guitar.webp" },
