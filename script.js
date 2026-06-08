@@ -1543,7 +1543,7 @@ window.sendToDiscordExport = async function() {
                 fetch(REPORTS_API_URL, { method: "POST", body: JSON.stringify(logPayload) }).catch(e => console.error(e));
                 showNotice("Wysłano raport na Discord!", "success");
 
-                window.addSystemLog('SPRZEDAŻ (MAGAZYN)', `Zrealizowano sprzedaż [${lastGeneratedReportID}] na kwotę: ${currentTotalExport}$`);
+                window.addSystemLog('SPRZEDAŻ', `Zrealizowano sprzedaż [${lastGeneratedReportID}] na kwotę: ${currentTotalExport}$`);
 
                 closeModalExport();
                 resetCartAndInventoryExport();
