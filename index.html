@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Kasa fiskalna</title>
-    <link id="theme-style" rel="stylesheet" href="style.css?v=4.1.1">
+    <link id="theme-style" rel="stylesheet" href="style.css?v=4.2.1">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -414,7 +414,7 @@
                 <h2><i class="fas fa-cog"></i> Ustawienia konta</h2>
                 <button id="close-settings-modal-btn" class="settings-close-btn"><i class="fas fa-times"></i></button>
             </div>
-            <p class="settings-desc">Zmień swój kod PIN.</p>
+            <p class="settings-desc">Zmień swój kod PIN lub ustawienia systemowe.</p>
             <div class="settings-form">
                 <div class="input-group">
                     <label>Obecny kod PIN</label>
@@ -428,6 +428,18 @@
                     <label>Potwierdź nowy PIN</label>
                     <input type="password" id="new-pin-confirm" placeholder="••••" class="settings-pin-input highlight-input" maxlength="4">
                 </div>
+                
+                <div class="audio-settings-wrapper" style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-top: 10px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-volume-up text-accent-icon"></i>
+                        <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 800; color: var(--text-secondary); letter-spacing: 1px;">Dźwięki systemu</span>
+                    </div>
+                    <label class="image-switch" title="Włącz/wyłącz dźwięki">
+                        <input type="checkbox" id="toggle-audio-settings" checked>
+                        <span class="image-slider"></span>
+                    </label>
+                </div>
+
                 <button id="change-pin-btn" class="settings-save-btn"><i class="fas fa-save"></i> Zapisz</button>
             </div>
         </div>
@@ -758,6 +770,6 @@
     <div id="online-employees-widget" class="online-widget hidden"></div>
     <div id="toast-container" class="toast-container"></div>
     
-    <script src="script.js?v=4.1.1"></script>
+    <script src="script.js?v=4.2.1"></script>
 </body>
 </html>

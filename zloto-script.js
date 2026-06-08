@@ -1,4 +1,4 @@
-const APP_VERSION = "4.1.1";
+const APP_VERSION = "4.2.1";
 
 // ==========================================
 // KONFIGURACJA
@@ -20,6 +20,26 @@ const PRICE_PER_GOLD_BAR = 15000;
 let currentEmployeeName = "";
 let currentCounts = {};
 let isBoss = false;
+
+// ==========================================
+// UNIWERSALNY SYSTEM LOGOWANIA DO BAZY (DZIENNIK ZDARZEŃ)
+// ==========================================
+window.addSystemLog = async function(type, description) {
+    const who = window.currentEmployeeName || currentEmployeeName || "Nieznany Szef";
+    try {
+        fetch(REPORTS_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'save_log',
+                employee: who,
+                type: type,
+                description: description
+            })
+        });
+    } catch (e) {
+        console.error("Błąd zapisu logu:", e);
+    }
+};
 
 // --- EFEKTY CYFROWEGO ODLICZANIA I PULSOWANIA ---
 let previousTotalCost = 0;
@@ -107,6 +127,9 @@ async function login() {
                     document.getElementById('user-profile').style.display = 'block';
                     document.getElementById('header-date').innerText = getFormattedDate();
                     
+                    // DODANIE LOGU
+                    window.addSystemLog('LOGOWANIE', `Zalogowano do panelu odlewni (Szef).`);
+
                     renderGoldItems();
                     loadWarehouseData();
 
@@ -126,6 +149,7 @@ async function login() {
             }
         } else {
             showNotice("Nieprawidłowy PIN!", "danger");
+            window.addSystemLog('BŁĘDNY PIN', `Niewłaściwa próba autoryzacji do panelu odlewni (Użyto niepoprawnego kodu PIN w zloto.html).`);
             btn.disabled = false;
             btn.innerHTML = 'Zaloguj <i class="fas fa-lock"></i>';
 
@@ -191,6 +215,10 @@ window.submitKorekta = async function(isAdding) {
             method: "POST", 
             body: JSON.stringify(payload) 
         });
+        
+        // DODANIE LOGU
+        window.addSystemLog('KOREKTA MAGAZYNU', `Zastosowano korektę w odlewni. Akcja: ${isAdding ? 'DODATNIA (+)' : 'UJEMNA (-)'}, Przedmiot: ${itemName}, Ilość: ${qty} szt.`);
+
         showNotice("Pomyślnie zaktualizowano magazyn!", "success");
         closeKorektaModal();
         
@@ -445,6 +473,9 @@ async function processSmelting() {
             body: JSON.stringify(payload) 
         }).catch(e => console.error("Google Sheets Error:", e));
 
+        // DODANIE LOGU
+        window.addSystemLog('PRZETOP ZŁOTA', `Przetopiono surowce na sztabki złota (x${possibleBars}). Wartość: ${barValue}$`);
+
         showNotice("Przetopiono pomyślnie! Logi wysłane.", "success");
         resetSmeltery();
 
@@ -544,6 +575,8 @@ window.loadGoldStats = async function() {
 }
 
 function logout() {
+    window.addSystemLog('WYLOGOWANIE', `Wylogowano z panelu odlewni.`);
+    
     const mainApp = document.getElementById('main-app');
     const loginScreen = document.getElementById('login-screen');
     const loginCard = document.querySelector('.login-card');
@@ -570,7 +603,7 @@ function logout() {
             }, 550);
         }
 
-        // Wydłużamy czas do restartu strony (550ms czekania + 500ms animacji = ok. 1200ms całkowitego czasu)
+        // Wydłużemy czas do restartu strony (550ms czekania + 500ms animacji = ok. 1200ms całkowitego czasu)
         setTimeout(() => {
             location.reload();
         }, 1200);
@@ -646,3 +679,21 @@ window.forceHardReload = async function(serverVersion) {
 
 setInterval(checkUpdates, 60000);
 setTimeout(checkUpdates, 3000);
+
+// ==========================================
+// AUTOMATYCZNE WYLOGOWANIE PRZY ZAMKNIĘCIU OKNA/KARTY
+// ==========================================
+window.addEventListener('beforeunload', function() {
+    if (currentEmployeeName) {
+        fetch(REPORTS_API_URL, {
+            method: 'POST',
+            keepalive: true,
+            body: JSON.stringify({
+                action: 'save_log',
+                employee: currentEmployeeName,
+                type: 'WYLOGOWANIE',
+                description: 'Zamknięto kartę lub okno panelu odlewni (automatyczne wylogowanie).'
+            })
+        });
+    }
+});

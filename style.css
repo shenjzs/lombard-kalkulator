@@ -3774,3 +3774,16 @@ body:has(.cart-sidebar.active) .online-widget {
     min-width: 0;
     margin-right: 0;
 }
+
+/* ==========================================
+   USTAWIENIA AUDIO - DODATKOWE STYLE
+   ========================================== */
+.audio-settings-wrapper {
+    transition: var(--transition-normal);
+}
+
+.audio-settings-wrapper:hover {
+    border-color: rgba(56, 189, 248, 0.2) !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+    box-shadow: 0 4px 15px rgba(56, 189, 248, 0.05);
+}

@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "4.1.1"; // Normalizacja nazw produktów
+const APP_VERSION = "4.2.1"; // Normalizacja nazw produktów
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
@@ -25,6 +25,7 @@ window.globalRawFeed = []; // Globalne logi do profili pracownika
 window.currentFilteredFeed = []; // Tabela z danymi tylko z obecnego filtru (do statystyk przedmiotów)
 window.globalBonuses = []; // Globalne premie
 window.globalLoyaltyData = []; // Baza klientów (pieczątki)
+window.globalSystemLogs = []; // Globalne logi systemowe
 let currentEmployeeName = "";
 let currentFeedLimit = 50; // LIMIT WYŚWIETLANIA DLA LIVE FEEDA
 
@@ -34,6 +35,7 @@ window.bonusesFetchPromise = null;
 window.loyaltyFetchPromise = null;
 window.loyaltySettingsFetchPromise = null;
 window.employeesFetchPromise = null;
+window.logsFetchPromise = null;
 
 window.preloadReportsData = function() {
     if (!window.reportsFetchPromise) {
@@ -78,6 +80,37 @@ window.preloadEmployeesData = function() {
             .catch(err => { window.employeesFetchPromise = null; return { employees: [] }; });
     }
     return window.employeesFetchPromise;
+};
+
+window.preloadLogsData = function() {
+    if (!window.logsFetchPromise) {
+        window.logsFetchPromise = fetch(`${REPORTS_API_URL}?action=get_logs&t=${new Date().getTime()}`)
+            .then(res => res.json())
+            .catch(err => { window.logsFetchPromise = null; return { logs: [] }; });
+    }
+    return window.logsFetchPromise;
+};
+
+// ==========================================
+// FUNKCJA ZAPISU LOGÓW SYSTEMOWYCH
+// ==========================================
+window.addSystemLog = async function(type, description) {
+    const who = currentEmployeeName || "Nieznany szef";
+    try {
+        await fetch(REPORTS_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'save_log',
+                employee: who,
+                type: type,
+                description: description
+            })
+        });
+        // Czyścimy cache logów, aby pobrały się świeże przy otwarciu panelu
+        window.logsFetchPromise = null;
+    } catch (e) {
+        console.error("Błąd zapisu logu systemowego:", e);
+    }
 };
 
 // ==========================================
@@ -150,6 +183,9 @@ async function loginBoss() {
                     currentEmployeeName = data.name;
                     document.getElementById('logged-boss-name').innerText = currentEmployeeName.toUpperCase();
                     
+                    // DODANIE LOGU DO SYSTEMU
+                    window.addSystemLog('LOGOWANIE', `Zalogowano do panelu statystyk (IP/Urządzenie zweryfikowane).`);
+
                     // --- ANIMACJA LOGOWANIA ---
                     const loginCard = document.querySelector('.login-card');
                     loginCard.classList.add('login-zoom-in');
@@ -213,6 +249,9 @@ window.logoutBoss = function() {
     const loginScreen = document.getElementById('login-screen');
     const loginCard = document.querySelector('.login-card');
     const mainIcon = document.querySelector('.login-icon');
+
+    // DODANIE LOGU DO SYSTEMU
+    window.addSystemLog('WYLOGOWANIE', `Wylogowano bezpiecznie z panelu zarządzania.`);
 
     document.getElementById('user-dropdown').classList.remove('active');
     document.getElementById('user-profile').classList.add('hidden');
@@ -379,7 +418,7 @@ async function loadRealData() {
             <div class="skeleton" style="width: 80px; height: 22px; border-radius: 6px;"></div>
             <div class="skeleton" style="width: 130px; height: 16px; border-radius: 4px;"></div>
             <div class="skeleton" style="width: 95px; height: 16px; border-radius: 4px;"></div>
-            <div class="skeleton" style="flex-grow: 1; height: 16px; border-radius: 4px;"></div>
+            <div class="flex-grow: 1; height: 16px; border-radius: 4px;"></div>
             <div class="skeleton" style="width: 80px; height: 20px; border-radius: 4px;"></div>
         </div>
     `).join('');
@@ -804,6 +843,9 @@ window.updateGoalValue = function(val) {
     const goal = parseFloat(val) || 0;
     window.currentGlobalGoal = goal;
     
+    // DODANIE LOGU
+    window.addSystemLog('CEL FINANSOWY', `Zmieniono tygodniowy cel finansowy na: ${window.formatMoney(goal)}$`);
+
     fetch(REPORTS_API_URL, {
         method: "POST",
         body: JSON.stringify({ action: "set_goal", goal: goal })
@@ -1387,7 +1429,7 @@ window.openEmployeeProfile = function(name) {
             
             <div class="profile-stats">
                 <div class="p-stat-box">
-                    <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">Suma Obrotu</div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">Suma Obrtu</div>
                     <div class="p-stat-val" style="color:var(--accent-color)">${window.formatMoney(totalVolume)}$</div>
                 </div>
                 <div class="p-stat-box">
@@ -1468,6 +1510,9 @@ window.updateReputation = async function(name, type) {
         if (data.success) {
             showNotice(type === 'plus' ? "Dodano pochwałę do bazy głównej!" : "Zapisano karę w bazie głównej!", type === 'plus' ? "success" : "danger");
             
+            // DODANIE LOGU
+            window.addSystemLog('REPUTACJA', `Dodano ${type === 'plus' ? 'pochwałę (+)' : 'karę (-)'} dla pracownika: ${name}`);
+
             // Aktualizacja pamięci podręcznej przeglądarki
             const emp = window.currentEmployeesList.find(e => e.name === name);
             if(emp) {
@@ -1479,13 +1524,13 @@ window.updateReputation = async function(name, type) {
             pVal.innerText = data.pluses;
             mVal.innerText = data.minuses;
         } else {
-            // Cofnięcie zmiany w przypadku błędu
+            // Cofnięcie zmian w przypadku błędu
             if(type === 'plus') pVal.innerText = parseInt(pVal.innerText) - 1;
             else mVal.innerText = parseInt(mVal.innerText) - 1;
             showNotice("Błąd zapisu w bazie danych!", "danger");
         }
     } catch (e) {
-        // Cofnięcie zmiany w przypadku błędu połączenia
+        // Cofnięcie zmian w przypadku błędu połączenia
         if(type === 'plus') pVal.innerText = parseInt(pVal.innerText) - 1;
         else mVal.innerText = parseInt(mVal.innerText) - 1;
         showNotice("Błąd połączenia z serwerem!", "danger");
@@ -1518,6 +1563,7 @@ window.saveEmployeeEdit = async function() {
     const rank = document.getElementById('edit-emp-rank').value;
     const ssn = document.getElementById('edit-emp-ssn').value;
     const photo = document.getElementById('edit-emp-photo').value;
+    const name = document.getElementById('edit-emp-name').value;
 
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Zapisywanie...';
@@ -1537,6 +1583,10 @@ window.saveEmployeeEdit = async function() {
         
         if (data.success) {
             showNotice("Dane pracownika zostały zaktualizowane!", "success");
+            
+            // DODANIE LOGU
+            window.addSystemLog('EDYCJA PRACOWNIKA', `Zaktualizowano dane pracownika: ${name} (Stopień: ${rank}, SSN: ${ssn || 'Brak'})`);
+
             window.employeesFetchPromise = null;
             closeEditEmployee();
             await loadEmployeesToTable();
@@ -1582,6 +1632,10 @@ window.addNewEmployee = async function() {
         });
         
         showNotice("Przetwarzanie...", "info");
+        
+        // DODANIE LOGU
+        window.addSystemLog('NOWY PRACOWNIK', `Zatrudniono nową osobę: ${name} (Stopień: ${rank}, Uprawnienia Szefa: ${isBoss ? 'TAK' : 'NIE'})`);
+
         window.employeesFetchPromise = null;
         await loadEmployeesToTable();
         showNotice(`Dodano pracownika: ${name}`, "success");
@@ -1602,6 +1656,10 @@ window.deleteEmployee = async function(pin, name) {
     try {
         showNotice("Usuwanie pracownika...", "info");
         await fetch(PIN_API_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', pin: pin }) });
+        
+        // DODANIE LOGU
+        window.addSystemLog('USUNIĘTO PRACOWNIKA', `Zwolniono pracownika z firmy: ${name}`);
+
         window.employeesFetchPromise = null;
         await loadEmployeesToTable();
         showNotice("Pracownik usunięty!", "warning");
@@ -1612,6 +1670,14 @@ window.toggleEmployeeRole = async function(pin, newRole) {
     try {
         showNotice("Zmienianie uprawnień...", "info");
         await fetch(PIN_API_URL, { method: 'POST', body: JSON.stringify({ action: 'toggle_role', pin: pin, role: newRole }) });
+        
+        // Znajdź pracownika dla logu
+        const emp = window.currentEmployeesList.find(e => e.pin === pin);
+        const empName = emp ? emp.name : "Nieznany PIN";
+
+        // DODANIE LOGU
+        window.addSystemLog('ZMIANA UPRAWNIEŃ', `Zmieniono dostęp do panelu dla: ${empName} na: ${newRole === 'szef' ? 'Pełny dostęp (Szef)' : 'Brak dostępu'}`);
+
         window.employeesFetchPromise = null;
         await loadEmployeesToTable();
         showNotice("Zmieniono uprawnienia!", "success");
@@ -1725,6 +1791,10 @@ window.confirmResetStamps = async function() {
 
                 if(res.ok) {
                     showNotice(`Wyzerowano punkty klienta ${ssn}!`, "success");
+                    
+                    // DODANIE LOGU
+                    window.addSystemLog('PIECZĄTKI', `Wyzerowano pieczątki dla klienta SSN: ${ssn} (Ilość skasowana: ${customer.stamps})`);
+
                     closeResetStampsModal();
                     
                     window.loyaltyFetchPromise = null;
@@ -1812,6 +1882,10 @@ window.saveLoyaltyRate = async function() {
         });
         if(res.ok) {
             showNotice("Przelicznik zapisany pomyślnie!", "success");
+            
+            // DODANIE LOGU
+            window.addSystemLog('USTAWIENIA LOJALNOŚCIOWE', `Zmieniono przelicznik punktów. Obecnie: ${rate}$ = 1 pieczątka`);
+
             window.loyaltySettingsFetchPromise = null;
         } else {
             throw new Error();
@@ -1847,6 +1921,10 @@ window.addLoyaltyReward = async function() {
         
         if(res.ok) {
             showNotice("Nagroda dodana!", "success");
+            
+            // DODANIE LOGU
+            window.addSystemLog('NOWA NAGRODA', `Dodano nową nagrodę do systemu: ${name} (Koszt: ${cost} pieczątek)`);
+
             nameInput.value = "";
             costInput.value = "";
             window.loyaltySettingsFetchPromise = null;
@@ -1871,6 +1949,10 @@ window.deleteLoyaltyReward = async function(name) {
             body: JSON.stringify({ action: 'delete_loyalty_reward', name: name })
         });
         showNotice("Usunięto nagrodę!", "warning");
+        
+        // DODANIE LOGU
+        window.addSystemLog('USUNIĘTO NAGRODĘ', `Usunięto nagrodę z systemu lojalnościowego: ${name}`);
+
         window.loyaltySettingsFetchPromise = null;
         await loadLoyaltySettings();
     } catch(e) {
@@ -1963,6 +2045,10 @@ window.addBonus = async function() {
         });
 
         showNotice("Przetwarzanie...", "info");
+        
+        // DODANIE LOGU
+        window.addSystemLog('PREMIA', `Wypłacono premię dla pracownika: ${employee} w kwocie: ${window.formatMoney(amount)}$ (Tytuł: ${reason || 'Brak tytułu'})`);
+
         window.bonusesFetchPromise = null;
         await loadBonusesToTable();
         window.reportsFetchPromise = null;
@@ -1979,6 +2065,184 @@ window.addBonus = async function() {
         btn.innerHTML = '<i class="fas fa-plus"></i> Wypłać';
     }
 }
+
+// ==========================================
+// NOWE: DZIENNIK LOGÓW SYSTEMOWYCH
+// ==========================================
+window.currentLogCategoryFilter = "ALL";
+
+window.setLogCategoryFilter = function(category) {
+    window.currentLogCategoryFilter = category;
+    window.renderSystemLogs();
+};
+
+window.openSystemLogs = async function() {
+    document.getElementById('system-logs-modal').classList.remove('hidden');
+    await window.loadLogsToTable();
+};
+
+window.closeSystemLogs = function() {
+    document.getElementById('system-logs-modal').classList.add('hidden');
+    const searchInput = document.getElementById('logs-search-input');
+    if (searchInput) searchInput.value = "";
+    window.currentLogCategoryFilter = "ALL"; // Reset filtra przy zamykaniu okna
+};
+
+window.loadLogsToTable = async function() {
+    const tbody = document.getElementById('system-logs-table-body');
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Ładowanie logów...</td></tr>';
+    
+    try {
+        const data = await window.preloadLogsData();
+        window.globalSystemLogs = data.logs || [];
+        window.renderSystemLogs();
+    } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--danger);">Błąd połączenia z bazą logów!</td></tr>';
+    }
+};
+
+window.renderSystemLogs = function() {
+    const tbody = document.getElementById('system-logs-table-body');
+    const searchInput = document.getElementById('logs-search-input');
+    const term = searchInput ? searchInput.value.toLowerCase().trim() : "";
+
+    if (!window.globalSystemLogs || window.globalSystemLogs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Brak logów w systemie.</td></tr>';
+        return;
+    }
+
+    let logsArray = [...window.globalSystemLogs];
+    
+    // Obliczanie statystyk
+    let totalLogs = logsArray.length;
+    let securityAlerts = 0;
+    let loginActions = 0;
+    let managementChanges = 0;
+
+    logsArray.forEach(l => {
+        const type = String(l.type).toUpperCase();
+        if (type.includes("USUNIĘTO") || type.includes("KARA") || type.includes("BŁĄD") || type.includes("BŁĘDNY")) securityAlerts++;
+        if (type.includes("LOGOWANIE") || type.includes("WYLOGOWANIE") || type.includes("ZALOGOWANO")) loginActions++;
+        if (type.includes("EDYCJA") || type.includes("ZMIANA") || type.includes("UPRAWNIENIA") || type.includes("USTAWIENIA") || type.includes("REPUTACJA") || type.includes("PREMIA")) managementChanges++;
+    });
+
+    const statsContainer = document.getElementById('system-logs-stats-summary');
+    if (statsContainer) {
+        const getBoxStyle = (cat) => {
+            const isActive = window.currentLogCategoryFilter === cat;
+            return `background: ${isActive ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.02)'}; border: 1px solid ${isActive ? 'var(--accent-color)' : 'rgba(255,255,255,0.05)'}; padding: 15px; border-radius: 10px; text-align: center; flex: 1; min-width: 120px; cursor: pointer; transition: 0.2s;`;
+        };
+
+        statsContainer.innerHTML = `
+            <div class="log-stat-box" onclick="setLogCategoryFilter('ALL')" style="${getBoxStyle('ALL')}">
+                <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">Suma zdarzeń</div>
+                <div style="font-size: 1.5rem; font-weight: 900; color: var(--accent-color); margin-top: 5px;">${totalLogs}</div>
+            </div>
+            <div class="log-stat-box" onclick="setLogCategoryFilter('LOGIN')" style="${getBoxStyle('LOGIN')}">
+                <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">Sesje / Autoryzacje</div>
+                <div style="font-size: 1.5rem; font-weight: 900; color: var(--success); margin-top: 5px;">${loginActions}</div>
+            </div>
+            <div class="log-stat-box" onclick="setLogCategoryFilter('MANAGEMENT')" style="${getBoxStyle('MANAGEMENT')}">
+                <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">Modyfikacje baz</div>
+                <div style="font-size: 1.5rem; font-weight: 900; color: var(--warning); margin-top: 5px;">${managementChanges}</div>
+            </div>
+            <div class="log-stat-box" onclick="setLogCategoryFilter('SECURITY')" style="${getBoxStyle('SECURITY')}">
+                <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">Alerty bezpieczeństwa</div>
+                <div style="font-size: 1.5rem; font-weight: 900; color: var(--danger); margin-top: 5px;">${securityAlerts}</div>
+            </div>
+        `;
+    }
+    
+    logsArray.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    // Filtrowanie po wpisanym tekście
+    if (term) {
+        logsArray = logsArray.filter(l => 
+            String(l.employee).toLowerCase().includes(term) ||
+            String(l.type).toLowerCase().includes(term) ||
+            String(l.description).toLowerCase().includes(term)
+        );
+    }
+
+    // Filtrowanie po klikniętym kafelku
+    if (window.currentLogCategoryFilter !== "ALL") {
+        logsArray = logsArray.filter(l => {
+            const type = String(l.type).toUpperCase();
+            if (window.currentLogCategoryFilter === "SECURITY") {
+                return type.includes("USUNIĘTO") || type.includes("KARA") || type.includes("BŁĄD") || type.includes("BŁĘDNY");
+            }
+            if (window.currentLogCategoryFilter === "LOGIN") {
+                return type.includes("LOGOWANIE") || type.includes("WYLOGOWANIE") || type.includes("ZALOGOWANO");
+            }
+            if (window.currentLogCategoryFilter === "MANAGEMENT") {
+                return type.includes("EDYCJA") || type.includes("ZMIANA") || type.includes("UPRAWNIENIA") || type.includes("USTAWIENIA") || type.includes("REPUTACJA") || type.includes("PREMIA");
+            }
+            return true;
+        });
+    }
+
+    if (logsArray.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-secondary); padding: 20px;">Brak wyników wyszukiwania.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = logsArray.map(l => {
+        let displayDate = l.date;
+        if (typeof displayDate === 'string' && displayDate.includes('T')) {
+            displayDate = new Date(displayDate).toLocaleString('pl-PL');
+        }
+        
+        let typeColor = "var(--text-secondary)";
+        if(l.type.includes("USUNIĘTO") || l.type.includes("KARA") || l.type.includes("BŁĄD") || l.type.includes("BŁĘDNY") || l.type.includes("WYLOGOWANIE")) typeColor = "var(--danger)";
+        else if(l.type.includes("NOWY") || l.type.includes("POCHWAŁA") || l.type.includes("ZALOGOWANO") || l.type.includes("LOGOWANIE")) typeColor = "var(--success)";
+        else if(l.type.includes("EDYCJA") || l.type.includes("ZMIANA") || l.type.includes("UPRAWNIENIA") || l.type.includes("USTAWIENIA")) typeColor = "var(--warning)";
+        else if(l.type.includes("PREMIA") || l.type.includes("KOREKTA")) typeColor = "var(--warning)";
+        else typeColor = "var(--accent-color)";
+
+        return `
+            <tr>
+                <td style="font-size: 0.85rem; color: var(--text-secondary);">${displayDate}</td>
+                <td><strong style="color: white;"><i class="fas fa-user-shield"></i> ${l.employee}</strong></td>
+                <td style="text-align: center;">
+                    <span style="background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; color: ${typeColor}; border: 1px solid ${typeColor}40; text-transform: uppercase; white-space: nowrap; display: inline-block;">${l.type}</span>
+                </td>
+                <td style="color: var(--text-primary); font-size: 0.9rem; white-space: normal !important; text-align: left !important; line-height: 1.5; min-width: 300px;">
+                    ${l.description}
+                </td>
+            </tr>
+        `;
+    }).join('');
+};
+
+window.filterSystemLogs = function() {
+    window.renderSystemLogs();
+};
+
+// ==========================================
+// RĘCZNE ODŚWIEŻANIE LOGÓW SYSTEMOWYCH W LOCIE
+// ==========================================
+window.refreshSystemLogs = async function() {
+    const btn = document.getElementById('refresh-logs-btn');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    }
+    
+    // Zmuszamy system do zignorowania zapisanych danych i pobrania świeżych z Google Sheets
+    window.logsFetchPromise = null;
+    
+    try {
+        await window.loadLogsToTable();
+        showNotice("Pomyślnie pobrano najnowsze logi z bazy!", "success");
+    } catch (e) {
+        showNotice("Błąd podczas pobierania logów!", "danger");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sync-alt"></i> Odśwież';
+        }
+    }
+};
 
 // ==========================================
 // GENEROWANIE RAPORTU GRAFICZNEGO I DISCORD
@@ -2083,6 +2347,9 @@ window.sendReportToDiscord = async function() {
             const res = await fetch(BOSS_DISCORD_WEBHOOK, { method: "POST", body: formData });
             
             if (res.ok) { 
+                // DODANIE LOGU
+                window.addSystemLog('RAPORT DISCORD', `Wygenerowano i pomyślnie wysłano raport statystyczny na Discord.`);
+
                 showNotice("Pełny raport wysłany na Discord!", "success"); 
             } else { 
                 showNotice("Błąd wysyłania Webhooka!", "danger"); 
@@ -2143,6 +2410,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (onclickCode.includes('openBonusesManager')) window.preloadBonusesData();
             if (onclickCode.includes('openClientsManager')) window.preloadLoyaltyData();
             if (onclickCode.includes('openLoyaltySettings')) window.preloadLoyaltySettingsData();
+            if (onclickCode.includes('openSystemLogs')) window.preloadLogsData(); // Nowy prefetch dla logów
         });
     });
 

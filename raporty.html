@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Statystyki</title>
-    <link rel="stylesheet" href="style-raporty.css?v=4.1.1">
+    <link rel="stylesheet" href="style-raporty.css?v=4.2.1">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -64,6 +64,7 @@
                 <button onclick="openBonusesManager()" class="manage-emp-btn" style="color: var(--warning); border-color: rgba(245, 158, 11, 0.3);"><i class="fas fa-gift"></i> Premie</button>
                 <button onclick="openClientsManager()" class="manage-emp-btn" style="color: var(--accent-color); border-color: rgba(56, 189, 248, 0.3);"><i class="fas fa-users"></i> Baza klientów</button>
                 <button onclick="openLoyaltySettings()" class="manage-emp-btn" style="color: var(--success); border-color: rgba(34, 197, 94, 0.3);"><i class="fas fa-stamp"></i> Ustawienia lojalnościowe</button>
+                <button onclick="openSystemLogs()" class="manage-emp-btn" style="color: #a855f7; border-color: rgba(168, 85, 247, 0.3);"><i class="fas fa-list-alt"></i> Logi systemowe</button>
             </div>
         </header>
 
@@ -303,7 +304,6 @@
         </footer>
     </div>
 
-    <!-- MODAL - BAZA KLIENTÓW -->
     <div id="clients-manager-modal" class="emp-modal-overlay hidden">
         <div class="emp-modal-content" style="max-width: 800px;">
             <div class="emp-modal-header">
@@ -335,7 +335,6 @@
         </div>
     </div>
 
-    <!-- MODAL - POTWIERDZENIE RESETU PIECZĄTEK -->
     <div id="reset-stamps-modal" class="emp-modal-overlay hidden" style="z-index: 10005;">
         <div class="emp-modal-content" style="max-width: 400px; text-align: center;">
             <div class="emp-modal-header" style="justify-content: center; position: relative;">
@@ -356,7 +355,6 @@
         </div>
     </div>
 
-    <!-- MODAL - USTAWIENIA LOJALNOŚCIOWE -->
     <div id="loyalty-settings-modal" class="emp-modal-overlay hidden">
         <div class="emp-modal-content" style="max-width: 800px;">
             <div class="emp-modal-header">
@@ -401,7 +399,6 @@
         </div>
     </div>
 
-    <!-- MODAL - ZARZĄDZANIE PREMIAMI -->
     <div id="bonuses-manager-modal" class="emp-modal-overlay hidden">
         <div class="emp-modal-content" style="max-width: 800px;">
             <div class="emp-modal-header">
@@ -439,7 +436,6 @@
         </div>
     </div>
 
-    <!-- MODAL - ZARZĄDZANIE PRACOWNIKAMI -->
     <div id="employee-manager-modal" class="emp-modal-overlay hidden">
         <div class="emp-modal-content">
             <div class="emp-modal-header">
@@ -527,7 +523,6 @@
         </div>
     </div>
 
-    <!-- MODAL - STATYSTYKI PRODUKTU -->
     <div id="product-stats-modal" class="emp-modal-overlay hidden" style="z-index: 10010;">
         <div class="emp-modal-content" style="max-width: 700px;">
             <div class="emp-modal-header">
@@ -537,14 +532,12 @@
             <div class="emp-modal-body">
                 <h3 id="ps-item-name" style="text-align: center; font-size: 1.8rem; margin-bottom: 20px; color: white;">Nazwa Produktu</h3>
                 
-                <!-- Czysty zysk i ogólne podsumowanie -->
                 <div class="p-stat-box" style="text-align: center; margin-bottom: 20px; border: 1px solid var(--warning); background: rgba(245, 158, 11, 0.05);">
                     <div style="font-size:0.75rem; color:var(--warning); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px; font-weight: 800;">Szacowany zysk na produkcie (Netto)</div>
                     <div class="p-stat-val" id="ps-total-profit" style="color:var(--warning); text-shadow: 0 0 10px rgba(245,158,11,0.3);">0$</div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-                    <!-- Kolumna SKUP -->
                     <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 16px; padding: 20px;">
                         <h4 style="color: var(--danger); text-align: center; margin-bottom: 15px; font-weight: 800; font-size: 1.1rem;"><i class="fas fa-shopping-basket"></i> SKUP</h4>
                         <div class="insight-row" style="margin-bottom: 8px;"><span class="insight-label">Wolumen</span> <span class="insight-value" id="ps-buy-qty">0 szt.</span></div>
@@ -553,7 +546,6 @@
                         <div class="insight-row"><span class="insight-label">Min / Max</span> <span class="insight-value" id="ps-buy-minmax">0$ / 0$</span></div>
                     </div>
 
-                    <!-- Kolumna SPRZEDAŻ -->
                     <div style="background: rgba(34, 197, 94, 0.05); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 16px; padding: 20px;">
                         <h4 style="color: var(--success); text-align: center; margin-bottom: 15px; font-weight: 800; font-size: 1.1rem;"><i class="fas fa-truck-loading"></i> SPRZEDAŻ</h4>
                         <div class="insight-row" style="margin-bottom: 8px;"><span class="insight-label">Wolumen</span> <span class="insight-value" id="ps-sell-qty">0 szt.</span></div>
@@ -563,12 +555,49 @@
                     </div>
                 </div>
 
-                <!-- NOWA SEKCJA Z WYKRESEM SPECJALNYM DLA PRODUKTU -->
                 <div style="margin-top: 25px; padding-top: 20px; border-top: 1px dashed rgba(255,255,255,0.1);">
                     <h4 style="font-size: 0.9rem; font-weight: 800; color: var(--accent-color); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; text-align: center;"><i class="fas fa-chart-line"></i> Historia wahań ceny (Skup vs Sprzedaż)</h4>
                     <div class="chart-wrapper" style="height: 250px; width: 100%; position: relative; padding: 0;">
                         <canvas id="productDetailsChart"></canvas>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="system-logs-modal" class="emp-modal-overlay hidden" style="z-index: 10020;">
+        <div class="emp-modal-content" style="max-width: 950px;">
+            <div class="emp-modal-header">
+                <h2 style="color: #a855f7;"><i class="fas fa-list-alt"></i> Dziennik zdarzeń systemowych</h2>
+                <button onclick="closeSystemLogs()" class="emp-close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="emp-modal-body">
+                <div id="system-logs-stats-summary" style="display: flex; gap: 15px; margin-bottom: 20px; justify-content: space-between; flex-wrap: wrap;"></div>
+                
+                <div style="display: flex; gap: 15px; margin-bottom: 20px; align-items: center;">
+                    <div style="position: relative; flex-grow: 1;">
+                        <i class="fas fa-search" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+                        <input type="text" id="logs-search-input" placeholder="Wyszukaj logi (np. nazwa pracownika, usunięto pracownika, logowanie)..." class="emp-input" style="width: 100%; padding-left: 40px;" oninput="filterSystemLogs()">
+                    </div>
+                    <button id="refresh-logs-btn" onclick="refreshSystemLogs()" class="filter-btn success-btn" style="white-space: nowrap; height: 43px;">
+                        <i class="fas fa-sync-alt"></i> Odśwież
+                    </button>
+                </div>
+                
+                <div class="emp-table-container">
+                    <table class="modern-table emp-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 130px;">Data i czas</th>
+                                <th style="width: 160px;">Kto</th>
+                                <th style="width: 160px; text-align: center;">Typ akcji</th>
+                                <th style="text-align: left;">Opis zdarzenia</th>
+                            </tr>
+                        </thead>
+                        <tbody id="system-logs-table-body">
+                            <tr><td colspan="4" style="text-align:center;">Ładowanie logów...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -617,6 +646,6 @@
     </div>
 
     <div id="toast-container" class="toast-container"></div>
-    <script src="raporty.js?v=4.1.1"></script>
+    <script src="raporty.js?v=4.2.1"></script>
 </body>
 </html>

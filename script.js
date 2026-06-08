@@ -1,4 +1,4 @@
-const APP_VERSION = "4.1.1";
+const APP_VERSION = "4.2.1";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const DISCORD_WEBHOOK_URL_SKUP = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/skup"; 
@@ -31,6 +31,40 @@ window.currentEmployeesList = [];
 window.reportsFetchPromise = null;
 window.bonusesFetchPromise = null;
 window.errorReportsFetchPromise = null;
+
+// ==========================================
+// UNIWERSALNY SYSTEM LOGOWANIA DO BAZY (DZIENNIK ZDARZEŃ)
+// ==========================================
+window.addSystemLog = async function(type, description) {
+    const who = window.currentEmployeeName || currentEmployeeName || "Nieznany Pracownik";
+    try {
+        fetch(REPORTS_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'save_log',
+                employee: who,
+                type: type,
+                description: description
+            })
+        });
+    } catch (e) {
+        console.error("Błąd zapisu logu:", e);
+    }
+};
+
+// ==========================================
+// SYSTEM ODTWARZANIA DŹWIĘKÓW SYSTEMOWYCH
+// ==========================================
+window.playSystemSound = function(soundName) {
+    const audioEnabled = localStorage.getItem('elcartel_audio_enabled') !== 'false';
+    if (!audioEnabled) return;
+    try {
+        const audio = new Audio(`audio/${soundName}.mp3`);
+        audio.play();
+    } catch (e) {
+        console.error("Błąd odtwarzania dźwięku:", e);
+    }
+};
 
 // Funkcje inteligentnego pobierania danych w tle (Predictive Fetch)
 window.preloadReportsData = function() {
@@ -120,7 +154,7 @@ const defaultInventory = [
     { name: "Komputer (stacjonarny)", min: 680, max: 680, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_computer2.webp" },
     { name: "Konsola", min: 400, max: 400, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_console.webp" },
     { name: "Konsola DJ", min: 640, max: 640, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_djconsole.webp" },
-    { name: "Kobieca plastikowa figurka", min: 100, max: 100, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_figure.webp" },
+    { name: "Kobieca plastikowa figurka", min: 100, max: 100, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_book.webp" },
     { name: "Plastikowa figurka małpki", min: 80, max: 80, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_figure2.webp" },
     { name: "Kwiat", min: 65, max: 65, category: "dom", image: "https://img.realmgaming.eu/onbeat/items/hr_flower.webp" },
     { name: "Gitara elektryczna", min: 480, max: 480, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_guitar.webp" },
@@ -156,7 +190,7 @@ const defaultExportInventory = [
     { name: "Zdobiona książka", price: 150, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_book.webp" },
     { name: "Dywan", price: 300, category: "dom", image: "https://img.realmgaming.eu/onbeat/items/hr_carpet.webp" },
     { name: "Komputer (laptop)", price: 750, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_computer.webp" },
-    { name: "Komputer (stacjonarny)", price: 850, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_computer2.webp" },
+    { name: "Komputer (stacjamarny)", price: 850, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_computer2.webp" },
     { name: "Konsola", price: 500, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_console.webp" },
     { name: "Konsola DJ", price: 800, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_djconsole.webp" },
     { name: "Kobieca plastikowa figurka", price: 120, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_figure.webp" },
@@ -405,6 +439,8 @@ window.login = async function() {
                     const banner = document.getElementById('announcement-banner');
                     if(banner) banner.classList.remove('hidden');
 
+                    window.addSystemLog('LOGOWANIE', `Pracownik zalogował się do systemu (Wersja: ${APP_VERSION}).`);
+
                     showNotice(`Rozpoczęto zmianę: ${data.name}`, "success");
                     
                     initSkup();
@@ -430,6 +466,7 @@ window.login = async function() {
 
        } else {
             showNotice("Nieprawidłowy PIN!", "danger");
+            window.addSystemLog('BŁĘDNY PIN', `Niewłaściwa próba autoryzacji do systemu (Użyto niepoprawnego kodu PIN w index.html).`);
             btn.disabled = false;
             btn.innerHTML = 'Odblokuj system <i class="fas fa-unlock"></i>';
 
@@ -452,6 +489,7 @@ window.login = async function() {
 }
 
 window.logout = function() {
+    window.addSystemLog('WYLOGOWANIE', `Pracownik zakończył zmianę i wylogował się.`);
     const mainApp = document.getElementById('main-app');
     const loginScreen = document.getElementById('login-screen');
     const loginCard = document.querySelector('.login-card');
@@ -808,7 +846,7 @@ function applyFilters() {
     } else {
         if(adSection) adSection.classList.add('hidden');
         if(itemsList) itemsList.classList.remove('hidden');
-        if(asortymentHeader) asortymentHeader.classList.remove('hidden');
+        if(asortymentHeader) asortymentHeader.remove('hidden');
         if(itemsList) {
             itemsList.querySelectorAll('.item-card').forEach(card => {
                 const name = card.getAttribute('data-name') || '';
@@ -849,7 +887,14 @@ window.generateQuote = async function() {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Przetwarzanie...';
 
     setTimeout(() => {
-        finalizeQuote(currentEmployeeName, finalPrice);
+        try {
+            finalizeQuote(currentEmployeeName || "Pracownik", finalPrice);
+        } catch (error) {
+            console.error("Błąd generowania paragonu:", error);
+            if (window.showNotice) {
+                window.showNotice("Błąd paragonu: " + error.message, "danger", 5000);
+            }
+        }
         btn.disabled = false;
         btn.innerHTML = originalBtnHtml;
     }, 400);
@@ -888,23 +933,28 @@ function finalizeQuote(employeeName, finalPrice) {
         });
 
         let sigDiv = document.querySelector('.receipt-signature');
-        if (!sigDiv) {
+        const footerEl = document.querySelector('.receipt-footer');
+        
+        if (!sigDiv && footerEl && itemsDiv.parentNode) {
             sigDiv = document.createElement('div');
             sigDiv.className = 'receipt-signature';
-            itemsDiv.parentNode.insertBefore(sigDiv, document.querySelector('.receipt-footer'));
+            itemsDiv.parentNode.insertBefore(sigDiv, footerEl);
         }
-        sigDiv.innerHTML = `<span class="signature-label">Podpis pracownika</span><span class="signature-text">${employeeName}</span>`;
+        
+        if (sigDiv) {
+            sigDiv.innerHTML = `<span class="signature-label">Podpis pracownika</span><span class="signature-text">${employeeName}</span>`;
+        }
     }
 
     const quoteModal = document.getElementById('quote-modal');
     if(quoteModal) quoteModal.classList.add('active');
-    // --- DODANE: Restart animacji pieczątki i trzęsienia ---
+    
     const receiptBox = document.getElementById('receipt');
     const stampBox = document.querySelector('#receipt .receipt-stamp');
     if (receiptBox && stampBox) {
         receiptBox.classList.remove('receipt-shake');
         stampBox.style.animation = 'none';
-        void receiptBox.offsetWidth; // Magiczna sztuczka wymuszająca reflow w przeglądarce
+        void receiptBox.offsetWidth; // Wymuszenie reflow
         receiptBox.classList.add('receipt-shake');
         stampBox.style.animation = '';
     }
@@ -1012,6 +1062,9 @@ window.sendToDiscord = async function() {
                     isStatAddedForCurrentReceipt = true;
                 }
                 showNotice("Wysłano na Discord i zaktualizowano obrót!", "success");
+
+                window.addSystemLog('SKUP', `Wystawiono paragon [${receiptID}] na kwotę: ${finalPriceNumeric}$`);
+
                 resetCartAndInventory();
                 closeModal();
                 
@@ -1222,7 +1275,7 @@ window.addCustomItemSlotExport = function() {
     countsExport[index] = 0;
     renderInventoryExport();
     calculateTotalExport();
-    showNotice("Dodano nowe pole na własny przedmiot (Eksport)!", "success");
+    showNotice("Dodano nowe pole na własny przedmiot!", "success");
 }
 
 window.updateCustomNameExport = function(i, val) {
@@ -1489,6 +1542,9 @@ window.sendToDiscordExport = async function() {
             if (res.ok) {
                 fetch(REPORTS_API_URL, { method: "POST", body: JSON.stringify(logPayload) }).catch(e => console.error(e));
                 showNotice("Wysłano raport na Discord!", "success");
+
+                window.addSystemLog('SPRZEDAŻ (MAGAZYN)', `Zrealizowano sprzedaż [${lastGeneratedReportID}] na kwotę: ${currentTotalExport}$`);
+
                 closeModalExport();
                 resetCartAndInventoryExport();
                 
@@ -1681,6 +1737,7 @@ window.publishChangelog = async function() {
             body: JSON.stringify({ action: "save_receipt", type: "changelog", date: getFormattedDateTime(), employee: currentEmployeeName, report_id: "v" + version, items: itemsToLog })
         });
         showNotice("Changelog opublikowany!", "success");
+        window.addSystemLog('CHANGELOG', `Opublikowano nową wersję systemu: v${version}`);
         closeAdminChangelog();
         document.getElementById('admin-version-input').value = "";
         document.getElementById('admin-changes-list').innerHTML = "";
@@ -1759,6 +1816,7 @@ window.saveEditedChangelog = async function() {
             body: JSON.stringify({ action: 'edit_changelog', original_version: origVersion, new_version: newVersion.startsWith('v') ? newVersion : 'v' + newVersion, items: itemsToLog, employee: currentEmployeeName, date: getFormattedDateTime() })
         });
         showNotice("Zaktualizowano changelog!", "success");
+        window.addSystemLog('CHANGELOG', `Zaktualizowano wpis changeloga dla wersji: ${newVersion}`);
         closeEditChangelog();
         fetchChangelogData();
     } catch(e) { showNotice("Błąd edycji!", "danger"); } 
@@ -1771,6 +1829,7 @@ window.deleteChangelog = async function(version) {
     try {
         await fetch(REPORTS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'delete_changelog', version: version }) });
         showNotice("Usunięto " + version + "!", "success");
+        window.addSystemLog('CHANGELOG', `Usunięto wpis changeloga: ${version}`);
         fetchChangelogData(); 
     } catch(e) { showNotice("Błąd usuwania!", "danger"); }
 }
@@ -1804,7 +1863,11 @@ window.changeEmployeePin = async function() {
     try {
         const response = await fetch(PIN_API_URL, { method: 'POST', body: JSON.stringify({ action: 'change_pin', old_pin: oldPin, new_pin: newPin, name: currentEmployeeName }) });
         const data = await response.json();
-        if (data.success) { showNotice("PIN zmieniony!", "success"); closeSettings(); } 
+        if (data.success) { 
+            showNotice("PIN zmieniony!", "success"); 
+            window.addSystemLog('USTAWIENIA', 'Pracownik zmienił swój kod PIN.');
+            closeSettings(); 
+        } 
         else { showNotice(data.message || "Błąd zmiany PINu!", "danger"); }
     } catch (e) { showNotice("Błąd połączenia!", "danger"); } 
     finally { btn.disabled = false; btn.innerHTML = originalHtml; }
@@ -2099,6 +2162,7 @@ window.submitTransactionReport = async function() {
 
         if (resDiscord.ok && resSheet.ok) {
             showNotice("Zgłoszenie wysłane na Discord!", "success");
+            window.addSystemLog('ZGŁOSZENIE POMYŁKI', `Zgłoszono pomyłkę w transakcji. Paragon: ${currentReportReceiptId}, Powód: ${reason}`);
             closeReportModal();
         } else throw new Error("Błąd.");
     } catch (e) { showNotice("Błąd wysyłania!", "danger"); } 
@@ -2159,6 +2223,7 @@ window.updateReportStatus = async function(receiptId, newStatus) {
         showNotice("Aktualizowanie...", "info");
         await fetch(REPORTS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'update_error_report', receipt_id: receiptId, new_status: newStatus }) });
         showNotice(`Zgłoszenie zaktualizowane: ${newStatus}`, "success");
+        window.addSystemLog('STATUS ZGŁOSZENIA', `Zmieniono status zgłoszenia [${receiptId}] na: ${newStatus}`);
         openAdminReports(); 
     } catch(e) { showNotice("Wystąpił błąd podczas aktualizacji!", "danger"); }
 }
@@ -2287,22 +2352,38 @@ function renderBadges(totalXP, txCount, myData = [], rawData = [], myErrors = 0)
     let artCount = 0; 
     let totalSellVolume = 0; 
     let katanaCount = 0;
+    let punctualCount = 0; 
     let uniqueClients = new Set();
     
-    // --- ZNAJDŹ AKTYWNOŚĆ SZEFÓW ---
+    let clientCounts = {};
+    let maxRepeatedClient = 0;
+    
     let servedWhileBossOnline = false;
     const bosses = window.currentEmployeesList.filter(e => e.role && e.role.toLowerCase() === 'szef').map(e => e.name);
     let bossTimestamps = [];
+    
+    let metJamajka = false;
+    let jamajkaTimestamps = [];
+    const jamajkaStartDate = parseDate("06.06.2026 00:00").getTime(); 
     
     if (rawData && rawData.length > 0) {
         rawData.forEach(row => {
             if (bosses.includes(row.employee) && row.date) {
                 bossTimestamps.push(parseDate(row.date).getTime());
             }
+            
+            if (row.employee && (row.employee.toLowerCase().includes('jamajka') || row.employee.toLowerCase().includes('james brown')) && row.date) {
+                const d = parseDate(row.date);
+                if (d && !isNaN(d.getTime())) {
+                    const time = d.getTime();
+                    if (time >= jamajkaStartDate) {
+                        jamajkaTimestamps.push(time);
+                    }
+                }
+            }
         });
     }
 
-    // --- LOGIKA DLA SZYBKIEJ FUCHY I PRACOHOLIKA ---
     let txTimestamps = [];
     let uniqueDays = new Set();
 
@@ -2313,7 +2394,13 @@ function renderBadges(totalXP, txCount, myData = [], rawData = [], myErrors = 0)
         if (tx.type === 'skup' && tx.qty > maxItemsInSingleTx) maxItemsInSingleTx = tx.qty;
 
         if (tx.ssn && String(tx.ssn).trim() !== "") {
-            uniqueClients.add(String(tx.ssn).trim());
+            const ssnKey = String(tx.ssn).trim();
+            uniqueClients.add(ssnKey);
+            
+            clientCounts[ssnKey] = (clientCounts[ssnKey] || 0) + 1;
+            if (clientCounts[ssnKey] > maxRepeatedClient) {
+                maxRepeatedClient = clientCounts[ssnKey];
+            }
         }
 
         let txTime = 0;
@@ -2326,14 +2413,23 @@ function renderBadges(totalXP, txCount, myData = [], rawData = [], myErrors = 0)
                 const hour = txDate.getHours();
                 if (hour >= 0 && hour <= 5) nightShiftCount++;
                 
+                if (txDate.getMinutes() === 0) punctualCount++;
+                
                 const dayString = `${txDate.getFullYear()}-${String(txDate.getMonth() + 1).padStart(2, '0')}-${String(txDate.getDate()).padStart(2, '0')}`;
                 uniqueDays.add(dayString);
             }
         }
         
         if (!servedWhileBossOnline && txTime > 0) {
-            if (bossTimestamps.some(bTime => Math.abs(bTime - txTime) <= 60 * 60 * 1000)) {
+            if (bossTimestamps.some(bTime => Math.abs(bTime - txTime) <= 120 * 60 * 1000)) {
                 servedWhileBossOnline = true;
+            }
+        }
+
+        const myNameLow = currentEmployeeName.toLowerCase();
+        if (!metJamajka && txTime >= jamajkaStartDate && !myNameLow.includes('jamajka') && !myNameLow.includes('james brown')) {
+            if (jamajkaTimestamps.some(jTime => Math.abs(jTime - txTime) <= 120 * 60 * 1000)) {
+                metJamajka = true;
             }
         }
 
@@ -2351,23 +2447,37 @@ function renderBadges(totalXP, txCount, myData = [], rawData = [], myErrors = 0)
         }
     });
 
-    // WYLICZANIE: Pracoholik (ciąg dni)
-    let maxStreak = 0, currentStreak = 0, previousDateStr = null;
+    let currentStreak = 0, previousDateStr = null;
     const sortedDays = Array.from(uniqueDays).sort((a, b) => new Date(a) - new Date(b));
+    
     sortedDays.forEach(dayStr => {
-        const currentDate = new Date(dayStr);
         if (!previousDateStr) {
             currentStreak = 1;
         } else {
+            const currentDate = new Date(dayStr);
             const diffDays = Math.round(Math.abs(currentDate - new Date(previousDateStr)) / (1000 * 60 * 60 * 24));
             if (diffDays === 1) currentStreak++;
-            else currentStreak = 1;
+            else currentStreak = 1; 
         }
-        if (currentStreak > maxStreak) maxStreak = currentStreak;
         previousDateStr = dayStr;
     });
 
-    // WYLICZANIE: Szybka Fucha (5 transakcji w < 10 min)
+    if (previousDateStr) {
+        const todayObj = new Date();
+        todayObj.setHours(0, 0, 0, 0);
+        
+        const lastTxDate = new Date(previousDateStr);
+        lastTxDate.setHours(0, 0, 0, 0);
+        
+        const diffFromToday = Math.round((todayObj - lastTxDate) / (1000 * 60 * 60 * 24));
+        
+        if (diffFromToday > 1) {
+            currentStreak = 0;
+        }
+    } else {
+        currentStreak = 0;
+    }
+
     let fastHustleAchieved = 0;
     txTimestamps.sort((a, b) => a - b);
     for (let i = 0; i <= txTimestamps.length - 5; i++) {
@@ -2377,7 +2487,6 @@ function renderBadges(totalXP, txCount, myData = [], rawData = [], myErrors = 0)
         }
     }
 
-    // Definicja poziomów (Brąz, Srebro, Złoto)
     const tierColors = ["#cd7f32", "#c0c0c0", "#fbbf24"]; 
 
     const badges = [
@@ -2402,16 +2511,21 @@ function renderBadges(totalXP, txCount, myData = [], rawData = [], myErrors = 0)
         { icon: "fa-laptop", name: "Elektro-śmieciarz", desc: "Obracaj sprzętem elektronicznym.", current: electronicsCount, 
           tiers: [{ max: 50, color: tierColors[0] }, { max: 150, color: tierColors[1] }, { max: 250, color: tierColors[2] }] },
           
-        { icon: "fa-truck-loading", name: "Wilk z Wall Street", desc: "Sprzedaj towar z magazynu (eksport).", current: totalSellVolume, isMoney: true, 
+        { icon: "fa-truck-loading", name: "Wilk z Wall Street", desc: "Sprzedaj towar z magazynu.", current: totalSellVolume, isMoney: true, 
           tiers: [{ max: 100000, color: tierColors[0] }, { max: 400000, color: tierColors[1] }, { max: 850000, color: tierColors[2] }] },
           
         { icon: "fa-users", name: "Znajoma twarz", desc: "Obsłuż unikalnych klientów (różne numery SSN).", current: uniqueClients.size, 
           tiers: [{ max: 20, color: tierColors[0] }, { max: 40, color: tierColors[1] }, { max: 70, color: tierColors[2] }] },
           
-        { icon: "fa-fire", name: "Pracoholik", desc: "Zrealizuj przynajmniej jedną transakcję dziennie pod rząd.", current: maxStreak, 
-          tiers: [{ max: 3, color: tierColors[0] }, { max: 7, color: tierColors[1] }, { max: 14, color: tierColors[2] }] },
+        { icon: "fa-id-badge", name: "Stały bywalec", desc: "Zbuduj zaufanie na dzielnicy. Obsłuż tego samego klienta (ten sam numer SSN) wielokrotnie.", current: maxRepeatedClient, 
+          tiers: [{ max: 10, color: tierColors[0] }, { max: 20, color: tierColors[1] }, { max: 30, color: tierColors[2] }] },
+          
+        { icon: "fa-fire", name: "Pracoholik", desc: "Zrealizuj przynajmniej jedną transakcję dziennie pod rząd.", current: currentStreak, 
+          tiers: [{ max: 7, color: tierColors[0] }, { max: 14, color: tierColors[1] }, { max: 30, color: tierColors[2] }] },
 
-        // --- OSIĄGNIĘCIA JEDNOPOZIOMOWE (Unikalne) ---
+        { icon: "fa-hourglass-start", name: "Punktualny", desc: "W firmie zjawiasz się co do minuty. Zrealizuj transakcję dokładnie o pełnej godzinie (np. 14:00, 18:00).", current: punctualCount, 
+          tiers: [{ max: 1, color: tierColors[0] }, { max: 5, color: tierColors[1] }, { max: 10, color: tierColors[2] }] },
+
         { icon: "fa-bolt", name: "Szybka fucha", desc: "Zrealizuj 5 transakcji w czasie poniżej 10 minut.", current: fastHustleAchieved, 
           tiers: [{ max: 1, color: "#f97316" }] },
           
@@ -2419,21 +2533,34 @@ function renderBadges(totalXP, txCount, myData = [], rawData = [], myErrors = 0)
           tiers: [{ max: 1, color: "#eab308" }] },
           
         { icon: "fa-feather", name: "Czyste sumienie", desc: "Zrealizuj minimum 50 transakcji nie mając żadnej pomyłki.", current: (txCount >= 50 && myErrors === 0) ? 1 : 0, 
-          tiers: [{ max: 1, color: "#14b8a6" }] }
+          tiers: [{ max: 1, color: "#14b8a6" }] },
+          
+        { icon: "fa-leaf", name: "Duch Jamajki", desc: "Udało ci się spotkać legendę. Zrealizowałeś transakcję na tej samej zmianie co Jamajka.", current: metJamajka ? 1 : 0, 
+          tiers: [{ max: 1, color: "#22c55e" }] }
     ];
     
+    badges.forEach(b => {
+        b.completedTiers = 0;
+        for (let i = 0; i < b.tiers.length; i++) {
+            if (b.current >= b.tiers[i].max) b.completedTiers++;
+        }
+        b.isMaxed = (b.completedTiers === b.tiers.length);
+    });
+
+    badges.sort((a, b) => {
+        if (a.isMaxed && !b.isMaxed) return 1;
+        if (!a.isMaxed && b.isMaxed) return -1;
+        return 0;
+    });
+
     const container = document.getElementById('achievements-container');
     container.innerHTML = '';
     container.className = 'achievements-grid hidden'; 
     container.style = ''; 
 
     badges.forEach(b => {
-        let completedTiers = 0;
-        for (let i = 0; i < b.tiers.length; i++) {
-            if (b.current >= b.tiers[i].max) completedTiers++;
-        }
-        
-        const isMaxed = completedTiers === b.tiers.length;
+        const completedTiers = b.completedTiers;
+        const isMaxed = b.isMaxed;
         const currentTierInfo = isMaxed ? b.tiers[b.tiers.length - 1] : b.tiers[completedTiers];
         const activeColor = completedTiers > 0 ? b.tiers[completedTiers - 1].color : "var(--text-secondary)";
         const hasStarted = b.current > 0;
@@ -2480,8 +2607,8 @@ function renderBadges(totalXP, txCount, myData = [], rawData = [], myErrors = 0)
     });
 }
 
-// ZAKTUALIZOWANA FUNKCJA SHOWNOTICE - NOWY NIEZAWODNY POMIAR CZASU DLA KONTROLEK TIMERA
-window.showNotice = function(msg, type = 'info', duration = 3000) {
+// ZAKTUALIZOWANA FUNKCJA SHOWNOTICE - NOWY NIEZAWODNY POMIAR CZASU DLA KONTROLEK TIMERA ORAZ OBSŁUGA DŹWIĘKÓW
+window.showNotice = function(msg, type = 'info', duration = 3000, soundName = null) {
     const container = document.getElementById('toast-container');
     if(!container) return;
     const t = document.createElement('div');
@@ -2495,12 +2622,20 @@ window.showNotice = function(msg, type = 'info', duration = 3000) {
     t.appendChild(progress);
     
     container.appendChild(t);
+    
+    // Odtwarzanie dźwięku systemowego dopasowanego do typu powiadomienia lub wymuszonego parametrem
+    if (soundName) {
+        window.playSystemSound(soundName);
+    } else {
+        if (type === 'success') window.playSystemSound('success');
+        else if (type === 'danger') window.playSystemSound('error');
+        else if (type === 'warning') window.playSystemSound('warning');
+        else window.playSystemSound('info');
+    }
+    
     setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, duration);
 }
 
-// ==========================================
-// KARTY LOJALNOŚCIOWE Z DYNAMICZNYM POBIERANIEM NAGRÓD
-// ==========================================
 window.checkLoyaltyCustomer = async function() {
     const ssnInput = document.getElementById('loyalty-search-ssn').value.trim();
     if(!ssnInput) return showNotice("Podaj numer SSN!", "warning");
@@ -2617,6 +2752,8 @@ window.claimReward = async function(btn) {
         document.getElementById('loyalty-display-stamps').innerText = currentLoyaltyCustomer.stamps;
         
         showNotice("Nagroda odebrana! (Punkty pobrane)", "success");
+        window.addSystemLog('NAGRODA LOJALNOŚCIOWA', `Wydano nagrodę "${rewardName}" dla klienta SSN: ${currentLoyaltyCustomer.ssn}. Koszt: ${cost} pieczątek.`);
+
     } catch(e) {
         showNotice("Wystąpił błąd przy pobieraniu punktów!", "danger");
     } finally {
@@ -2655,9 +2792,6 @@ window.forceHardReload = async function(serverVersion) {
 setInterval(checkUpdates, 60000);
 setTimeout(checkUpdates, 3000);
 
-// ==========================================
-// FUNKCJE WIDŻETU ONLINE
-// ==========================================
 window.updateOnlineEmployees = async function() {
     try {
         window.reportsFetchPromise = null;
@@ -2765,28 +2899,19 @@ function renderOnlineWidget(onlineData) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // --- GENERATOR AMBIENTOWEGO TŁA ---
     const ambientContainer = document.createElement('div');
     ambientContainer.id = 'ambient-background';
     document.body.prepend(ambientContainer);
 
-    // Generujemy 40 losowych cząsteczek
     for (let i = 0; i < 50; i++) {
         const particle = document.createElement('div');
         particle.className = 'ambient-particle';
         
-        // Losowy rozmiar (od 1px do 3px)
         const size = Math.random() * 2 + 1; 
         particle.style.width = `${size}px`;
         particle.style.height = `${size}px`;
-        
-        // Losowa pozycja na szerokości ekranu
         particle.style.left = `${Math.random() * 100}vw`;
-        
-        // Losowy czas lotu do góry (od 10 do 25 sekund)
         particle.style.animationDuration = `${Math.random() * 15 + 10}s`; 
-        
-        // Losowe opóźnienie startu (żeby nie wyleciały wszystkie naraz)
         particle.style.animationDelay = `${Math.random() * 10}s`;
         
         ambientContainer.appendChild(particle);
@@ -2830,7 +2955,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.querySelectorAll('#check-loyalty-btn').forEach(btn => btn.addEventListener('click', window.checkLoyaltyCustomer));
-    document.querySelectorAll('#loyalty-search-ssn').forEach(input => input.addEventListener('keypress', function(e) { if (e.key === 'Enter') window.checkLoyaltyCustomer(); }));
+    document.getElementById('loyalty-search-ssn')?.addEventListener('keypress', function(e) { if (e.key === 'Enter') window.checkLoyaltyCustomer(); });
 
     document.querySelectorAll('.claim-reward-btn').forEach(btn => {
         btn.addEventListener('click', (e) => window.claimReward(e.currentTarget));
@@ -2861,7 +2986,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    document.querySelectorAll('#close-achievements-btn').forEach(btn => btn.addEventListener('click', closeAchievements));
+    document.getElementById('close-achievements-btn')?.addEventListener('click', closeAchievements);
     document.querySelectorAll('#menu-changelog').forEach(btn => btn.addEventListener('click', openChangelog));
     document.querySelectorAll('#admin-changelog-btn').forEach(btn => btn.addEventListener('click', openAdminChangelog));
     document.querySelectorAll('#admin-reports-btn').forEach(btn => btn.addEventListener('click', openAdminReports));
@@ -2952,7 +3077,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('close-bonus-notification-btn')?.addEventListener('click', closeBonusNotification);
     document.getElementById('claim-bonus-notification-btn')?.addEventListener('click', closeBonusNotification);
 
-    // PODPIĘCIE NOWYCH PRZYCISKÓW OD PAGERA
     document.getElementById('close-pager-modal-btn')?.addEventListener('click', () => document.getElementById('pager-modal').classList.remove('active'));
     document.getElementById('submit-pager-btn')?.addEventListener('click', window.sendPagerMessage);
 
@@ -3020,7 +3144,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if(btn) updateReportStatus(btn.getAttribute('data-id'), btn.getAttribute('data-status'));
     });
 
-    // --- HOLOGRAFICZNY EFEKT 3D NA IDENTYFIKATORZE ---
     const tiltCard = document.getElementById('tilt-card-element');
     const glare = document.querySelector('.id-card-glare');
 
@@ -3052,7 +3175,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- PODPIĘCIE PRZEŁĄCZNIKÓW ZDJĘĆ ---
     const toggleSkup = document.getElementById('toggle-images-skup');
     if (toggleSkup) {
         toggleSkup.checked = showImagesSkup;
@@ -3073,6 +3195,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- OBSŁUGA PRZEŁĄCZNIKA DŹWIĘKÓW W USTAWIENIACH ---
+    const toggleAudio = document.getElementById('toggle-audio-settings');
+    if (toggleAudio) {
+        toggleAudio.checked = localStorage.getItem('elcartel_audio_enabled') !== 'false';
+        toggleAudio.addEventListener('change', (e) => {
+            localStorage.setItem('elcartel_audio_enabled', e.target.checked);
+            if (e.target.checked) {
+                window.playSystemSound('info'); // Krótkie piknięcie testowe przy włączeniu
+            }
+        });
+    }
 });
 
 /* ==========================================================================
@@ -3121,7 +3254,7 @@ window.sendPagerMessage = function() {
         employee: currentEmployeeName,
         report_id: Date.now().toString(), 
         items: [{ name: encodedMsg, qty: 1, total: 0 }],
-        ssn: targetSsn // Wysyłamy konkretny numer SSN lub "ALL"
+        ssn: targetSsn 
     };
 
     fetch(REPORTS_API_URL, { 
@@ -3129,6 +3262,7 @@ window.sendPagerMessage = function() {
         body: JSON.stringify(payload) 
     }).then(() => {
         showNotice("Komunikat wysłany!", "success");
+        window.addSystemLog('PAGER (KOMUNIKAT)', `Wysłano wiadomość z pagera (Odbiorca SSN: ${targetSsn}). Treść: ${msg}`);
         document.getElementById('pager-modal').classList.remove('active'); 
     }).catch(e => {
         showNotice("Zakłócenia! Błąd nadajnika.", "danger");
@@ -3152,7 +3286,6 @@ async function checkPagerMessages() {
             const msgTime = parseInt(m.report_id);
             
             if (msgTime > lastPagerTimestamp) {
-                // Kuloodporne sprawdzanie tożsamości (ucina spacje i ignoruje wielkość liter)
                 const targetSsn = String(m.ssn).trim();
                 const mySsn = String(currentEmployeeSsn).trim();
                 
@@ -3163,8 +3296,6 @@ async function checkPagerMessages() {
                 const isForMe = (targetSsn === mySsn);
                 const isFromMe = (senderName === myName);
 
-                // NOWA LOGIKA: Pokaż, jeśli komunikat jest globalny (nawet od Ciebie) 
-                // LUB jeśli jest skierowany bezpośrednio do Ciebie od kogoś innego
                 if (isGlobal || (isForMe && !isFromMe)) {
                     let msgText = m.name;
                     let msgColor = 'info';
@@ -3179,7 +3310,7 @@ async function checkPagerMessages() {
                         }
                     }
 
-                    showNotice(`${m.employee}: ${msgText}`, msgColor, msgDuration);
+                    showNotice(`${msgText}`, msgColor, msgDuration, 'pager');
                 }
                 
                 if (msgTime > newestTimestamp) newestTimestamp = msgTime;
@@ -3191,3 +3322,21 @@ async function checkPagerMessages() {
 }
 
 setInterval(checkPagerMessages, 15000);
+
+// ==========================================
+// AUTOMATYCZNE WYLOGOWANIE PRZY ZAMKNIĘCIU OKNA/KARTY
+// ==========================================
+window.addEventListener('beforeunload', function() {
+    if (currentEmployeeName) {
+        fetch(REPORTS_API_URL, {
+            method: 'POST',
+            keepalive: true,
+            body: JSON.stringify({
+                action: 'save_log',
+                employee: currentEmployeeName,
+                type: 'WYLOGOWANIE',
+                description: 'Zamknięto kartę lub okno przeglądarki (Automatyczne wylogowanie).'
+            })
+        });
+    }
+});
