@@ -722,7 +722,7 @@ window.addCustomItemSlot = function() {
     inventory.push({ name: "Własny przedmiot", min: 0, max: 0, category: "inne", isCustom: true });
     counts[index] = 0;
     renderInventory();
-    showNotice("Dodano nowe pole na własny przedmiot (Skup)!", "success");
+    showNotice("Dodano nowe pole na własny przedmiot!", "success");
 }
 
 window.updateCustomName = function(index, value) {
