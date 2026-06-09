@@ -1,4 +1,4 @@
-const APP_VERSION = "4.2.2";
+const APP_VERSION = "4.2.3";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const DISCORD_WEBHOOK_URL_SKUP = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/skup"; 
@@ -175,7 +175,18 @@ const defaultInventory = [
     { name: "Złota moneta", min: 200, max: 200, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/goldcoin.webp" },
     { name: "Złota moneta z prezydentem", min: 200, max: 200, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/prescoin42.webp" },
     { name: "Złote kolczyki", min: 200, max: 200, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/goldenearrings.webp" },
-    { name: "Popsuty telefon", min: 95, max: 95, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/brokenphone.webp" }
+    { name: "Popsuty telefon", min: 95, max: 95, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/brokenphone.webp" },
+	{ name: "Muszle morskie", min: 120, max: 120, category: "inne", image: "" },
+	{ name: "Mała szara muszla", min: 90, max: 90, category: "inne", image: "" },
+	{ name: "Gwiazda morska", min: 80, max: 80, category: "inne", image: "" },
+	{ name: "Ząb rekina", min: 90, max: 90, category: "inne", image: "" },
+	{ name: "Stary płaszcz piracki", min: 350, max: 350, category: "inne", image: "" },
+	{ name: "Różowa perła", min: 550, max: 550, category: "inne", image: "" },
+	{ name: "Zniszczona flaga piratów", min: 300, max: 300, category: "inne", image: "" },
+	{ name: "Kapelusz piracki", min: 350, max: 350, category: "inne", image: "" },
+	{ name: "Szkatuła ze złotymi łańcuchami", min: 750, max: 750, category: "inne", image: "" },
+	{ name: "Zabytkowa szabla", min: 600, max: 600, category: "inne", image: "" },
+	{ name: "Legendarna fajka", min: 800, max: 800, category: "inne", image: "" }
 ];
 
 let inventory = [];
@@ -213,7 +224,19 @@ const defaultExportInventory = [
     { name: "Zegarek", price: 200, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/hr_watch.webp" },
     { name: "Stary popsuty telefon", price: 110, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/brokenphone.webp" },
     { name: "Sztabka złota", price: 15000, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/sztabka_zlota.webp" },
-    { name: "Złota moneta z prezydentem", price: 250, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/prescoin42.webp" }
+    { name: "Złota moneta z prezydentem", price: 250, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/prescoin42.webp" },
+	{ name: "Muszle morskie", price: 144, category: "inne", image: "" },
+	{ name: "Mała szara muszla", price: 108, category: "inne", image: "" },
+	{ name: "Gwiazda morska", price: 96, category: "inne", image: "" },
+	{ name: "Ząb rekina", price: 108, category: "inne", image: "" },
+	{ name: "Stary płaszcz piracki", price: 420, category: "inne", image: "" },
+	{ name: "Różowa perła", price: 660, category: "inne", image: "" },
+	{ name: "Zniszczona flaga piratów", price: 360, category: "inne", image: "" },
+	{ name: "Kapelusz piracki", price: 420, category: "inne", image: "" },
+	{ name: "Szkatuła ze złotymi łańcuchami", price: 900, category: "inne", image: "" },
+	{ name: "Zabytkowa szabla", price: 720, category: "inne", image: "" },
+	
+	
 ];
 
 let exportInventory = [];
@@ -2535,7 +2558,7 @@ function renderBadges(totalXP, txCount, myData = [], rawData = [], myErrors = 0)
         { icon: "fa-feather", name: "Czyste sumienie", desc: "Zrealizuj minimum 50 transakcji nie mając żadnej pomyłki.", current: (txCount >= 50 && myErrors === 0) ? 1 : 0, 
           tiers: [{ max: 1, color: "#14b8a6" }] },
           
-        { icon: "fa-leaf", name: "Duch Jamajki", desc: "Udało ci się spotkać legendę. Zrealizowałeś transakcję na tej samej zmianie co Jamajka.", current: metJamajka ? 1 : 0, 
+        { icon: "fa-ghost", name: "Duch Jamajki", desc: "Udało ci się spotkać legendę. Zrealizowałeś transakcję na tej samej zmianie co Jamajka.", current: metJamajka ? 1 : 0, 
           tiers: [{ max: 1, color: "#22c55e" }] }
     ];
     
