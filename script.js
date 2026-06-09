@@ -235,8 +235,6 @@ const defaultExportInventory = [
 	{ name: "Kapelusz piracki", price: 420, category: "inne", image: "" },
 	{ name: "Szkatuła ze złotymi łańcuchami", price: 900, category: "inne", image: "" },
 	{ name: "Zabytkowa szabla", price: 720, category: "inne", image: "" },
-	
-	
 ];
 
 let exportInventory = [];
