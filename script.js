@@ -235,6 +235,7 @@ const defaultExportInventory = [
 	{ name: "Kapelusz piracki", price: 420, category: "inne", image: "" },
 	{ name: "Szkatuła ze złotymi łańcuchami", price: 900, category: "inne", image: "" },
 	{ name: "Zabytkowa szabla", price: 720, category: "inne", image: "" },
+	{ name: "Legendarna fajka", price: 960, category: "inne", image: "" }
 ];
 
 let exportInventory = [];
@@ -2395,6 +2396,8 @@ function renderBadges(totalXP, txCount, myData = [], rawData = [], myErrors = 0)
     let artCount = 0; 
     let totalSellVolume = 0; 
     let katanaCount = 0;
+	let pirateItemsCount = 0;
+    let seaItemsCount = 0;
     let punctualCount = 0; 
     let uniqueClients = new Set();
     
@@ -2476,7 +2479,7 @@ function renderBadges(totalXP, txCount, myData = [], rawData = [], myErrors = 0)
             }
         }
 
-        if (tx.name) {
+			if (tx.name) {
             const nameLow = tx.name.toLowerCase();
             if (nameLow.includes('dziwna substancja')) weirdStuffCount += (tx.qty || 1);
             if (nameLow.includes('złot') || nameLow.includes('sztabka')) goldCount += (tx.qty || 1);
@@ -2487,6 +2490,16 @@ function renderBadges(totalXP, txCount, myData = [], rawData = [], myErrors = 0)
                 artCount += (tx.qty || 1);
             }
             if (nameLow.includes('katana')) katanaCount += (tx.qty || 1);
+            
+            // NOWE: Pirackie i Antyczne przedmioty (TYLKO SKUP)
+            if (tx.type === 'skup' && (nameLow.includes('pirack') || nameLow.includes('flaga') || nameLow.includes('szkatuła') || nameLow.includes('szabla') || nameLow.includes('fajka'))) {
+                pirateItemsCount += (tx.qty || 1);
+            }
+            
+            // NOWE: Morskie zdobycze (TYLKO SKUP)
+            if (tx.type === 'skup' && (nameLow.includes('muszl') || nameLow.includes('gwiazda morsk') || nameLow.includes('ząb rekina') || nameLow.includes('perła'))) {
+                seaItemsCount += (tx.qty || 1);
+            }
         }
     });
 
@@ -2505,16 +2518,16 @@ function renderBadges(totalXP, txCount, myData = [], rawData = [], myErrors = 0)
         previousDateStr = dayStr;
     });
 
-    if (previousDateStr) {
-        const todayObj = new Date();
-        todayObj.setHours(0, 0, 0, 0);
+if (previousDateStr) {
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
         
-        const lastTxDate = new Date(previousDateStr);
-        lastTxDate.setHours(0, 0, 0, 0);
-        
-        const diffFromToday = Math.round((todayObj - lastTxDate) / (1000 * 60 * 60 * 24));
-        
-        if (diffFromToday > 1) {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+
+        // Jeśli ostatnia transakcja NIE była dzisiaj ani NIE była wczoraj -> czas minął, reset do zera
+        if (previousDateStr !== todayStr && previousDateStr !== yesterdayStr) {
             currentStreak = 0;
         }
     } else {
@@ -2579,7 +2592,13 @@ function renderBadges(totalXP, txCount, myData = [], rawData = [], myErrors = 0)
           tiers: [{ max: 1, color: "#14b8a6" }] },
           
         { icon: "fa-ghost", name: "Duch Jamajki", desc: "Udało ci się spotkać legendę. Zrealizowałeś transakcję na tej samej zmianie co Jamajka.", current: metJamajka ? 1 : 0, 
-          tiers: [{ max: 1, color: "#22c55e" }] }
+          tiers: [{ max: 1, color: "#22c55e" }] },
+		  
+		{ icon: "fa-skull-crossbones", name: "Klątwa Czarnobrodego", desc: "Skupuj antyki i pirackie artefakty (płaszcze, kapelusze, flagi piratów, szkatuły, szable i fajki).", current: pirateItemsCount, 
+          tiers: [{ max: 25, color: tierColors[0] }, { max: 40, color: tierColors[1] }, { max: 70, color: tierColors[2] }] },
+
+        { icon: "fa-water", name: "Zew oceanu", desc: "Skup dary morza (muszle, perły, zęby rekinów).", current: seaItemsCount, 
+          tiers: [{ max: 20, color: tierColors[0] }, { max: 50, color: tierColors[1] }, { max: 100, color: tierColors[2] }] }
     ];
     
     badges.forEach(b => {
