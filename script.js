@@ -698,7 +698,7 @@ function renderInventory() {
             card.className = cardClass + ' custom-card-special';
             card.innerHTML = `
                 <div class="item-left-side">
-                    <i class="fas fa-plus item-icon"></i>
+                    <button onclick="removeCustomItemSlot(${index})" style="width: 42px; height: 42px; border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.15); color: var(--danger); cursor: pointer; flex-shrink: 0; display: flex; justify-content: center; align-items: center; transition: 0.2s;" title="Usuń pole" onmouseover="this.style.background='var(--danger)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(239, 68, 68, 0.15)'; this.style.color='var(--danger)';"><i class="fas fa-trash"></i></button>
                     <div class="item-info custom-inputs-wrapper" style="margin-right:0;">
                         <input type="text" class="custom-item-name" data-index="${index}" placeholder="Wpisz nazwę..." value="${item.name === 'Własny przedmiot' ? '' : item.name}">
                         <input type="number" class="custom-item-price" data-index="${index}" placeholder="Cena $" min="0" value="${item.min > 0 ? item.min : ''}">
@@ -767,6 +767,28 @@ window.updateCustomPrice = function(index, value) {
     inventory[index].max = price;
     calculateTotal();
 }
+
+window.removeCustomItemSlot = function(index) {
+    inventory.splice(index, 1);
+    let newCounts = {};
+    for(let i = 0; i < inventory.length; i++) {
+        newCounts[i] = counts[i >= index ? i + 1 : i] || 0;
+    }
+    counts = newCounts;
+    renderInventory();
+    calculateTotal();
+};
+
+window.removeCustomItemSlotExport = function(index) {
+    exportInventory.splice(index, 1);
+    let newCounts = {};
+    for(let i = 0; i < exportInventory.length; i++) {
+        newCounts[i] = countsExport[i >= index ? i + 1 : i] || 0;
+    }
+    countsExport = newCounts;
+    renderInventoryExport();
+    calculateTotalExport();
+};
 
 window.updateCount = function(index, change) {
     counts[index] = Math.max(0, (counts[index] || 0) + change);
@@ -867,7 +889,7 @@ function applyFilters() {
     } else {
         if(adSection) adSection.classList.add('hidden');
         if(itemsList) itemsList.classList.remove('hidden');
-        if(asortymentHeader) asortymentHeader.remove('hidden');
+        if(asortymentHeader) asortymentHeader.classList.remove('hidden');
         if(itemsList) {
             itemsList.querySelectorAll('.item-card').forEach(card => {
                 const name = card.getAttribute('data-name') || '';
@@ -1250,7 +1272,7 @@ function renderInventoryExport() {
             card.id = `custom-card-export-${index}`;
             card.innerHTML = `
                 <div class="item-left-side">
-                    <i class="fas fa-plus item-icon"></i>
+                    <button onclick="removeCustomItemSlotExport(${index})" style="width: 42px; height: 42px; border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.15); color: var(--danger); cursor: pointer; flex-shrink: 0; display: flex; justify-content: center; align-items: center; transition: 0.2s;" title="Usuń pole" onmouseover="this.style.background='var(--danger)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(239, 68, 68, 0.15)'; this.style.color='var(--danger)';"><i class="fas fa-trash"></i></button>
                     <div class="custom-inputs-wrapper" style="margin-right: 0;">
                         <input type="text" class="custom-name-input" data-index="${index}" placeholder="Wpisz nazwę..." value="${item.name === 'Własny przedmiot' ? '' : item.name}">
                         <input type="number" class="custom-price-input" data-index="${index}" placeholder="Cena $" min="0" value="${item.price > 0 ? item.price : ''}">

@@ -3201,8 +3201,8 @@ body:has(.cart-sidebar.active) .online-widget {
    ========================================================================== */
 #add-custom-slot-btn {
     background: transparent;
-    border: 1px dashed var(--accent-color); /* Na stałe niebieska ramka */
-    color: var(--accent-color); /* Na stałe niebieski tekst */
+    border: 1px dashed var(--accent-color);
+    color: var(--accent-color);
     padding: 10px 20px;
     border-radius: 12px;
     cursor: pointer;
@@ -3213,8 +3213,6 @@ body:has(.cart-sidebar.active) .online-widget {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    margin: 0 0 20px auto; /* Trzyma przycisk idealnie po prawej stronie */
-    width: fit-content;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
