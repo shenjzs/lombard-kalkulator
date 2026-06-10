@@ -665,7 +665,10 @@ function addDailyStat(employeeName, amount) {
 
 function initSkup() {
     document.getElementById('header-date').innerText = getFormattedDate();
-    resetCartAndInventory();
+    
+    // Odpalamy nowy system zakładek!
+    initTabs(); 
+    
     const adInput = document.getElementById('ad-input');
     if(adInput) updateAdPreview();
     updateCartView(); 
@@ -683,8 +686,15 @@ function resetCartAndInventory() {
     if (ssnInput) ssnInput.value = "";
     currentCustomerSSN = "";
 
+    // --- INTELIGENTNY RESET NAZWY ---
+    if (window.skupTabs && window.activeSkupTabId) {
+        const tab = window.skupTabs.find(t => t.id === window.activeSkupTabId);
+        if (tab) tab.name = window.getFreeClientName(window.skupTabs, tab.id);
+    }
+
     renderInventory();
     calculateTotal();
+    if (typeof window.renderTabsUI === 'function') window.renderTabsUI(); 
 }
 
 function renderInventory() {
@@ -909,6 +919,314 @@ function calculateTotal() {
     updateCartView();
 }
 
+// ==========================================
+// SYSTEM ZAKŁADEK (PILL-STYLE) - ROZDZIELONY SKUP / SPRZEDAŻ
+// ==========================================
+window.skupTabs = [];
+window.activeSkupTabId = null;
+
+window.exportTabs = [];
+window.activeExportTabId = null;
+
+window.initTabs = function() {
+    skupTabs = [];
+    exportTabs = [];
+    
+    // Czysta karta dla Skupu
+    const newSkupId = "skup_" + Date.now();
+    skupTabs.push(createEmptyTabObj(newSkupId, "Klient 1", 'skup'));
+    activeSkupTabId = newSkupId;
+
+    // Czysta karta dla Sprzedaży
+    const newExpId = "export_" + Date.now();
+    exportTabs.push(createEmptyTabObj(newExpId, "Klient 1", 'export'));
+    activeExportTabId = newExpId;
+    
+    loadTabState(activeSkupTabId, 'skup');
+    loadTabState(activeExportTabId, 'export');
+};
+
+function createEmptyTabObj(id, name, type) {
+    if (type === 'skup') {
+        const freshInventory = JSON.parse(JSON.stringify(defaultInventory));
+        const freshCounts = {};
+        freshInventory.forEach((_, i) => freshCounts[i] = 0);
+        return { id, name, inventory: freshInventory, counts: freshCounts, ssn: "", finalPrice: "" };
+    } else {
+        const freshExportInventory = JSON.parse(JSON.stringify(defaultExportInventory));
+        const freshCountsExport = {};
+        freshExportInventory.forEach((_, i) => freshCountsExport[i] = 0);
+        return { id, name, exportInventory: freshExportInventory, countsExport: freshCountsExport, ssn: "" };
+    }
+}
+
+window.saveCurrentTabState = function(viewType = currentActiveView) {
+    if (viewType === 'skup') {
+        if (!activeSkupTabId) return;
+        let tab = skupTabs.find(t => t.id === activeSkupTabId);
+        if (tab) {
+            tab.inventory = JSON.parse(JSON.stringify(inventory));
+            tab.counts = JSON.parse(JSON.stringify(counts));
+            const ssnInput = document.getElementById('customer-ssn-input');
+            tab.ssn = ssnInput ? ssnInput.value : "";
+            const priceInput = document.getElementById('final-price-input');
+            tab.finalPrice = priceInput ? priceInput.value : "";
+        }
+    } else if (viewType === 'export') {
+        if (!activeExportTabId) return;
+        let tab = exportTabs.find(t => t.id === activeExportTabId);
+        if (tab) {
+            tab.exportInventory = JSON.parse(JSON.stringify(exportInventory));
+            tab.countsExport = JSON.parse(JSON.stringify(countsExport));
+            const ssnInput = document.getElementById('customer-ssn-input-export');
+            tab.ssn = ssnInput ? ssnInput.value : "";
+        }
+    }
+};
+
+window.loadTabState = function(tabId, viewType = currentActiveView) {
+    if (viewType === 'skup') {
+        let tab = skupTabs.find(t => t.id === tabId);
+        if (!tab) return;
+        activeSkupTabId = tabId;
+        inventory = JSON.parse(JSON.stringify(tab.inventory));
+        counts = JSON.parse(JSON.stringify(tab.counts));
+        
+        const ssnInput = document.getElementById('customer-ssn-input');
+        if (ssnInput) ssnInput.value = tab.ssn;
+        currentCustomerSSN = tab.ssn;
+        
+        const priceInput = document.getElementById('final-price-input');
+        if (priceInput) priceInput.value = tab.finalPrice;
+
+        renderInventory();
+        calculateTotal();
+    } else if (viewType === 'export') {
+        let tab = exportTabs.find(t => t.id === tabId);
+        if (!tab) return;
+        activeExportTabId = tabId;
+        exportInventory = JSON.parse(JSON.stringify(tab.exportInventory));
+        countsExport = JSON.parse(JSON.stringify(tab.countsExport));
+        
+        const ssnInput = document.getElementById('customer-ssn-input-export');
+        if (ssnInput) ssnInput.value = tab.ssn;
+        currentCustomerSSNExport = tab.ssn;
+
+        renderInventoryExport();
+        calculateTotalExport();
+    }
+    renderTabsUI();
+};
+
+// --- NOWA FUNKCJA POMOCNICZA DO WYZNACZANIA WOLNEGO NUMERU ---
+window.getFreeClientName = function(tabsArray, ignoreId = null) {
+    let usedNums = tabsArray.map(t => {
+        if (ignoreId && t.id === ignoreId) return 0;
+        let match = t.name.match(/^Klient (\d+)$/);
+        return match ? parseInt(match[1]) : 0;
+    });
+    let nextNum = 1;
+    while(usedNums.includes(nextNum)) nextNum++;
+    return `Klient ${nextNum}`;
+};
+
+window.createNewTab = function(nameStr, viewType = currentActiveView) {
+    saveCurrentTabState(viewType);
+    
+    const newId = viewType + "_" + Date.now().toString() + Math.random().toString().substr(2,4);
+    
+    if (viewType === 'skup') {
+        if (skupTabs.length >= 3) return showNotice("Maksymalnie możesz mieć otwarte 3 rachunki!", "warning");
+        const newName = nameStr || window.getFreeClientName(skupTabs);
+        skupTabs.push(createEmptyTabObj(newId, newName, 'skup'));
+    } else {
+        if (exportTabs.length >= 3) return showNotice("Maksymalnie możesz mieć otwarte 3 rachunki!", "warning");
+        const newName = nameStr || window.getFreeClientName(exportTabs);
+        exportTabs.push(createEmptyTabObj(newId, newName, 'export'));
+    }
+    
+    loadTabState(newId, viewType);
+};
+
+window.switchTab = function(tabId, viewType) {
+    if (viewType === 'skup' && activeSkupTabId === tabId) return;
+    if (viewType === 'export' && activeExportTabId === tabId) return;
+    
+    saveCurrentTabState(viewType);
+    loadTabState(tabId, viewType);
+};
+
+window.closeTab = function(tabId, viewType, event) {
+    event.stopPropagation();
+    
+    let targetArr = viewType === 'skup' ? skupTabs : exportTabs;
+    let activeId = viewType === 'skup' ? activeSkupTabId : activeExportTabId;
+    
+    let tab = targetArr.find(t => t.id === tabId);
+    if (tab) {
+        let itemsCount = 0;
+        if (viewType === 'skup') itemsCount = Object.values(tab.counts || {}).reduce((a, b) => a + b, 0);
+        if (viewType === 'export') itemsCount = Object.values(tab.countsExport || {}).reduce((a, b) => a + b, 0);
+        
+        if (itemsCount > 0) {
+            showNotice("Nie można zamknąć! Posiadasz tu otwarty rachunek.", "danger");
+            const tabElement = event.target.closest('.cart-tab');
+            if (tabElement) {
+                tabElement.style.animation = 'none';
+                void tabElement.offsetWidth; 
+                tabElement.style.animation = 'icon-shake-anim 0.4s ease'; 
+            }
+            return; 
+        }
+    }
+
+    if (targetArr.length === 1) {
+        if (viewType === 'skup') resetCartAndInventory();
+        else resetCartAndInventoryExport();
+        return;
+    }
+    
+    const idx = targetArr.findIndex(t => t.id === tabId);
+    targetArr.splice(idx, 1);
+    
+    if (activeId === tabId) {
+        const nextTab = targetArr[idx - 1] || targetArr[0];
+        loadTabState(nextTab.id, viewType);
+    } else {
+        renderTabsUI();
+    }
+};
+
+window.renameTab = function(tabId, viewType, event) {
+    if (event) event.stopPropagation();
+    let targetArr = viewType === 'skup' ? skupTabs : exportTabs;
+    let tab = targetArr.find(t => t.id === tabId);
+    if (!tab) return;
+    
+    const newName = prompt("Wpisz własną nazwę / opis dla tego rachunku:", tab.name);
+    if (newName !== null && newName.trim() !== "") {
+        tab.name = newName.trim();
+        renderTabsUI();
+    }
+};
+
+window.renderTabsUI = function() {
+    saveCurrentTabState('skup'); 
+    saveCurrentTabState('export'); 
+    
+    let htmlSkup = '';
+    skupTabs.forEach((tab) => {
+        const isActive = tab.id === activeSkupTabId ? 'active' : '';
+        let itemsCount = Object.values(tab.counts || {}).reduce((a, b) => a + b, 0);
+        let indicator = itemsCount > 0 ? `<span class="tab-indicator"></span>` : '';
+        
+        let displayName = tab.name;
+        if (tab.ssn && tab.name.startsWith("Klient ")) displayName = `SSN: ${tab.ssn}`;
+
+        // NOWE: dodane atrybuty draggable i zdarzenia drag
+        htmlSkup += `
+            <div class="cart-tab ${isActive}" 
+                 draggable="true"
+                 ondragstart="window.handleTabDragStart(event, '${tab.id}', 'skup')"
+                 ondragover="window.handleTabDragOver(event)"
+                 ondrop="window.handleTabDrop(event, '${tab.id}', 'skup')"
+                 ondragend="this.style.opacity='1'"
+                 onclick="switchTab('${tab.id}', 'skup')" 
+                 ondblclick="window.renameTab('${tab.id}', 'skup', event)" 
+                 title="Przeciągnij, by zmienić kolejność. Kliknij 2x, by zmienić nazwę.">
+                <span>${displayName} ${indicator}</span>
+                <button class="close-tab-btn" onclick="closeTab('${tab.id}', 'skup', event)" title="Zamknij rachunek"><i class="fas fa-times"></i></button>
+            </div>
+        `;
+    });
+    if (skupTabs.length < 3) {
+        htmlSkup += `<button class="new-tab-btn" onclick="createNewTab(null, 'skup')" title="Otwórz nowy rachunek"><i class="fas fa-plus"></i></button>`;
+    }
+    
+    let htmlExport = '';
+    exportTabs.forEach((tab) => {
+        const isActive = tab.id === activeExportTabId ? 'active' : '';
+        let itemsCount = Object.values(tab.countsExport || {}).reduce((a, b) => a + b, 0);
+        let indicator = itemsCount > 0 ? `<span class="tab-indicator"></span>` : '';
+        
+        let displayName = tab.name;
+        if (tab.ssn && tab.name.startsWith("Klient ")) displayName = `SSN: ${tab.ssn}`;
+
+        // NOWE: dodane atrybuty draggable i zdarzenia drag
+        htmlExport += `
+            <div class="cart-tab ${isActive}" 
+                 draggable="true"
+                 ondragstart="window.handleTabDragStart(event, '${tab.id}', 'export')"
+                 ondragover="window.handleTabDragOver(event)"
+                 ondrop="window.handleTabDrop(event, '${tab.id}', 'export')"
+                 ondragend="this.style.opacity='1'"
+                 onclick="switchTab('${tab.id}', 'export')" 
+                 ondblclick="window.renameTab('${tab.id}', 'export', event)" 
+                 title="Przeciągnij, by zmienić kolejność. Kliknij 2x, by zmienić nazwę.">
+                <span>${displayName} ${indicator}</span>
+                <button class="close-tab-btn" onclick="closeTab('${tab.id}', 'export', event)" title="Zamknij rachunek"><i class="fas fa-times"></i></button>
+            </div>
+        `;
+    });
+    if (exportTabs.length < 3) {
+        htmlExport += `<button class="new-tab-btn" onclick="createNewTab(null, 'export')" title="Otwórz nowy rachunek"><i class="fas fa-plus"></i></button>`;
+    }
+    
+    const skupContainer = document.getElementById('skup-tabs-container');
+    if (skupContainer) skupContainer.innerHTML = htmlSkup;
+    
+    const sprzedazContainer = document.getElementById('sprzedaz-tabs-container');
+    if (sprzedazContainer) sprzedazContainer.innerHTML = htmlExport;
+    
+    const exportContainer = document.getElementById('export-tabs-container');
+    if (exportContainer) exportContainer.innerHTML = htmlExport;
+};
+
+// ==========================================
+// DRAG & DROP DLA ZAKŁADEK
+// ==========================================
+window.draggedTabInfo = null;
+
+window.handleTabDragStart = function(event, tabId, viewType) {
+    window.draggedTabInfo = { id: tabId, type: viewType };
+    event.dataTransfer.effectAllowed = "move";
+    
+    // Lekko wyszarzamy kartę, którą aktualnie trzymamy
+    setTimeout(() => {
+        if (event.target) event.target.style.opacity = '0.4';
+    }, 0);
+};
+
+window.handleTabDragOver = function(event) {
+    event.preventDefault(); // Niezbędne, żeby przeglądarka pozwoliła tu coś upuścić
+    event.dataTransfer.dropEffect = "move";
+};
+
+window.handleTabDrop = function(event, targetTabId, viewType) {
+    event.preventDefault();
+    
+    // Zabezpieczenie: upewniamy się, że przeciągamy kartę w odpowiednim widoku
+    if (!window.draggedTabInfo || window.draggedTabInfo.type !== viewType) return;
+    
+    const draggedId = window.draggedTabInfo.id;
+    if (draggedId === targetTabId) return; // Jeśli upuszczono w tym samym miejscu, nic nie rób
+
+    const targetArr = viewType === 'skup' ? skupTabs : exportTabs;
+    
+    const draggedIndex = targetArr.findIndex(t => t.id === draggedId);
+    const targetIndex = targetArr.findIndex(t => t.id === targetTabId);
+    
+    if (draggedIndex !== -1 && targetIndex !== -1) {
+        // Wyciągamy kartę z jej starego miejsca...
+        const [movedTab] = targetArr.splice(draggedIndex, 1);
+        // ...i wpychamy na nowe!
+        targetArr.splice(targetIndex, 0, movedTab);
+        
+        renderTabsUI();
+    }
+    window.draggedTabInfo = null;
+};
+
 window.toggleCart = function() {
     const sidebar = document.getElementById('cart-sidebar');
     if (sidebar) sidebar.classList.toggle('active');
@@ -944,11 +1262,16 @@ function updateCartView() {
             `;
         }
     });
-
+    
     if (totalItems === 0) html = '<div class="empty-cart-msg">Koszyk jest pusty</div>';
     if (container) container.innerHTML = html;
     if (badge) badge.innerText = totalItems;
     if (sidebarTotal) sidebarTotal.innerText = currentMinTotal + '$' + (currentMaxTotal > currentMinTotal ? ` - ${currentMaxTotal}$` : '');
+    
+    // --- NOWE: Błyskawiczne odświeżanie paska zakładek i kropki ---
+    if (typeof window.renderTabsUI === 'function') {
+        window.renderTabsUI();
+    }
 }
 
 window.filterCategory = function(cat, btnElement) {
@@ -1337,8 +1660,16 @@ function resetCartAndInventoryExport() {
     const ssnInput = document.getElementById('customer-ssn-input-export');
     if (ssnInput) ssnInput.value = "";
     currentCustomerSSNExport = "";
+    
+    // --- INTELIGENTNY RESET NAZWY ---
+    if (window.exportTabs && window.activeExportTabId) {
+        const tab = window.exportTabs.find(t => t.id === window.activeExportTabId);
+        if (tab) tab.name = window.getFreeClientName(window.exportTabs, tab.id);
+    }
+
     renderInventoryExport();
     calculateTotalExport();
+    if (typeof window.renderTabsUI === 'function') window.renderTabsUI();
 }
 
 function renderInventoryExport() {
@@ -1501,10 +1832,15 @@ window.updateCartViewExport = function() {
     });
 
     if (totalItems === 0) html = '<div class="empty-cart-msg">Brak przedmiotów</div>';
-    if (container) container.innerHTML = html;
-    if (badge) badge.innerText = totalItems;
-    if (sidebarTotal) sidebarTotal.innerText = currentTotalExport + '$';
-};
+            if (container) container.innerHTML = html;
+            if (badge) badge.innerText = totalItems;
+            if (sidebarTotal) sidebarTotal.innerText = currentTotalExport + '$';
+            
+            // --- NOWE: Błyskawiczne odświeżanie paska zakładek i kropki w Sprzedaży ---
+            if (typeof window.renderTabsUI === 'function') {
+                window.renderTabsUI();
+            }
+        };
 
 window.filterCategoryExport = function(cat, btnElement) {
     currentCategoryExport = cat || 'wszystkie';
@@ -3287,6 +3623,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const finalPriceInput = document.getElementById('final-price-input');
     if(finalPriceInput) finalPriceInput.addEventListener('keypress', function(e) { if (e.key === 'Enter') generateQuote(); });
+	
+	// Obsługa klawisza Enter dla widoku Sprzedaży (w polu SSN)
+    const ssnInputExport = document.getElementById('customer-ssn-input-export');
+    if(ssnInputExport) ssnInputExport.addEventListener('keypress', function(e) { if (e.key === 'Enter') generateQuoteExport(); });
 
     document.getElementById('reset-btn')?.addEventListener('click', () => { resetCartAndInventory(); showNotice("Wyczyszczono koszyk!", "warning"); });
     document.getElementById('reset-btn-export')?.addEventListener('click', () => { resetCartAndInventoryExport(); showNotice("Wyczyszczono listę!", "warning"); });
@@ -3670,9 +4010,25 @@ async function checkPagerMessages() {
 setInterval(checkPagerMessages, 15000);
 
 // ==========================================
-// AUTOMATYCZNE WYLOGOWANIE PRZY ZAMKNIĘCIU OKNA/KARTY
+// AUTOMATYCZNE WYLOGOWANIE I BLOKADA PRZY ZAMKNIĘCIU OKNA
 // ==========================================
-window.addEventListener('beforeunload', function() {
+window.addEventListener('beforeunload', function(e) {
+    let hasUnsavedItems = false;
+    
+    if (window.skupTabs) {
+        hasUnsavedItems = window.skupTabs.some(tab => Object.values(tab.counts || {}).reduce((a, b) => a + b, 0) > 0);
+    }
+    
+    if (!hasUnsavedItems && window.exportTabs) {
+        hasUnsavedItems = window.exportTabs.some(tab => Object.values(tab.countsExport || {}).reduce((a, b) => a + b, 0) > 0);
+    }
+
+    if (hasUnsavedItems) {
+        e.preventDefault();
+        e.returnValue = 'Masz otwarte i nieuzupełnione rachunki w koszyku! Na pewno chcesz opuścić stronę?';
+        return e.returnValue;
+    }
+
     if (currentEmployeeName) {
         fetch(REPORTS_API_URL, {
             method: 'POST',

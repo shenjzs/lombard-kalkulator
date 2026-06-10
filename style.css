@@ -3785,3 +3785,93 @@ body:has(.cart-sidebar.active) .online-widget {
     background: rgba(0, 0, 0, 0.4) !important;
     box-shadow: 0 4px 15px rgba(56, 189, 248, 0.05);
 }
+
+.tabs-bar {
+    display: flex;
+    gap: 12px;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+    margin-top: 20px; /* <--- TO ODSUNIE ZAKŁADKI W DÓŁ */
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+    overflow-x: auto;
+    align-items: center;
+}
+
+.cart-tab {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 30px; /* Kształt nowoczesnej pigułki */
+    padding: 6px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.cart-tab.active {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--accent-color);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.cart-tab:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+.close-tab-btn {
+    background: transparent;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 0.8rem;
+    opacity: 0.4;
+    padding: 2px 4px;
+    border-radius: 50%;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-tab-btn:hover {
+    opacity: 1;
+    color: #fff;
+    background: var(--danger);
+}
+
+.new-tab-btn {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 6px 16px;
+    border-radius: 30px;
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.new-tab-btn:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+    border-style: solid;
+}
+
+.tab-indicator {
+    background: var(--danger);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 8px var(--danger);
+}

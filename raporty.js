@@ -1676,7 +1676,7 @@ window.toggleEmployeeRole = async function(pin, newRole) {
         const empName = emp ? emp.name : "Nieznany PIN";
 
         // DODANIE LOGU
-        window.addSystemLog('ZMIANA UPRAWNIEŃ', `Zmieniono dostęp do panelu dla: ${empName} na: ${newRole === 'szef' ? 'Pełny dostęp (Szef)' : 'Brak dostępu'}`);
+        window.addSystemLog('ZMIANA UPRAWNIEŃ', `Zmieniono dostęp do panelu dla: ${empName} na: ${newRole === 'szef' ? 'Pełny dostęp' : 'Brak dostępu'}`);
 
         window.employeesFetchPromise = null;
         await loadEmployeesToTable();

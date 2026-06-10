@@ -128,7 +128,7 @@ async function login() {
                     document.getElementById('header-date').innerText = getFormattedDate();
                     
                     // DODANIE LOGU
-                    window.addSystemLog('LOGOWANIE', `Zalogowano do panelu odlewni (Szef).`);
+                    window.addSystemLog('LOGOWANIE', `Zalogowano do panelu odlewni.`);
 
                     renderGoldItems();
                     loadWarehouseData();
