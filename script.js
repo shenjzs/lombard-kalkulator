@@ -3334,10 +3334,20 @@ window.forceHardReload = async function(serverVersion, reloadId) {
             const cacheNames = await caches.keys(); 
             for (let name of cacheNames) await caches.delete(name); 
         }
+
+        // --- NOWOŚĆ: TWARDY HACK NA PAMIĘĆ PRZEGLĄDARKI ---
+        // Zmuszamy przeglądarkę do pobrania najnowszych plików z serwera (omijając dysk)
+        // zanim w ogóle odświeżymy stronę.
+        await fetch(`script.js?v=${APP_VERSION}`, { cache: 'reload' }).catch(() => {});
+        await fetch(`style.css?v=${APP_VERSION}`, { cache: 'reload' }).catch(() => {});
+        await fetch(`style-sprzedaz.css?v=${APP_VERSION}`, { cache: 'reload' }).catch(() => {});
+        // ---------------------------------------------------
+
     } catch (e) {
         console.log("Ignoruję błąd czyszczenia pamięci, wymuszam przeładowanie.", e);
     }
     
+    // Odświeżenie strony (teraz przeglądarka załaduje te nowo pobrane pliki)
     window.location.href = window.location.pathname + '?refresh=' + new Date().getTime();
 };
 
