@@ -712,15 +712,35 @@ function renderInventory() {
                 </div>
             `;
             customCards.push(card);
-        } else {
+} else {
             card.className = cardClass;
+            
+            let trendHtml = '';
+            const nameLow = String(item.name).toLowerCase().trim();
+            const trend = window.productTrendsSkup ? window.productTrendsSkup[nameLow] : null;
+
+            if (trend === 'up') {
+                trendHtml = `<span title="Gorący towar! Znaczny wzrost skupu w ostatnich 3 dniach." style="background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3); color: var(--success); padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; cursor: help; display: inline-flex; align-items: center;"><i class="fas fa-arrow-trend-up"></i></span>`;
+            } else if (trend === 'down') {
+                trendHtml = `<span title="Zainteresowanie spada. Skupujecie tego mniej niż 3 dni temu." style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--danger); padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; cursor: help; display: inline-flex; align-items: center;"><i class="fas fa-arrow-trend-down"></i></span>`;
+            } else if (trend === 'neutral') {
+                trendHtml = `<span title="Rynek stabilny. Skup idzie tak samo jak kilka dni temu." style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-secondary); padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; cursor: help; display: inline-flex; align-items: center;"><i class="fas fa-minus"></i></span>`;
+            } else {
+                trendHtml = `<span title="Brak wystarczających danych z ostatnich 6 dni." style="background: transparent; border: 1px dashed rgba(255, 255, 255, 0.2); color: var(--text-secondary); padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; cursor: help; opacity: 0.5; display: inline-flex; align-items: center;"><i class="fas fa-minus"></i></span>`;
+            }
+
+            let priceText = item.min === item.max ? item.min + '$' : item.min + '$ - ' + item.max + '$';
             let imageHtml = item.image ? `<img src="${item.image}" class="item-image" alt="">` : `<i class="fas fa-box-open item-icon"></i>`;
+            
             card.innerHTML = `
                 <div class="item-left-side">
                     ${imageHtml}
                     <div class="item-info">
                         <span class="item-name">${item.name}</span>
-                        <span class="item-price">${item.min === item.max ? item.min + '$' : item.min + '$ - ' + item.max + '$'}</span>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-top: 2px;">
+                            <span class="item-price">${priceText}</span>
+                            ${trendHtml}
+                        </div>
                     </div>
                 </div>
                 <div class="controls">
@@ -789,6 +809,64 @@ window.removeCustomItemSlotExport = function(index) {
     countsExport = newCounts;
     renderInventoryExport();
     calculateTotalExport();
+};
+
+window.productTrendsSkup = {};
+window.productTrendsExport = {};
+
+window.updateProductTrends = async function() {
+    try {
+        const data = await window.preloadReportsData();
+        const now = new Date().getTime();
+        // ZMIANA: Zamiast 7 dni, sprawdzamy dokładnie ostatnie 3 dni (3 * 24h)
+        const days3 = 3 * 24 * 60 * 60 * 1000; 
+        
+        const currSkup = {}, prevSkup = {};
+        const currExp = {}, prevExp = {};
+        
+        if (Array.isArray(data)) {
+            data.forEach(row => {
+                if (row.date && row.name) {
+                    const d = parseDate(row.date);
+                    if (d && !isNaN(d.getTime())) {
+                        const txTime = d.getTime();
+                        const itemName = String(row.name).toLowerCase().trim();
+                        const qty = parseInt(row.qty) || 1; 
+                        
+                        if (row.type === 'skup') {
+                            if (now - txTime <= days3) currSkup[itemName] = (currSkup[itemName] || 0) + qty;
+                            else if (now - txTime <= days3 * 2) prevSkup[itemName] = (prevSkup[itemName] || 0) + qty;
+                        } else if (row.type === 'sprzedaz') {
+                            if (now - txTime <= days3) currExp[itemName] = (currExp[itemName] || 0) + qty;
+                            else if (now - txTime <= days3 * 2) prevExp[itemName] = (prevExp[itemName] || 0) + qty;
+                        }
+                    }
+                }
+            });
+        }
+
+        const calcTrend = (curr, prev) => {
+            if (curr === 0 && prev === 0) return 'nodata';
+            if (curr > prev) return 'up';
+            if (curr < prev) return 'down';
+            return 'neutral';
+        };
+
+        // Obliczanie dla Skupu
+        defaultInventory.forEach(item => {
+            const nameLow = String(item.name).toLowerCase().trim();
+            window.productTrendsSkup[nameLow] = calcTrend(currSkup[nameLow] || 0, prevSkup[nameLow] || 0);
+        });
+
+        // Obliczanie dla Eksportu
+        defaultExportInventory.forEach(item => {
+            const nameLow = String(item.name).toLowerCase().trim();
+            window.productTrendsExport[nameLow] = calcTrend(currExp[nameLow] || 0, prevExp[nameLow] || 0);
+        });
+        
+    } catch (e) {
+        console.error("Błąd kalkulacji trendów rynkowych:", e);
+    }
 };
 
 window.updateCount = function(index, change) {
@@ -1240,6 +1318,9 @@ function initExport() {
     const headerDateExport = document.getElementById('header-date-export');
     if(headerDateExport) headerDateExport.innerText = getFormattedDate();
     resetCartAndInventoryExport();
+    
+    // Czeka na dane o trendach i odświeża widok eksportu
+    updateProductTrends().then(() => renderInventoryExport());
 }
 
 function resetCartAndInventoryExport() {
@@ -1268,7 +1349,7 @@ function renderInventoryExport() {
         card.setAttribute('data-category', item.category);
         card.setAttribute('data-name', item.name.toLowerCase());
         
-        if(item.isCustom) {
+		if(item.isCustom) {
             card.className = cardClass + ' custom-item';
             card.id = `custom-card-export-${index}`;
             card.innerHTML = `
@@ -1286,15 +1367,33 @@ function renderInventoryExport() {
                 </div>
             `;
             customCards.push(card);
-        } else {
+} else {
             card.className = cardClass;
+            
+            let trendHtml = '';
+            const nameLow = String(item.name).toLowerCase().trim();
+            const trend = window.productTrendsExport ? window.productTrendsExport[nameLow] : null;
+
+            if (trend === 'up') {
+                trendHtml = `<span title="Więcej sprzedanych sztuk względem ostatnich 3 dni." style="background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3); color: var(--success); padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; cursor: help; display: inline-flex; align-items: center;"><i class="fas fa-arrow-trend-up"></i></span>`;
+            } else if (trend === 'down') {
+                trendHtml = `<span title="Mniej sprzedanych sztuk względem ostatnich 3 dni." style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--danger); padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; cursor: help; display: inline-flex; align-items: center;"><i class="fas fa-arrow-trend-down"></i></span>`;
+            } else if (trend === 'neutral') {
+                trendHtml = `<span title="Sprzedaż stabilna. Idziecie łeb w łeb z poprzednim okresem." style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-secondary); padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; cursor: help; display: inline-flex; align-items: center;"><i class="fas fa-minus"></i></span>`;
+            } else {
+                trendHtml = `<span title="Brak wystarczających danych z ostatnich 6 dni." style="background: transparent; border: 1px dashed rgba(255, 255, 255, 0.2); color: var(--text-secondary); padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; cursor: help; opacity: 0.5; display: inline-flex; align-items: center;"><i class="fas fa-minus"></i></span>`;
+            }
+
             let imageHtml = item.image ? `<img src="${item.image}" class="item-image" alt="">` : `<i class="fas fa-box-open item-icon"></i>`;
             card.innerHTML = `
                 <div class="item-left-side">
                     ${imageHtml}
                     <div class="item-info">
                         <span class="item-name">${item.name}</span>
-                        <span class="item-price">Sprzedaż: ${item.price}$</span>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-top: 2px;">
+                            <span class="item-price">Sprzedaż: ${item.price}$</span>
+                            ${trendHtml}
+                        </div>
                     </div>
                 </div>
                 <div class="controls">
@@ -2454,15 +2553,18 @@ function renderBadges(totalXP, txCount, myData = [], rawData = [], myErrors = 0)
             const txDate = parseDate(tx.date);
             if (txDate && !isNaN(txDate.getTime())) {
                 txTime = txDate.getTime();
-                txTimestamps.push(txTime);
+                
+                // ZABEZPIECZENIE: Zliczamy do osiągnięć czasowych i passy TYLKO faktyczne transakcje!
+                if (tx.type === 'skup' || tx.type === 'sprzedaz' || tx.type === 'zloto') {
+                    txTimestamps.push(txTime);
+                    const dayString = `${txDate.getFullYear()}-${String(txDate.getMonth() + 1).padStart(2, '0')}-${String(txDate.getDate()).padStart(2, '0')}`;
+                    uniqueDays.add(dayString);
+                }
                 
                 const hour = txDate.getHours();
                 if (hour >= 0 && hour <= 5) nightShiftCount++;
                 
                 if (txDate.getMinutes() === 0) punctualCount++;
-                
-                const dayString = `${txDate.getFullYear()}-${String(txDate.getMonth() + 1).padStart(2, '0')}-${String(txDate.getDate()).padStart(2, '0')}`;
-                uniqueDays.add(dayString);
             }
         }
         
@@ -2496,43 +2598,51 @@ function renderBadges(totalXP, txCount, myData = [], rawData = [], myErrors = 0)
                 pirateItemsCount += (tx.qty || 1);
             }
             
-            // NOWE: Morskie zdobycze (TYLKO SKUP)
+			// NOWE: Morskie zdobycze (TYLKO SKUP)
             if (tx.type === 'skup' && (nameLow.includes('muszl') || nameLow.includes('gwiazda morsk') || nameLow.includes('ząb rekina') || nameLow.includes('perła'))) {
                 seaItemsCount += (tx.qty || 1);
             }
         }
     });
 
-    let currentStreak = 0, previousDateStr = null;
-    const sortedDays = Array.from(uniqueDays).sort((a, b) => new Date(a) - new Date(b));
+    // --- WYLICZANIE PRACOHOLIKA (PANCERNY SYSTEM) ---
+    const sortedDays = Array.from(uniqueDays).sort((a, b) => new Date(b) - new Date(a));
     
-    sortedDays.forEach(dayStr => {
-        if (!previousDateStr) {
-            currentStreak = 1;
+    let currentStreak = 0;
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+    const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+
+    if (sortedDays.length > 0) {
+        // Passa trwa TYLKO, jeśli ostatnia transakcja była dzisiaj lub wczoraj
+        if (sortedDays[0] === todayStr || sortedDays[0] === yesterdayStr) {
+            currentStreak = 1; // Mamy przynajmniej 1 dzień
+            
+            // Lecimy po kolei wstecz i sprawdzamy, czy dni są idealnie dzień po dniu
+            for (let i = 0; i < sortedDays.length - 1; i++) {
+                const currDate = new Date(sortedDays[i]);
+                const nextDate = new Date(sortedDays[i+1]);
+                
+                // Obliczamy różnicę w dniach
+                const diffTime = currDate - nextDate;
+                const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays === 1) {
+                    currentStreak++; // Dzień po dniu -> dodajemy do passy
+                } else {
+                    break; // Przerwa -> passa zerwana, przerywamy pętlę
+                }
+            }
         } else {
-            const currentDate = new Date(dayStr);
-            const diffDays = Math.round(Math.abs(currentDate - new Date(previousDateStr)) / (1000 * 60 * 60 * 24));
-            if (diffDays === 1) currentStreak++;
-            else currentStreak = 1; 
-        }
-        previousDateStr = dayStr;
-    });
-
-if (previousDateStr) {
-        const today = new Date();
-        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-        
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
-
-        // Jeśli ostatnia transakcja NIE była dzisiaj ani NIE była wczoraj -> czas minął, reset do zera
-        if (previousDateStr !== todayStr && previousDateStr !== yesterdayStr) {
             currentStreak = 0;
         }
     } else {
         currentStreak = 0;
     }
+    // ------------------------------------------------
 
     let fastHustleAchieved = 0;
     txTimestamps.sort((a, b) => a - b);
