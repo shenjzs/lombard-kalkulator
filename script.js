@@ -176,17 +176,17 @@ const defaultInventory = [
     { name: "Złota moneta z prezydentem", min: 200, max: 200, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/prescoin42.webp" },
     { name: "Złote kolczyki", min: 200, max: 200, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/goldenearrings.webp" },
     { name: "Popsuty telefon", min: 95, max: 95, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/brokenphone.webp" },
-	{ name: "Muszle morskie", min: 120, max: 120, category: "inne", image: "" },
-	{ name: "Mała szara muszla", min: 90, max: 90, category: "inne", image: "" },
-	{ name: "Gwiazda morska", min: 80, max: 80, category: "inne", image: "" },
-	{ name: "Ząb rekina", min: 90, max: 90, category: "inne", image: "" },
-	{ name: "Stary płaszcz piracki", min: 350, max: 350, category: "inne", image: "" },
-	{ name: "Różowa perła", min: 550, max: 550, category: "inne", image: "" },
-	{ name: "Zniszczona flaga piratów", min: 300, max: 300, category: "inne", image: "" },
-	{ name: "Kapelusz piracki", min: 350, max: 350, category: "inne", image: "" },
-	{ name: "Szkatuła ze złotymi łańcuchami", min: 750, max: 750, category: "inne", image: "" },
-	{ name: "Zabytkowa szabla", min: 600, max: 600, category: "inne", image: "" },
-	{ name: "Legendarna fajka", min: 800, max: 800, category: "inne", image: "" }
+	{ name: "Muszle morskie", min: 120, max: 120, category: "skarby", image: "" },
+	{ name: "Mała szara muszla", min: 90, max: 90, category: "skarby", image: "" },
+	{ name: "Gwiazda morska", min: 80, max: 80, category: "skarby", image: "" },
+	{ name: "Ząb rekina", min: 90, max: 90, category: "skarby", image: "" },
+	{ name: "Stary płaszcz piracki", min: 350, max: 350, category: "skarby", image: "" },
+	{ name: "Różowa perła", min: 550, max: 550, category: "skarby", image: "" },
+	{ name: "Zniszczona flaga piratów", min: 300, max: 300, category: "skarby", image: "" },
+	{ name: "Kapelusz piracki", min: 350, max: 350, category: "skarby", image: "" },
+	{ name: "Szkatuła ze złotymi łańcuchami", min: 750, max: 750, category: "skarby", image: "" },
+	{ name: "Zabytkowa szabla", min: 600, max: 600, category: "skarby", image: "" },
+	{ name: "Legendarna fajka", min: 800, max: 800, category: "skarby", image: "" }
 ];
 
 let inventory = [];
@@ -225,17 +225,17 @@ const defaultExportInventory = [
     { name: "Stary popsuty telefon", price: 110, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/brokenphone.webp" },
     { name: "Sztabka złota", price: 15000, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/sztabka_zlota.webp" },
     { name: "Złota moneta z prezydentem", price: 250, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/prescoin42.webp" },
-	{ name: "Muszle morskie", price: 144, category: "inne", image: "" },
-	{ name: "Mała szara muszla", price: 108, category: "inne", image: "" },
-	{ name: "Gwiazda morska", price: 96, category: "inne", image: "" },
-	{ name: "Ząb rekina", price: 108, category: "inne", image: "" },
-	{ name: "Stary płaszcz piracki", price: 420, category: "inne", image: "" },
-	{ name: "Różowa perła", price: 660, category: "inne", image: "" },
-	{ name: "Zniszczona flaga piratów", price: 360, category: "inne", image: "" },
-	{ name: "Kapelusz piracki", price: 420, category: "inne", image: "" },
-	{ name: "Szkatuła ze złotymi łańcuchami", price: 900, category: "inne", image: "" },
-	{ name: "Zabytkowa szabla", price: 720, category: "inne", image: "" },
-	{ name: "Legendarna fajka", price: 960, category: "inne", image: "" }
+	{ name: "Muszle morskie", price: 144, category: "skarby", image: "" },
+	{ name: "Mała szara muszla", price: 108, category: "skarby", image: "" },
+	{ name: "Gwiazda morska", price: 96, category: "skarby", image: "" },
+	{ name: "Ząb rekina", price: 108, category: "skarby", image: "" },
+	{ name: "Stary płaszcz piracki", price: 420, category: "skarby", image: "" },
+	{ name: "Różowa perła", price: 660, category: "skarby", image: "" },
+	{ name: "Zniszczona flaga piratów", price: 360, category: "skarby", image: "" },
+	{ name: "Kapelusz piracki", price: 420, category: "skarby", image: "" },
+	{ name: "Szkatuła ze złotymi łańcuchami", price: 900, category: "skarby", image: "" },
+	{ name: "Zabytkowa szabla", price: 720, category: "skarby", image: "" },
+	{ name: "Legendarna fajka", price: 960, category: "skarby", image: "" }
 ];
 
 let exportInventory = [];
