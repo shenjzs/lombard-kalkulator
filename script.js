@@ -155,6 +155,7 @@ const defaultInventory = [
     { name: "Konsola", min: 400, max: 400, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_console.webp" },
     { name: "Konsola DJ", min: 640, max: 640, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_djconsole.webp" },
     { name: "Kobieca plastikowa figurka", min: 100, max: 100, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_figure.webp" },
+	{ name: "Zdobiona zapalniczka", min: 0, max: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/metallighter.webp", dynamicPrice: true },
     { name: "Plastikowa figurka małpki", min: 80, max: 80, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_figure2.webp" },
     { name: "Kwiat", min: 65, max: 65, category: "dom", image: "https://img.realmgaming.eu/onbeat/items/hr_flower.webp" },
     { name: "Gitara elektryczna", min: 480, max: 480, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_guitar.webp" },
@@ -171,11 +172,31 @@ const defaultInventory = [
     { name: "Głośnik", min: 145, max: 145, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_speaker.webp" },
     { name: "Telewizor", min: 600, max: 600, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_tv.webp" },
     { name: "Zegarek", min: 160, max: 160, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/hr_watch.webp" },
+	{ name: "Zepsuty telefon", min: 95, max: 95, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/brokenphone.webp" },
+	{ name: "Złoty zegarek", min: 0, max: 0, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/zloty_zegarek.webp", dynamicPrice: true },
     { name: "Złota bransoletka", min: 200, max: 200, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/goldenbracelet.webp" },
     { name: "Złota moneta", min: 200, max: 200, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/goldcoin.webp" },
     { name: "Złota moneta z prezydentem", min: 200, max: 200, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/prescoin42.webp" },
     { name: "Złote kolczyki", min: 200, max: 200, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/goldenearrings.webp" },
-    { name: "Popsuty telefon", min: 95, max: 95, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/brokenphone.webp" },
+	{ name: "Dziwny telefon", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/trapphone.webp", dynamicPrice: true },
+	{ name: "Dziwna paczka", min: 0, max: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/podejrzana_paczka.webp", dynamicPrice: true },
+	{ name: "Dziwny pendrive", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/pendrive.webp", dynamicPrice: true },
+	{ name: "Zielony pendrive", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/pendrive_zielony.webp", dynamicPrice: true },
+	{ name: "Wytrych", min: 0, max: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/lockpick.webp", dynamicPrice: true },
+	{ name: "Tablet G6420", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/tablet_green.webp", dynamicPrice: true },
+	{ name: "Sprężyna", min: 0, max: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/spring.webp", dynamicPrice: true },
+	{ name: "Śmieci elektroniczne", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/electrotrash.webp", dynamicPrice: true },
+	{ name: "Moduł do telefonu", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/modul_telefoniczny.webp", dynamicPrice: true },
+	{ name: "Elementy do laptopa", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/elementy_do_laptopa.webp", dynamicPrice: true },
+	{ name: "Krótkofalówka", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/radio.webp", dynamicPrice: true },
+	{ name: "Legitymacja Bobcat - Niko Bellic", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/bobcat_entrance.webp", dynamicPrice: true },
+	{ name: "Dekoder do alarmu", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/dekoder_house.webp", dynamicPrice: true },
+	{ name: "Dekoder do pojazdu", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/decoder_car.webp", dynamicPrice: true },
+	{ name: "Radio samochodowe", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/car_radio.webp", dynamicPrice: true },
+	{ name: "Antena", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/antena.webp", dynamicPrice: true },
+	{ name: "Zardzewiała blacha", min: 0, max: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/zardzewialy_metal.webp", dynamicPrice: true },
+	{ name: "Cygaro Havana", min: 0, max: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/cygaro_havana.webp", dynamicPrice: true },
+	{ name: "Butelka rumu pirackiego", min: 0, max: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/rum_piracki.webp", dynamicPrice: true },
 	{ name: "Muszle morskie", min: 120, max: 120, category: "skarby", image: "" },
 	{ name: "Mała szara muszla", min: 90, max: 90, category: "skarby", image: "" },
 	{ name: "Gwiazda morska", min: 80, max: 80, category: "skarby", image: "" },
@@ -201,11 +222,11 @@ const defaultExportInventory = [
     { name: "Zdobiona książka", price: 150, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_book.webp" },
     { name: "Dywan", price: 300, category: "dom", image: "https://img.realmgaming.eu/onbeat/items/hr_carpet.webp" },
     { name: "Komputer (laptop)", price: 750, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_computer.webp" },
-    { name: "Komputer (stacjamarny)", price: 850, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_computer2.webp" },
+    { name: "Komputer (stacjonarny)", price: 850, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_computer2.webp" },
     { name: "Konsola", price: 500, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_console.webp" },
     { name: "Konsola DJ", price: 800, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_djconsole.webp" },
     { name: "Kobieca plastikowa figurka", price: 120, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_figure.webp" },
-    { name: "Stara zapalniczka", price: 22, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/metallighter.webp" },
+    { name: "Zdobiona zapalniczka", price: 22, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/metallighter.webp" },
     { name: "Plastikowa figurka małpki", price: 100, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/hr_figure2.webp" },
     { name: "Kwiat", price: 80, category: "dom", image: "https://img.realmgaming.eu/onbeat/items/hr_flower.webp" },
     { name: "Gitara elektryczna", price: 600, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_guitar.webp" },
@@ -222,20 +243,40 @@ const defaultExportInventory = [
     { name: "Głośnik", price: 180, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_speaker.webp" },
     { name: "Telewizor", price: 750, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_tv.webp" },
     { name: "Zegarek", price: 200, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/hr_watch.webp" },
-    { name: "Stary popsuty telefon", price: 110, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/brokenphone.webp" },
+    { name: "Zepsuty telefon", price: 110, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/brokenphone.webp" },
     { name: "Sztabka złota", price: 15000, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/sztabka_zlota.webp" },
+    { name: "Złoty zegarek", price: 0, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/zloty_zegarek.webp", dynamicPrice: true },
     { name: "Złota moneta z prezydentem", price: 250, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/prescoin42.webp" },
-	{ name: "Muszle morskie", price: 144, category: "skarby", image: "" },
-	{ name: "Mała szara muszla", price: 108, category: "skarby", image: "" },
-	{ name: "Gwiazda morska", price: 96, category: "skarby", image: "" },
-	{ name: "Ząb rekina", price: 108, category: "skarby", image: "" },
-	{ name: "Stary płaszcz piracki", price: 420, category: "skarby", image: "" },
-	{ name: "Różowa perła", price: 660, category: "skarby", image: "" },
-	{ name: "Zniszczona flaga piratów", price: 360, category: "skarby", image: "" },
-	{ name: "Kapelusz piracki", price: 420, category: "skarby", image: "" },
-	{ name: "Szkatuła ze złotymi łańcuchami", price: 900, category: "skarby", image: "" },
-	{ name: "Zabytkowa szabla", price: 720, category: "skarby", image: "" },
-	{ name: "Legendarna fajka", price: 960, category: "skarby", image: "" }
+    { name: "Dziwny telefon", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/trapphone.webp", dynamicPrice: true },
+    { name: "Dziwna paczka", price: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/podejrzana_paczka.webp", dynamicPrice: true },
+    { name: "Dziwny pendrive", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/pendrive.webp", dynamicPrice: true },
+    { name: "Zielony pendrive", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/pendrive_zielony.webp", dynamicPrice: true },
+    { name: "Wytrych", price: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/lockpick.webp", dynamicPrice: true },
+    { name: "Tablet G6420", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/tablet_green.webp", dynamicPrice: true },
+    { name: "Sprężyna", price: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/spring.webp", dynamicPrice: true },
+    { name: "Śmieci elektroniczne", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/electrotrash.webp", dynamicPrice: true },
+    { name: "Moduł do telefonu", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/modul_telefoniczny.webp", dynamicPrice: true },
+    { name: "Elementy do laptopa", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/elementy_do_laptopa.webp", dynamicPrice: true },
+    { name: "Krótkofalówka", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/radio.webp", dynamicPrice: true },
+    { name: "Legitymacja Bobcat - Niko Bellic", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/bobcat_entrance.webp", dynamicPrice: true },
+    { name: "Dekoder do alarmu", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/dekoder_house.webp", dynamicPrice: true },
+    { name: "Dekoder do pojazdu", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/decoder_car.webp", dynamicPrice: true },
+    { name: "Radio samochodowe", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/car_radio.webp", dynamicPrice: true },
+    { name: "Antena", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/antena.webp", dynamicPrice: true },
+    { name: "Zardzewiała blacha", price: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/zardzewialy_metal.webp", dynamicPrice: true },
+    { name: "Cygaro Havana", price: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/cygaro_havana.webp", dynamicPrice: true },
+    { name: "Butelka rumu pirackiego", price: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/rum_piracki.webp", dynamicPrice: true },
+    { name: "Muszle morskie", price: 144, category: "skarby", image: "" },
+    { name: "Mała szara muszla", price: 108, category: "skarby", image: "" },
+    { name: "Gwiazda morska", price: 96, category: "skarby", image: "" },
+    { name: "Ząb rekina", price: 108, category: "skarby", image: "" },
+    { name: "Stary płaszcz piracki", price: 420, category: "skarby", image: "" },
+    { name: "Różowa perła", price: 660, category: "skarby", image: "" },
+    { name: "Zniszczona flaga piratów", price: 360, category: "skarby", image: "" },
+    { name: "Kapelusz piracki", price: 420, category: "skarby", image: "" },
+    { name: "Szkatuła ze złotymi łańcuchami", price: 900, category: "skarby", image: "" },
+    { name: "Zabytkowa szabla", price: 720, category: "skarby", image: "" },
+    { name: "Legendarna fajka", price: 960, category: "skarby", image: "" }
 ];
 
 let exportInventory = [];
@@ -749,14 +790,21 @@ function renderInventory() {
             let priceText = item.min === item.max ? item.min + '$' : item.min + '$ - ' + item.max + '$';
             let imageHtml = item.image ? `<img src="${item.image}" class="item-image" alt="">` : `<i class="fas fa-box-open item-icon"></i>`;
             
+            let priceElementHtml = '';
+            if (item.dynamicPrice) {
+                priceElementHtml = `<input type="number" class="custom-item-price" data-index="${index}" placeholder="Cena $" min="0" value="${item.min > 0 ? item.min : ''}" style="width: 80px; padding: 4px 8px; border-radius: 8px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); color: var(--accent-color); font-weight: 700; outline: none;">`;
+            } else {
+                priceElementHtml = `<span class="item-price">${priceText}</span>`;
+            }
+
             card.innerHTML = `
                 <div class="item-left-side">
                     ${imageHtml}
                     <div class="item-info">
                         <span class="item-name">${item.name}</span>
                         <div style="display: flex; align-items: center; gap: 8px; margin-top: 2px;">
-                            <span class="item-price">${priceText}</span>
-                            ${trendHtml}
+                            ${priceElementHtml}
+							${trendHtml}
                         </div>
                     </div>
                 </div>
@@ -1312,11 +1360,16 @@ function applyFilters() {
 }
 
 window.generateQuote = async function() {
-    // WALIDACJA NIESTANDARDOWYCH PRODUKTÓW
+    // WALIDACJA NIESTANDARDOWYCH PRODUKTÓW ORAZ DYNAMICZNYCH CEN
     for (let i = 0; i < inventory.length; i++) {
         if (counts[i] > 0 && inventory[i].isCustom) {
             if (inventory[i].min <= 0 || inventory[i].name === "Własny przedmiot" || inventory[i].name.trim() === "") {
                 return showNotice("Uzupełnij poprawną nazwę i cenę dla niestandardowych produktów!", "danger");
+            }
+        }
+        if (counts[i] > 0 && inventory[i].dynamicPrice) {
+            if (inventory[i].min <= 0) {
+                return showNotice(`Uzupełnij cenę dla produktu: ${inventory[i].name}!`, "danger");
             }
         }
     }
@@ -1723,13 +1776,23 @@ function renderInventoryExport() {
             }
 
             let imageHtml = item.image ? `<img src="${item.image}" class="item-image" alt="">` : `<i class="fas fa-box-open item-icon"></i>`;
+            
+            let priceElementHtml = '';
+            if (item.dynamicPrice) {
+                // Całkowicie wywalone "Sprzedaż: " z przodu + węższy input (70px)
+                priceElementHtml = `<input type="number" class="custom-price-input" data-index="${index}" placeholder="Cena $" min="0" value="${item.price > 0 ? item.price : ''}" style="width: 70px; padding: 4px 8px; border-radius: 8px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); color: var(--accent-color); font-weight: 700; outline: none;">`;
+            } else {
+                // Wywalone słowo "Sprzedaż:" - zostaje sama liczba
+                priceElementHtml = `<span class="item-price">${item.price}$</span>`;
+            }
+
             card.innerHTML = `
                 <div class="item-left-side">
                     ${imageHtml}
                     <div class="item-info">
                         <span class="item-name">${item.name}</span>
                         <div style="display: flex; align-items: center; gap: 8px; margin-top: 2px;">
-                            <span class="item-price">Sprzedaż: ${item.price}$</span>
+                            ${priceElementHtml}
                             ${trendHtml}
                         </div>
                     </div>
@@ -1869,11 +1932,16 @@ function applyFiltersExport() {
 }
 
 window.generateQuoteExport = async function() {
-    // WALIDACJA NIESTANDARDOWYCH PRODUKTÓW
+    // WALIDACJA NIESTANDARDOWYCH PRODUKTÓW ORAZ DYNAMICZNYCH CEN
     for (let i = 0; i < exportInventory.length; i++) {
         if (countsExport[i] > 0 && exportInventory[i].isCustom) {
             if (exportInventory[i].price <= 0 || exportInventory[i].name === "Własny przedmiot" || exportInventory[i].name.trim() === "") {
                 return showNotice("Uzupełnij poprawną nazwę i cenę (>0$) dla niestandardowych produktów!", "danger");
+            }
+        }
+        if (countsExport[i] > 0 && exportInventory[i].dynamicPrice) {
+            if (exportInventory[i].price <= 0) {
+                return showNotice(`Uzupełnij cenę dla produktu: ${exportInventory[i].name}!`, "danger");
             }
         }
     }

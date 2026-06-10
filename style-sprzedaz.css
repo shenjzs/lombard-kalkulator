@@ -3453,3 +3453,126 @@ body:has(.cart-sidebar.active) .online-widget {
     display: inline-block;
     box-shadow: 0 0 8px var(--danger);
 }
+
+/* ==========================================================================
+   NAPRAWA UCINANIA NAZW PRODUKTÓW
+   ========================================================================== */
+
+.item-info {
+    /* Zapewnia, że tekst zajmie dostępną wolną przestrzeń */
+    flex: 1; 
+    /* Pozwala na zawijanie długich nazw do kolejnej linii zamiast ucinać */
+    overflow: visible; 
+    min-width: 0; 
+}
+
+.item-name {
+    /* Pozwala na łamanie bardzo długich nazw */
+    word-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+    display: block;
+    line-height: 1.2;
+    padding-right: 10px; /* Mały margines, żeby nie dotykało przycisków */
+}
+
+/* Zapewnienie, że przyciski po prawej stronie nie będą się ściskać */
+.controls {
+    flex-shrink: 0; /* Nigdy nie zmniejsza przycisków */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ==========================================================================
+   IDEALNY UKŁAD POZIOMY KART (JAK NA SCREENIE 2)
+   ========================================================================== */
+.items-grid .item-card {
+    display: flex !important;
+    flex-direction: row !important; /* Układa wszystko w jednej linii lewo-prawo */
+    align-items: center !important; /* Środkuje w pionie */
+    justify-content: space-between !important;
+    padding: 12px 15px !important;
+    gap: 15px !important;
+    min-height: 80px !important;
+    height: auto !important;
+}
+
+/* Lewa strona (obrazek + tekst) */
+.items-grid .item-header,
+.items-grid .item-left-side {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex: 1 !important; /* Zabiera całe dostępne miejsce */
+    min-width: 0 !important; /* KLUCZ: zapobiega wypychaniu przycisków na zewnątrz! */
+    gap: 12px !important;
+    width: auto !important;
+}
+
+/* Kontener z nazwą i ceną */
+.items-grid .item-info {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    flex: 1 !important;
+    min-width: 0 !important; /* KLUCZ: zmusza długi tekst do zawijania się */
+    gap: 4px !important;
+}
+
+/* Nazwa przedmiotu */
+.items-grid .item-name {
+    white-space: normal !important; /* Zezwala na przejście do nowej linii */
+    word-break: break-word !important; /* Łamie zbyt długie nazwy */
+    line-height: 1.2 !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
+}
+
+/* Kontener ceny i trendu */
+.items-grid .price-trend-wrapper {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    flex-wrap: nowrap !important;
+}
+
+/* Prawa strona (przyciski +/-) */
+.items-grid .controls {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    flex-shrink: 0 !important; /* KLUCZ: Przyciski NIGDY się nie zgniotą */
+    width: auto !important;
+    background: rgba(0, 0, 0, 0.25) !important;
+    padding: 6px 10px !important;
+    border-radius: 12px !important;
+    margin: 0 !important;
+}
+
+/* Zabezpieczenie szerokości dla inputów (np. przy własnym przedmiocie) */
+.items-grid .custom-inputs-wrapper {
+    width: 100% !important;
+}
+.items-grid .custom-item-price, 
+.items-grid .custom-price-input {
+    max-width: 90px !important;
+}
+
+/* Usztywnienie ikonek */
+.items-grid .item-image,
+.items-grid .item-icon {
+    flex-shrink: 0 !important;
+    width: 45px !important;
+    height: 45px !important;
+}
+
+/* ==========================================================================
+   NAPRAWA FILTROWANIA KATEGORII I WYSZUKIWARKI
+   ========================================================================== */
+.items-grid .item-card.hidden {
+    display: none !important;
+}
