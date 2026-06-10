@@ -386,13 +386,19 @@ window.login = async function() {
             
             const adminChangelogBtn = document.getElementById('admin-changelog-btn');
             const adminReportsBtn = document.getElementById('admin-reports-btn');
+            const adminReloadBtn = document.getElementById('admin-force-reload-btn');
+
             if (adminChangelogBtn) {
-                if(isTravisVance()) adminChangelogBtn.classList.remove('hidden');
+                if(isTravisVance() || currentEmployeeSsn === "4") adminChangelogBtn.classList.remove('hidden');
                 else adminChangelogBtn.classList.add('hidden');
             }
             if (adminReportsBtn) {
-                if(isTravisVance()) adminReportsBtn.classList.remove('hidden');
+                if(isTravisVance() || currentEmployeeSsn === "4") adminReportsBtn.classList.remove('hidden');
                 else adminReportsBtn.classList.add('hidden');
+            }
+            if (adminReloadBtn) {
+                if(isTravisVance() || currentEmployeeSsn === "4") adminReloadBtn.classList.remove('hidden');
+                else adminReloadBtn.classList.add('hidden');
             }
 
             // PAGER - Logika uprawnień po SSN
@@ -567,6 +573,7 @@ window.logout = function() {
         if(adminChangelogBtn) adminChangelogBtn.classList.add('hidden');
         if(adminReportsBtn) adminReportsBtn.classList.add('hidden');
         if(pagerBtn) pagerBtn.classList.add('hidden');
+        if(document.getElementById('admin-force-reload-btn')) document.getElementById('admin-force-reload-btn').classList.add('hidden');
 
         const loyaltyBtn = document.getElementById('loyalty-floating-btn');
         if (loyaltyBtn) loyaltyBtn.classList.add('hidden');
@@ -2964,11 +2971,80 @@ function showUpdatePrompt(serverVersion) {
     document.body.appendChild(div);
 }
 
-window.forceHardReload = async function(serverVersion) {
+function showForceReloadPrompt(reason, serverVersion, reloadId) {
+    if (document.getElementById('update-prompt')) return;
+    const div = document.createElement('div');
+    div.id = 'update-prompt'; 
+    div.className = 'update-notify';
+    
+    // Przycisk teraz przesyła reloadId do funkcji przeładowującej
+    div.innerHTML = `<span><i class="fas fa-exclamation-triangle"></i> Konieczne przeładowanie. Powód: ${reason}</span><button class="update-btn-refresh" onclick="forceHardReload('${serverVersion}', '${reloadId}')">Odśwież</button>`;
+    
+    document.body.appendChild(div);
+}
+
+window.forceHardReload = async function(serverVersion, reloadId) {
     if (serverVersion) localStorage.setItem('update_ignored_version', serverVersion);
-    if ('serviceWorker' in navigator) { const registrations = await navigator.serviceWorker.getRegistrations(); for (let reg of registrations) await reg.unregister(); }
-    if ('caches' in window) { const cacheNames = await caches.keys(); for (let name of cacheNames) await caches.delete(name); }
+    
+    // ZAPISUJEMY SYGNAŁ TYLKO JEŚLI KTOŚ FAKTYCZNIE KLIKNĄŁ PRZYCISK:
+    if (reloadId) localStorage.setItem('last_sys_reload', reloadId);
+    
+    try {
+        if ('serviceWorker' in navigator) { 
+            const registrations = await navigator.serviceWorker.getRegistrations(); 
+            for (let reg of registrations) await reg.unregister(); 
+        }
+        if ('caches' in window) { 
+            const cacheNames = await caches.keys(); 
+            for (let name of cacheNames) await caches.delete(name); 
+        }
+    } catch (e) {
+        console.log("Ignoruję błąd czyszczenia pamięci, wymuszam przeładowanie.", e);
+    }
+    
     window.location.href = window.location.pathname + '?refresh=' + new Date().getTime();
+};
+
+// ==========================================
+// SYSTEM WYMUSZANIA GLOBALNEGO ODŚWIEŻENIA SYSTEMU
+// ==========================================
+window.forceGlobalReload = async function() {
+    if (!isTravisVance() && currentEmployeeSsn !== "4") return showNotice("Brak uprawnień!", "danger");
+    
+    // NOWE: Pytamy admina o powód. Jeśli kliknie "Anuluj" lub nic nie wpisze - przerywamy.
+    const reason = prompt("Podaj powód wymuszenia odświeżenia strony u wszystkich pracowników:");
+    if (reason === null || reason.trim() === "") {
+        return showNotice("Anulowano. Musisz podać powód!", "warning");
+    }
+
+    const btn = document.getElementById('admin-force-reload-btn');
+    if (btn) { btn.style.pointerEvents = 'none'; btn.style.opacity = '0.5'; }
+
+    const reloadId = Date.now().toString();
+    // Kodujemy powód w wiadomości do formatu: sys_reload|||ID|||Powód
+    const encodedMsg = "sys_reload|||" + reloadId + "|||" + reason.trim();
+
+    try {
+        await fetch(REPORTS_API_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                action: "save_receipt",
+                type: "pager_message",
+                date: getFormattedDateTime(),
+                employee: currentEmployeeName,
+                report_id: reloadId,
+                items: [{ name: encodedMsg, qty: 1, total: 0 }],
+                ssn: "ALL"
+            })
+        });
+        showNotice("Sygnał przeładowania wysłany!", "success");
+        window.addSystemLog('SYSTEM', `Wymuszono globalne odświeżenie. Powód: ${reason.trim()}`);
+        document.getElementById('user-dropdown').classList.remove('active');
+    } catch (e) {
+        showNotice("Błąd nadajnika sygnału.", "danger");
+    } finally {
+        if (btn) { btn.style.pointerEvents = 'auto'; btn.style.opacity = '1'; }
+    }
 };
 
 setInterval(checkUpdates, 60000);
@@ -3522,6 +3598,27 @@ async function checkPagerMessages() {
         const data = await res.json();
         
         const messages = data.filter(row => row.type === "pager_message");
+        
+        // --- INTERCEPTOR GLOBALNEGO ODŚWIEŻENIA (Kuloodporny na F5) ---
+        // Szukamy wszystkich komend odświeżenia
+        const reloadMessages = messages.filter(m => String(m.name).startsWith("sys_reload"));
+        if (reloadMessages.length > 0) {
+            // Znajdujemy najnowszą z nich
+            const latestReload = reloadMessages.reduce((latest, current) => {
+                return parseInt(current.report_id) > parseInt(latest.report_id) ? current : latest;
+            });
+            
+            const parts = String(latestReload.name).split("|||");
+            const reloadId = parts[1];
+            const reason = parts[2] || "Brak podanego powodu";
+            
+            // Jeśli gracz jeszcze nie kliknął w PRZYCISK dla tego konkretnego ID - pokazujemy!
+            if (localStorage.getItem('last_sys_reload') !== reloadId) {
+                showForceReloadPrompt(reason, APP_VERSION, reloadId);
+            }
+        }
+        // --------------------------------------------------------------
+
         let newestTimestamp = lastPagerTimestamp;
 
         messages.forEach(m => {
@@ -3540,6 +3637,13 @@ async function checkPagerMessages() {
 
                 if (isGlobal || (isForMe && !isFromMe)) {
                     let msgText = m.name;
+
+                    // Pomijamy sys_reload w normalnych powiadomieniach, bo obsłużyliśmy go wyżej
+                    if (msgText.startsWith("sys_reload")) {
+                        if (msgTime > newestTimestamp) newestTimestamp = msgTime;
+                        return; 
+                    }
+
                     let msgColor = 'info';
                     let msgDuration = 5000;
 
