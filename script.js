@@ -204,7 +204,7 @@ const defaultInventory = [
 	{ name: "Stary płaszcz piracki", min: 350, max: 350, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_coat.webp" },
 	{ name: "Różowa perła", min: 550, max: 550, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_pinkpearl.webp" },
 	{ name: "Zniszczona flaga piratów", min: 300, max: 300, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_flag.webp" },
-	{ name: "Kapelusz piracki", min: 350, max: 350, category: "skarby", image: "" },
+	{ name: "Kapelusz piracki", min: 350, max: 350, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_hat.webp" },
 	{ name: "Szkatuła ze złotymi łańcuchami", min: 750, max: 750, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_treasure.webp" },
 	{ name: "Zabytkowa szabla", min: 600, max: 600, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_saber.webp" },
 	{ name: "Legendarna fajka", min: 800, max: 800, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_pipe.webp" }
@@ -273,7 +273,7 @@ const defaultExportInventory = [
     { name: "Stary płaszcz piracki", price: 420, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_coat.webp" },
     { name: "Różowa perła", price: 660, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_pinkpearl.webp" },
     { name: "Zniszczona flaga piratów", price: 360, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_flag.webp" },
-    { name: "Kapelusz piracki", price: 420, category: "skarby", image: "" },
+    { name: "Kapelusz piracki", price: 420, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_hat.webp" },
     { name: "Szkatuła ze złotymi łańcuchami", price: 900, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_treasure.webp" },
     { name: "Zabytkowa szabla", price: 720, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_saber.webp" },
     { name: "Legendarna fajka", price: 960, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_pipe.webp" }
