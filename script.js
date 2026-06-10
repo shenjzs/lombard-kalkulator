@@ -1846,10 +1846,12 @@ window.addAdminChangeSlot = function() {
     const container = document.getElementById('admin-changes-list');
     const div = document.createElement('div');
     div.className = "admin-change-slot-layout";
+    div.draggable = true;
     div.innerHTML = `
+        <div style="cursor: grab; padding: 0 10px; color: var(--text-secondary); display: flex; align-items: center;" class="drag-handle"><i class="fas fa-grip-vertical"></i></div>
         <select class="custom-input admin-change-tag admin-change-select"><option value="NOWOŚĆ">NOWOŚĆ</option><option value="POPRAWKA">POPRAWKA</option><option value="USUNIĘTO">USUNIĘTO</option></select>
         <input type="text" class="custom-input admin-change-desc admin-change-input" placeholder="Opis zmiany...">
-        <button type="button" class="settings-close-btn btn-delete-slot" data-action="remove-slot"><i class="fas fa-trash"></i></button>
+        <button type="button" class="settings-close-btn btn-delete-slot" data-action="remove-slot" title="Usuń"><i class="fas fa-trash"></i></button>
     `;
     container.appendChild(div);
 }
@@ -1903,14 +1905,16 @@ window.openEditChangelog = function(version, itemsJson) {
         if(itemStr.includes('|||')) { const parts = itemStr.split('|||'); tag = parts[0]; desc = parts[1]; }
         const div = document.createElement('div');
         div.className = "admin-change-slot-layout";
+        div.draggable = true;
         div.innerHTML = `
+            <div style="cursor: grab; padding: 0 10px; color: var(--text-secondary); display: flex; align-items: center;" class="drag-handle"><i class="fas fa-grip-vertical"></i></div>
             <select class="custom-input admin-change-tag admin-change-select">
                 <option value="NOWOŚĆ" ${tag==='NOWOŚĆ'?'selected':''}>NOWOŚĆ</option>
                 <option value="POPRAWKA" ${tag==='POPRAWKA'?'selected':''}>POPRAWKA</option>
                 <option value="USUNIĘTO" ${tag==='USUNIĘTO'?'selected':''}>USUNIĘTO</option>
             </select>
             <input type="text" class="custom-input admin-change-desc admin-change-input" value="${desc.replace(/"/g, '&quot;')}">
-            <button type="button" class="settings-close-btn btn-delete-slot" data-action="remove-slot"><i class="fas fa-trash"></i></button>
+            <button type="button" class="settings-close-btn btn-delete-slot" data-action="remove-slot" title="Usuń"><i class="fas fa-trash"></i></button>
         `;
         container.appendChild(div);
     });
@@ -1927,7 +1931,13 @@ window.addEditChangeSlot = function() {
     const container = document.getElementById('edit-cl-changes-list');
     const div = document.createElement('div');
     div.className = "admin-change-slot-layout";
-    div.innerHTML = `<select class="custom-input admin-change-tag admin-change-select"><option value="NOWOŚĆ">NOWOŚĆ</option><option value="POPRAWKA">POPRAWKA</option><option value="USUNIĘTO">USUNIĘTO</option></select><input type="text" class="custom-input admin-change-desc admin-change-input" placeholder="Opis zmiany..."><button type="button" class="settings-close-btn btn-delete-slot" data-action="remove-slot"><i class="fas fa-trash"></i></button>`;
+    div.draggable = true;
+    div.innerHTML = `
+        <div style="cursor: grab; padding: 0 10px; color: var(--text-secondary); display: flex; align-items: center;" class="drag-handle"><i class="fas fa-grip-vertical"></i></div>
+        <select class="custom-input admin-change-tag admin-change-select"><option value="NOWOŚĆ">NOWOŚĆ</option><option value="POPRAWKA">POPRAWKA</option><option value="USUNIĘTO">USUNIĘTO</option></select>
+        <input type="text" class="custom-input admin-change-desc admin-change-input" placeholder="Opis zmiany...">
+        <button type="button" class="settings-close-btn btn-delete-slot" data-action="remove-slot" title="Usuń"><i class="fas fa-trash"></i></button>
+    `;
     container.appendChild(div);
 }
 
@@ -3291,13 +3301,73 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('items-list')?.addEventListener('input', (e) => handleListInput(e, 'skup'));
     document.getElementById('items-list-export')?.addEventListener('input', (e) => handleListInput(e, 'export'));
 
+// Obsługa usuwania wierszy
     const handleAdminSlotRemove = (e) => {
         const btn = e.target.closest('.btn-delete-slot');
-        if (btn) btn.closest('.admin-change-slot-layout').remove();
+        if (btn) {
+            const slot = btn.closest('.admin-change-slot-layout');
+            if (slot) slot.remove();
+        }
     };
     
     document.getElementById('admin-changes-list')?.addEventListener('click', handleAdminSlotRemove);
     document.getElementById('edit-cl-changes-list')?.addEventListener('click', handleAdminSlotRemove);
+
+    // --- ZAAWANSOWANY MECHANIZM DRAG & DROP ---
+    let draggingSlot = null;
+
+    const setupSortableList = (listId) => {
+        const list = document.getElementById(listId);
+        if (!list) return;
+
+        // Moment złapania kafelka myszką
+        list.addEventListener('dragstart', e => {
+            const slot = e.target.closest('.admin-change-slot-layout');
+            if (!slot) return;
+            draggingSlot = slot;
+            // Lekkie ściemnienie, by było widać, co aktualnie trzymamy
+            setTimeout(() => slot.style.opacity = '0.4', 0);
+        });
+
+        // Upuszczenie kafelka
+        list.addEventListener('dragend', e => {
+            if (draggingSlot) {
+                draggingSlot.style.opacity = '1';
+                draggingSlot = null;
+            }
+        });
+
+        // Najeżdżanie trzymanym kafelkiem na inne elementy
+        list.addEventListener('dragover', e => {
+            e.preventDefault(); // Wymagane, żeby pozwolić na upuszczenie
+            if (!draggingSlot) return;
+            
+            const afterElement = getDragAfterElement(list, e.clientY);
+            if (afterElement == null) {
+                list.appendChild(draggingSlot);
+            } else {
+                list.insertBefore(draggingSlot, afterElement);
+            }
+        });
+    };
+
+    // Matematyka: Sprawdzanie, nad którym kafelkiem znajduje się myszka i czy przesunąć to nad, czy pod niego
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.admin-change-slot-layout:not([style*="opacity: 0.4"])')];
+        
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    setupSortableList('admin-changes-list');
+    setupSortableList('edit-cl-changes-list');
 
     document.getElementById('dynamic-changelog-container')?.addEventListener('click', (e) => {
         const btnEdit = e.target.closest('.btn-admin-edit');
