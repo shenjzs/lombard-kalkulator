@@ -252,7 +252,7 @@ const defaultExportInventory = [
     { name: "Dziwna paczka", price: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/podejrzana_paczka.webp", dynamicPrice: true },
     { name: "Dziwny pendrive", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/pendrive.webp", dynamicPrice: true },
     { name: "Zielony pendrive", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/pendrive_zielony.webp", dynamicPrice: true },
-	{ name: "Prymitywny wkład do kamizelki", min: 0, max: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/armor_25.webp", dynamicPrice: true },
+	{ name: "Prymitywny wkład do kamizelki", price: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/armor_25.webp", dynamicPrice: true },
     { name: "Wytrych", price: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/lockpick.webp", dynamicPrice: true },
     { name: "Tablet G6420", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/tablet_green.webp", dynamicPrice: true },
     { name: "Sprężyna", price: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/spring.webp", dynamicPrice: true },
