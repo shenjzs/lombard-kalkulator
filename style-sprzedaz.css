@@ -31,6 +31,9 @@ body {
     color: var(--text-primary);
     min-height: 100vh;
     padding-bottom: 120px;
+    /* TE DWIE LINIJKI ODBLOKOWUJĄ SCROLLA: */
+    overflow-x: hidden !important; 
+    overflow-y: auto !important; 
 }
 
 /* FIX: Blokada scrollowania przed zalogowaniem */
@@ -1643,16 +1646,17 @@ body:has(.modal.active) .summary-bar {
 }
 
 /* ==========================================================================
-   STYLE DLA MODALU MOJE STATYSTYKI
+   STYLE DLA MODALU MOJE STATYSTYKI (NOWY WYGLĄD)
    ========================================================================== */
 .my-stats-toggle-container {
     display: flex;
-    gap: 10px;
-    background: rgba(0, 0, 0, 0.3);
-    padding: 5px;
-    border-radius: 14px;
-    margin-bottom: 20px;
-    border: 1px solid rgba(255,255,255,0.05);
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 6px;
+    border-radius: 16px;
+    margin-bottom: 25px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
 }
 
 .my-stats-toggle-btn {
@@ -1660,14 +1664,14 @@ body:has(.modal.active) .summary-bar {
     background: transparent;
     color: var(--text-secondary);
     border: none;
-    padding: 10px 15px;
-    border-radius: 10px;
-    font-weight: 700;
+    padding: 12px 15px;
+    border-radius: 12px;
+    font-weight: 800;
     font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 1px;
     cursor: pointer;
-    transition: var(--transition-fast);
+    transition: var(--transition-normal);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1676,13 +1680,13 @@ body:has(.modal.active) .summary-bar {
 
 .my-stats-toggle-btn:hover {
     color: white;
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .my-stats-toggle-btn.active {
     background: var(--accent-color);
     color: #000;
-    box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
 }
 
 .my-stats-filter-container {
@@ -1694,19 +1698,19 @@ body:has(.modal.active) .summary-bar {
     background: rgba(0, 0, 0, 0.4);
     border: 1px solid var(--border-color);
     color: white;
-    padding: 12px 15px;
-    border-radius: 12px;
+    padding: 14px 18px;
+    border-radius: 14px;
     font-family: 'Inter', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 600;
+    font-size: 0.95rem;
+    font-weight: 700;
     outline: none;
     cursor: pointer;
     transition: var(--transition-fast);
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
 }
 
 .my-stats-select:focus {
     border-color: var(--accent-color);
-    box-shadow: 0 0 15px rgba(243, 156, 18, 0.15);
 }
 
 .my-stats-select option {
@@ -1717,53 +1721,109 @@ body:has(.modal.active) .summary-bar {
 .my-stats-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px;
+    gap: 16px;
     width: 100%;
 }
 
+/* NOWE KARTY Z LEWYM UKŁADEM I IKONĄ JAKO ZNAK WODNY */
 .my-stat-box {
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid var(--border-color);
-    padding: 20px 15px;
-    border-radius: 16px;
-    text-align: center;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0.4) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 20px 25px; /* Równy padding */
+    border-radius: 20px;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    transition: var(--transition-fast);
+    align-items: flex-start; 
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 4px 15px rgba(0,0,0,0.2);
+    min-height: 110px;
 }
 
 .my-stat-box:hover {
     border-color: var(--accent-color);
-    background: rgba(0, 0, 0, 0.5);
-    transform: translateY(-2px);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(0, 0, 0, 0.5) 100%);
+    transform: translateY(-5px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 10px 25px rgba(0,0,0,0.4);
 }
 
 .stat-box-icon {
-    font-size: 1.8rem;
-    margin-bottom: 5px;
+    position: absolute;
+    top: 50%; 
+    transform: translateY(-50%); /* Idealne wyśrodkowanie w pionie */
+    right: -10px; /* Lekko ucięta ikona po prawej daje fajny efekt */
+    font-size: 4rem; /* Duża ikona robiąca za tło */
+    margin: 0 !important;
+    opacity: 0.15; /* Bardzo przezroczysta, nie przeszkadza w czytaniu! */
+    transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1; /* Ląduje pod tekstem */
 }
 
-.text-success { color: var(--success); filter: drop-shadow(0 0 5px rgba(39, 174, 96, 0.4)); }
-.text-accent { color: var(--accent-color); filter: drop-shadow(0 0 5px rgba(243, 156, 18, 0.4)); }
-.text-warning { color: #f59e0b; filter: drop-shadow(0 0 5px rgba(245, 158, 11, 0.4)); }
-.text-danger { color: var(--danger); filter: drop-shadow(0 0 5px rgba(231, 76, 60, 0.4)); }
-.text-info { color: #38bdf8; filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.4)); }
-.text-purple { color: #a855f7; filter: drop-shadow(0 0 5px rgba(168, 85, 247, 0.4)); }
+.my-stat-box:hover .stat-box-icon {
+    transform: translateY(-50%) scale(1.1) rotate(-10deg);
+    opacity: 0.3; /* Lekko się podświetla przy najechaniu */
+}
 
 .my-stat-label {
     font-size: 0.75rem;
     text-transform: uppercase;
     color: var(--text-secondary);
-    font-weight: 700;
-    letter-spacing: 1px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+    z-index: 2; /* Wyciągamy tekst nad ikonę */
+    position: relative;
 }
 
 .my-stat-value {
-    font-size: 1.6rem;
+    font-size: 1.4rem; /* Minimalnie mniejsza czcionka, żeby zmieścić długie nazwy */
     font-weight: 900;
-    color: white;
+    color: #ffffff;
+    z-index: 2; /* Wyciągamy tekst nad ikonę */
+    position: relative;
+    text-shadow: 0 2px 5px rgba(0,0,0,0.8); /* Cień gwarantujący czytelność */
+    line-height: 1.2;
+    word-break: break-word; /* Wymusza przełamanie bardzo długiego tekstu do nowej linii! */
+    white-space: normal;
+    max-width: 100%;
+}
+
+/* ==========================================================================
+   KOLORY IKON W STATYSTYKACH (Automatyczne przypisanie)
+   ========================================================================== */
+.my-stats-grid .my-stat-box:nth-child(1) .stat-box-icon { color: var(--success) !important; }
+.my-stats-grid .my-stat-box:nth-child(2) .stat-box-icon { color: var(--accent-color) !important; }
+.my-stats-grid .my-stat-box:nth-child(3) .stat-box-icon { color: #a855f7 !important; } /* Fiolet */
+.my-stats-grid .my-stat-box:nth-child(4) .stat-box-icon { color: #f59e0b !important; } /* Pomarańcz */
+.my-stats-grid .my-stat-box:nth-child(5) .stat-box-icon { color: #38bdf8 !important; } /* Błękit */
+.my-stats-grid .my-stat-box:nth-child(6) .stat-box-icon { color: var(--danger) !important; }
+
+/* Czysty znak wodny bez rozmycia (likwidacja "astygmatyzmu") */
+.my-stats-grid .stat-box-icon {
+    opacity: 0.15 !important; 
+    filter: none !important; /* To wyłącza ten rozmyty cień! */
+}
+
+/* Delikatne, ostre podświetlenie przy najechaniu myszką */
+.my-stats-grid .my-stat-box:hover .stat-box-icon {
+    opacity: 0.35 !important; 
+}
+
+/* ==========================================================================
+   KONTENER NA WYKRES W STATYSTYKACH
+   ========================================================================== */
+.my-stats-chart-wrapper {
+    margin-top: 20px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 0, 0, 0.2) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 20px;
+    height: 250px;
+    width: 100%;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 4px 15px rgba(0,0,0,0.2);
+    animation: fadeInDown 0.5s ease-out;
 }
 
 /* ==========================================================================
@@ -3575,4 +3635,50 @@ body:has(.cart-sidebar.active) .online-widget {
    ========================================================================== */
 .items-grid .item-card.hidden {
     display: none !important;
+}
+
+/* ==========================================================================
+   NAPRAWA SCROLLOWANIA MODALI (BLOKADA TŁA)
+   ========================================================================== */
+
+/* 1. Kiedy modal jest otwarty, całkowicie blokujemy przewijanie tła */
+body:has(.modal.active) {
+    overflow: hidden !important;
+}
+
+/* 2. Wymuszamy, by sam modal miał własny suwak, jeśli jego zawartość jest długa */
+.modal-content {
+    max-height: 85vh !important;
+    overflow-y: auto !important;
+}
+
+/* (Opcjonalnie) Zabezpieczenie przed zgniataniem wykresu w małych oknach */
+.my-stats-chart-wrapper {
+    flex-shrink: 0;
+}
+
+/* ==========================================================================
+   STYLIZACJA PASKA PRZEWIJANIA (SCROLLBAR) W MODALACH
+   ========================================================================== */
+.modal-content::-webkit-scrollbar {
+    width: 8px; 
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2); 
+    border-radius: 10px;
+    margin-block: 15px; /* Zapobiega dotykaniu górnej i dolnej krawędzi okna */
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15); 
+    border-radius: 10px;
+    border: 2px solid transparent; 
+    background-clip: padding-box; /* Cieńszy wygląd samego suwaka */
+    transition: background 0.3s ease;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background-color: var(--accent-color); 
+    border: none;
 }

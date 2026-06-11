@@ -1,14 +1,14 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "4.2.3"; // Normalizacja nazw produktów
+const APP_VERSION = "4.2.4"; // Normalizacja nazw produktów
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
 // ==========================================
-const PIN_API_URL = "https://script.google.com/macros/s/AKfycbycnbsg8yC8Cqk0tF-6syzBTvTLvO-MyTgx-zqAPjgBXPR132MicKNtjNoq3WMQfmLR/exec";
-const REPORTS_API_URL = "https://script.google.com/macros/s/AKfycbwcbHTDSA5H0LO2hWYmBleL0z74CXyLYzm188cvhnQBLdbmrOw0r5OMj7QyPXivMZfzeg/exec";
-const BOSS_DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1501722411471470792/x8iSFE5OgDYMXCf4jpca70DvA87v0S1MSKz0ODfSQ-x5ajwLblRvjY7oy3q9OadoyHmD";
+const PIN_API_URL = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/pin";
+const REPORTS_API_URL = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/reports";
+const BOSS_DISCORD_WEBHOOK = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/boss";
 
 // ZMIENNE GLOBALNE DLA WYKRESÓW I CELU
 let topItemsChartInstance = null;

@@ -1,10 +1,10 @@
-const APP_VERSION = "4.2.3";
+const APP_VERSION = "4.2.4";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const DISCORD_WEBHOOK_URL_SKUP = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/skup"; 
 const DISCORD_WEBHOOK_URL_EXPORT = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/export";
-const PIN_API_URL = "https://script.google.com/macros/s/AKfycbycnbsg8yC8Cqk0tF-6syzBTvTLvO-MyTgx-zqAPjgBXPR132MicKNtjNoq3WMQfmLR/exec";
-const REPORTS_API_URL = "https://script.google.com/macros/s/AKfycbwcbHTDSA5H0LO2hWYmBleL0z74CXyLYzm188cvhnQBLdbmrOw0r5OMj7QyPXivMZfzeg/exec";
+const PIN_API_URL = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/pin";
+const REPORTS_API_URL = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/reports";
 
 let currentEmployeeName = ""; 
 let currentEmployeeRank = "Pracownik"; 
@@ -189,7 +189,7 @@ const defaultInventory = [
 	{ name: "Moduł do telefonu", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/modul_telefoniczny.webp", dynamicPrice: true },
 	{ name: "Elementy do laptopa", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/elementy_do_laptopa.webp", dynamicPrice: true },
 	{ name: "Krótkofalówka", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/radio.webp", dynamicPrice: true },
-	{ name: "Legitymacja Bobcat - Niko Bellic", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/bobcat_entrance.webp", dynamicPrice: true },
+	{ name: "Legitymacja Bobcat - Niko Bellic", min: 0, max: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/bobcat_entrance.webp", dynamicPrice: true },
 	{ name: "Dekoder do alarmu", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/dekoder_house.webp", dynamicPrice: true },
 	{ name: "Dekoder do pojazdu", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/decoder_car.webp", dynamicPrice: true },
 	{ name: "Radio samochodowe", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/car_radio.webp", dynamicPrice: true },
@@ -258,7 +258,7 @@ const defaultExportInventory = [
     { name: "Moduł do telefonu", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/modul_telefoniczny.webp", dynamicPrice: true },
     { name: "Elementy do laptopa", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/elementy_do_laptopa.webp", dynamicPrice: true },
     { name: "Krótkofalówka", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/radio.webp", dynamicPrice: true },
-    { name: "Legitymacja Bobcat - Niko Bellic", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/bobcat_entrance.webp", dynamicPrice: true },
+    { name: "Legitymacja Bobcat - Niko Bellic", price: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/bobcat_entrance.webp", dynamicPrice: true },
     { name: "Dekoder do alarmu", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/dekoder_house.webp", dynamicPrice: true },
     { name: "Dekoder do pojazdu", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/decoder_car.webp", dynamicPrice: true },
     { name: "Radio samochodowe", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/car_radio.webp", dynamicPrice: true },
@@ -713,6 +713,9 @@ function initSkup() {
     const adInput = document.getElementById('ad-input');
     if(adInput) updateAdPreview();
     updateCartView(); 
+    
+    // Czeka na dane o trendach z Google i odświeża widok Skupu, żeby strzałki wskoczyły natychmiast
+    updateProductTrends().then(() => renderInventory());
 }
 
 function resetCartAndInventory() {
@@ -778,7 +781,7 @@ function renderInventory() {
             const trend = window.productTrendsSkup ? window.productTrendsSkup[nameLow] : null;
 
             if (trend === 'up') {
-                trendHtml = `<span title="Gorący towar! Znaczny wzrost skupu w ostatnich 3 dniach." style="background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3); color: var(--success); padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; cursor: help; display: inline-flex; align-items: center;"><i class="fas fa-arrow-trend-up"></i></span>`;
+                trendHtml = `<span title="Znaczny wzrost skupu w ostatnich 3 dniach." style="background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3); color: var(--success); padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; cursor: help; display: inline-flex; align-items: center;"><i class="fas fa-arrow-trend-up"></i></span>`;
             } else if (trend === 'down') {
                 trendHtml = `<span title="Zainteresowanie spada. Skupujecie tego mniej niż 3 dni temu." style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--danger); padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; cursor: help; display: inline-flex; align-items: center;"><i class="fas fa-arrow-trend-down"></i></span>`;
             } else if (trend === 'neutral') {
@@ -2534,6 +2537,108 @@ window.renderMyStatsDisplay = function() {
         else if (currentStatsRange === 'month') periodLabelEl.innerText = 'Obrót (Miesiąc)';
         else periodLabelEl.innerText = 'Obrót (Całkowity)';
     }
+
+    // --- DYNAMICZNE TWORZENIE I WYWOŁYWANIE WYKRESU ---
+    let chartContainer = document.getElementById('my-stats-chart-container');
+    if (!chartContainer) {
+        chartContainer = document.createElement('div');
+        chartContainer.id = 'my-stats-chart-container';
+        chartContainer.className = 'my-stats-chart-wrapper';
+        chartContainer.innerHTML = '<canvas id="myStatsChart"></canvas>';
+        document.getElementById('my-stats-content').appendChild(chartContainer);
+    }
+    
+    // Przekazujemy zebrane ilości przedmiotów oraz typ widoku do wykresu
+    renderChart(itemCounts, currentStatsType);
+}
+
+let myChartInstance = null;
+window.renderChart = function(itemCounts, statsType) {
+    if (typeof Chart === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+        script.onload = () => drawChart(itemCounts, statsType);
+        document.head.appendChild(script);
+    } else {
+        drawChart(itemCounts, statsType);
+    }
+}
+
+window.drawChart = function(itemCounts, statsType) {
+    const ctx = document.getElementById('myStatsChart').getContext('2d');
+    if (myChartInstance) myChartInstance.destroy();
+
+    // Sortowanie przedmiotów od najczęściej obracanego
+    const sortedItems = Object.entries(itemCounts).sort((a, b) => b[1] - a[1]);
+    
+    // Wyciągnięcie TOP 5, reszta ląduje w "Inne"
+    const topItems = sortedItems.slice(0, 5);
+    const otherItems = sortedItems.slice(5);
+    let othersQty = otherItems.reduce((sum, item) => sum + item[1], 0);
+
+    const labels = topItems.map(item => item[0]);
+    const data = topItems.map(item => item[1]);
+
+    if (othersQty > 0) {
+        labels.push('Pozostałe');
+        data.push(othersQty);
+    }
+
+    if (data.length === 0) {
+        labels.push('Brak transakcji');
+        data.push(1); 
+    }
+
+    const isSkup = statsType === 'skup';
+    // Paleta kolorów - Błękitna dla Skupu, Zielona dla Sprzedaży
+    const palette = isSkup 
+        ? ['#38bdf8', '#0284c7', '#0369a1', '#075985', '#0c4a6e', '#1e293b'] 
+        : ['#22c55e', '#16a34a', '#15803d', '#166534', '#14532d', '#1e293b'];
+
+    myChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: data.length === 1 && labels[0] === 'Brak transakcji' ? ['#334155'] : palette,
+                borderWidth: 3,
+                borderColor: 'rgba(15, 23, 42, 1)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '65%', // Grubość "pączka"
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: { color: '#fff', font: { family: 'Inter', size: 12 }, padding: 15 }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    titleColor: '#fff',
+                    bodyFont: { size: 13, weight: 'bold' },
+                    padding: 12,
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: function(context) {
+                            if (labels[0] === 'Brak transakcji') return ' Brak danych w tym okresie';
+                            return ` ${context.label}: ${context.raw} szt.`;
+                        }
+                    }
+                },
+                title: {
+                    display: true,
+                    text: isSkup ? 'NAJCZĘŚCIEJ SKUPOWANE (SZTUKI)' : 'NAJCZĘŚCIEJ SPRZEDAWANE (SZTUKI)',
+                    color: '#94a3b8',
+                    font: { size: 11, family: 'Inter', weight: 'bold', letterSpacing: 1 },
+                    padding: { bottom: 15 }
+                }
+            }
+        }
+    });
 }
 
 window.closeMyStats = function() {

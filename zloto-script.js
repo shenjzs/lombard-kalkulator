@@ -1,11 +1,11 @@
-const APP_VERSION = "4.2.3";
+const APP_VERSION = "4.2.4";
 
 // ==========================================
 // KONFIGURACJA
 // ==========================================
-const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1503473517679874068/rCdQeWVlliG2MPP3Wzhzg1iJpCO4T9s-LsVW_mXbHUGBI18Xp09YLtqYd4VbZWitLP_f"; 
-const PIN_API_URL = "https://script.google.com/macros/s/AKfycbycnbsg8yC8Cqk0tF-6syzBTvTLvO-MyTgx-zqAPjgBXPR132MicKNtjNoq3WMQfmLR/exec";
-const REPORTS_API_URL = "https://script.google.com/macros/s/AKfycbwcbHTDSA5H0LO2hWYmBleL0z74CXyLYzm188cvhnQBLdbmrOw0r5OMj7QyPXivMZfzeg/exec";
+const DISCORD_WEBHOOK_URL = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/zloto"; 
+const PIN_API_URL = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/pin";
+const REPORTS_API_URL = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/reports";
 
 // Ceny materiałów i wymogi (receptura na 1 sztabkę)
 const goldInventory = [
