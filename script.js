@@ -421,16 +421,25 @@ window.login = async function() {
             window.mySessionStart = new Date().getTime();
             currentEmployeeName = data.name;
             currentEmployeeRank = data.rank || "Pracownik"; 
-            currentEmployeeSsn = String(data.ssn) || "---"; 
-            currentEmployeeDateZatrudnienia = data.dateZatrudnienia || "Brak danych";
-            currentEmployeePhoto = data.photo || "";
-			// --- SYSTEM ZAPAMIĘTYWANIA PROFILU ---
+            
+            // TWARDE PRZYPISANIE SSN I DATY
+            currentEmployeeSsn = data.ssn && data.ssn !== "" ? String(data.ssn) : "---"; 
+            currentEmployeeDateZatrudnienia = data.dateZatrudnienia && data.dateZatrudnienia !== "" ? String(data.dateZatrudnienia) : "Brak danych";
+            
+            currentEmployeePhoto = data.photo || ""; 
+
+            // --- SYSTEM ZAPAMIĘTYWANIA PROFILU ---
             const rememberMeCheckbox = document.getElementById('remember-me-checkbox');
             if (rememberMeCheckbox && rememberMeCheckbox.checked) {
                 let savedProfiles = JSON.parse(localStorage.getItem('elcartel_saved_profiles') || '[]');
-                // Usuwamy stary zapis dla tej osoby (żeby nie robić duplikatów przy np. zmianie zdjęcia)
                 savedProfiles = savedProfiles.filter(p => p.name !== currentEmployeeName);
-                savedProfiles.push({ name: currentEmployeeName, pin: pin, photo: currentEmployeePhoto || '' });
+                savedProfiles.push({ 
+                    name: currentEmployeeName, 
+                    pin: pin, 
+                    photo: currentEmployeePhoto,
+                    ssn: currentEmployeeSsn,                    // Dodano zapis
+                    dateZatrudnienia: currentEmployeeDateZatrudnienia // Dodano zapis
+                });
                 localStorage.setItem('elcartel_saved_profiles', JSON.stringify(savedProfiles));
                 if (typeof renderSavedProfiles === 'function') renderSavedProfiles();
             }
@@ -4217,17 +4226,40 @@ window.renderSavedProfiles = function() {
     
     container.style.display = 'flex';
     let html = '';
+    
+    const now = new Date();
+    const dateStr = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
+
     profiles.forEach((p, index) => {
-        // Zabezpieczenie na wypadek braku avatara
         const avatarHtml = p.photo && p.photo !== "" 
             ? `<img src="${p.photo}" class="saved-profile-avatar" alt="${p.name}">` 
             : `<div class="saved-profile-avatar" style="display:flex; justify-content:center; align-items:center; font-size:1.5rem; color:var(--text-secondary);"><i class="fas fa-user-tie"></i></div>`;
         
+        const statKey = `elcartel_stats_${p.name}_${dateStr}`;
+        const dailyEarned = parseFloat(localStorage.getItem(statKey)) || 0;
+        
         html += `
-            <div class="saved-profile-card" onclick="quickLogin('${p.pin}')" title="Zaloguj jako ${p.name}">
+            <div class="saved-profile-card" onclick="quickLogin('${p.pin}')">
                 ${avatarHtml}
                 <span class="saved-profile-name">${p.name}</span>
                 <button class="remove-profile-btn" onclick="removeSavedProfile(${index}, event)" title="Usuń zapisany profil"><i class="fas fa-times"></i></button>
+                
+                <div class="profile-mini-stats">
+                    <div class="stats-header">Zapisany profil</div>
+                    <div class="stats-row">
+                        <span><i class="fas fa-hashtag text-secondary"></i> SSN:</span>
+                        <strong class="text-white-inline">${p.ssn || '---'}</strong>
+                    </div>
+                    <div class="stats-row">
+                        <span><i class="fas fa-calendar-alt text-secondary"></i> Zatrudnienie:</span>
+                        <strong class="text-white-inline" style="font-size: 0.75rem;">${p.dateZatrudnienia || 'Brak danych'}</strong>
+                    </div>
+                    <div class="stats-row">
+                        <span><i class="fas fa-chart-line text-secondary"></i> Utarg dziś:</span>
+                        <strong class="text-success">${window.formatMoney ? window.formatMoney(dailyEarned) : dailyEarned}$</strong>
+                    </div>
+                    <div class="stats-hint">Kliknij, aby zalogować</div>
+                </div>
             </div>
         `;
     });
