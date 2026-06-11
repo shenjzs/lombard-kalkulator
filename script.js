@@ -438,14 +438,15 @@ window.login = async function() {
                 savedProfiles.push({ 
                     name: currentEmployeeName, 
                     pin: pin, 
-                    photo: currentEmployeePhoto,
-                    ssn: currentEmployeeSsn,                    // Dodano zapis
-                    dateZatrudnienia: currentEmployeeDateZatrudnienia // Dodano zapis
+                    photo: currentEmployeePhoto || '',
+                    ssn: currentEmployeeSsn || '---',
+                    dateZatrudnienia: currentEmployeeDateZatrudnienia || 'Brak danych',
+                    rank: currentEmployeeRank || 'Pracownik' // <--- TUTAJ DODALIŚMY STOPIEŃ
                 });
                 localStorage.setItem('elcartel_saved_profiles', JSON.stringify(savedProfiles));
                 if (typeof renderSavedProfiles === 'function') renderSavedProfiles();
             }
-            // ------------------------------------			
+            // ------------------------------------		
             
             const adminChangelogBtn = document.getElementById('admin-changelog-btn');
             const adminReportsBtn = document.getElementById('admin-reports-btn');
@@ -4248,6 +4249,10 @@ window.renderSavedProfiles = function() {
                 
                 <div class="profile-mini-stats">
                     <div class="stats-header">Zapisany profil</div>
+                    <div class="stats-row">
+                        <span><i class="fas fa-star text-secondary"></i> Stopień:</span>
+                        <strong style="color: var(--accent-color); font-weight: 800;">${p.rank || 'Pracownik'}</strong>
+                    </div>
                     <div class="stats-row">
                         <span><i class="fas fa-hashtag text-secondary"></i> SSN:</span>
                         <strong class="text-white-inline">${p.ssn || '---'}</strong>
