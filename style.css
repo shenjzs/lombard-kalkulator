@@ -3777,3 +3777,85 @@ input[type="number"]::-webkit-inner-spin-button {
 input[type="number"] {
     -moz-appearance: textfield !important;
 }
+
+/* ==========================================================================
+   SYSTEM SZYBKIEGO LOGOWANIA (ZAPISANE PROFILE)
+   ========================================================================== */
+.saved-profiles-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px dashed rgba(255,255,255,0.1);
+}
+
+.saved-profile-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: var(--transition-normal);
+    position: relative;
+    width: 70px;
+}
+
+.saved-profile-card:hover {
+    transform: translateY(-5px);
+}
+
+.saved-profile-avatar {
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    object-fit: cover;
+    transition: var(--transition-normal);
+    background: var(--card-bg);
+}
+
+.saved-profile-card:hover .saved-profile-avatar {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 15px rgba(243, 156, 18, 0.4);
+}
+
+.saved-profile-name {
+    font-size: 0.7rem;
+    color: var(--text-primary);
+    font-weight: 700;
+    text-align: center;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.remove-profile-btn {
+    position: absolute;
+    top: -5px;
+    right: 0px;
+    background: var(--danger);
+    color: white;
+    border: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 0.7rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: 0.2s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+.saved-profile-card:hover .remove-profile-btn {
+    opacity: 1;
+}
+
+.remove-profile-btn:hover {
+    transform: scale(1.15);
+}

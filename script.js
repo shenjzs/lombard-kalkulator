@@ -423,7 +423,18 @@ window.login = async function() {
             currentEmployeeRank = data.rank || "Pracownik"; 
             currentEmployeeSsn = String(data.ssn) || "---"; 
             currentEmployeeDateZatrudnienia = data.dateZatrudnienia || "Brak danych";
-            currentEmployeePhoto = data.photo || ""; 
+            currentEmployeePhoto = data.photo || "";
+			// --- SYSTEM ZAPAMIĘTYWANIA PROFILU ---
+            const rememberMeCheckbox = document.getElementById('remember-me-checkbox');
+            if (rememberMeCheckbox && rememberMeCheckbox.checked) {
+                let savedProfiles = JSON.parse(localStorage.getItem('elcartel_saved_profiles') || '[]');
+                // Usuwamy stary zapis dla tej osoby (żeby nie robić duplikatów przy np. zmianie zdjęcia)
+                savedProfiles = savedProfiles.filter(p => p.name !== currentEmployeeName);
+                savedProfiles.push({ name: currentEmployeeName, pin: pin, photo: currentEmployeePhoto || '' });
+                localStorage.setItem('elcartel_saved_profiles', JSON.stringify(savedProfiles));
+                if (typeof renderSavedProfiles === 'function') renderSavedProfiles();
+            }
+            // ------------------------------------			
             
             const adminChangelogBtn = document.getElementById('admin-changelog-btn');
             const adminReportsBtn = document.getElementById('admin-reports-btn');
@@ -4189,6 +4200,61 @@ async function checkPagerMessages() {
         lastPagerTimestamp = newestTimestamp;
     } catch(e) {}
 }
+
+// ==========================================
+// FUNKCJE SYSTEMU SZYBKIEGO LOGOWANIA
+// ==========================================
+window.renderSavedProfiles = function() {
+    const container = document.getElementById('saved-profiles-container');
+    if (!container) return;
+    const profiles = JSON.parse(localStorage.getItem('elcartel_saved_profiles') || '[]');
+    
+    if (profiles.length === 0) {
+        container.innerHTML = '';
+        container.style.display = 'none';
+        return;
+    }
+    
+    container.style.display = 'flex';
+    let html = '';
+    profiles.forEach((p, index) => {
+        // Zabezpieczenie na wypadek braku avatara
+        const avatarHtml = p.photo && p.photo !== "" 
+            ? `<img src="${p.photo}" class="saved-profile-avatar" alt="${p.name}">` 
+            : `<div class="saved-profile-avatar" style="display:flex; justify-content:center; align-items:center; font-size:1.5rem; color:var(--text-secondary);"><i class="fas fa-user-tie"></i></div>`;
+        
+        html += `
+            <div class="saved-profile-card" onclick="quickLogin('${p.pin}')" title="Zaloguj jako ${p.name}">
+                ${avatarHtml}
+                <span class="saved-profile-name">${p.name}</span>
+                <button class="remove-profile-btn" onclick="removeSavedProfile(${index}, event)" title="Usuń zapisany profil"><i class="fas fa-times"></i></button>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+}
+
+window.quickLogin = function(pin) {
+    const pinInput = document.getElementById('employee-login-pin');
+    if (pinInput) {
+        pinInput.value = pin;
+        window.login(); // Automatycznie uruchamia proces logowania
+    }
+}
+
+window.removeSavedProfile = function(index, event) {
+    event.stopPropagation(); // Zapobiega kliknięciu w avatar przy usuwaniu
+    let profiles = JSON.parse(localStorage.getItem('elcartel_saved_profiles') || '[]');
+    profiles.splice(index, 1);
+    localStorage.setItem('elcartel_saved_profiles', JSON.stringify(profiles));
+    renderSavedProfiles();
+    showNotice("Usunięto zapisany profil.", "info");
+}
+
+// Wywołaj renderowanie profili od razu po załadowaniu strony
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof renderSavedProfiles === 'function') renderSavedProfiles();
+});
 
 setInterval(checkPagerMessages, 15000);
 
