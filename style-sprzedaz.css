@@ -3764,3 +3764,29 @@ body:has(.modal.active) {
 .remove-profile-btn:hover {
     transform: scale(1.15);
 }
+
+/* ==========================================================================
+   INTELIGENTNE POWITANIA ZALEŻNE OD PORY DNIA
+   ========================================================================== */
+.time-greeting-box {
+    font-size: 0.75rem;
+    color: var(--text-secondary, #94a3b8);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: fadeInNormal 0.5s ease-in-out;
+}
+
+.time-greeting-box i {
+    color: var(--accent-color, #f39c12);
+    font-size: 0.85rem;
+}
+
+@keyframes fadeInNormal {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}

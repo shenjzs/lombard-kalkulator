@@ -1,4 +1,4 @@
-const APP_VERSION = "4.2.4";
+const APP_VERSION = "4.2.5";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const DISCORD_WEBHOOK_URL_SKUP = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/skup"; 
@@ -739,6 +739,8 @@ function initSkup() {
     
     // Czeka na dane o trendach z Google i odświeża widok Skupu, żeby strzałki wskoczyły natychmiast
     updateProductTrends().then(() => renderInventory());
+	
+	window.updateTimeBasedGreeting();
 }
 
 function resetCartAndInventory() {
@@ -1435,7 +1437,7 @@ function finalizeQuote(employeeName, finalPrice) {
     isStatAddedForCurrentReceipt = false;
     const receiptID = generateID();
     const currentReceiptDateEl = document.getElementById('current-receipt-date');
-    if(currentReceiptDateEl) currentReceiptDateEl.innerText = getFormattedDate();
+    if(currentReceiptDateEl) currentReceiptDateEl.innerText = getFormattedDateTime();
     
     const receiptIdDisplay = document.getElementById('receipt-id-display');
     if(receiptIdDisplay) receiptIdDisplay.innerText = `NR: ${receiptID}`;
@@ -1730,6 +1732,9 @@ function initExport() {
     
     // Czeka na dane o trendach i odświeża widok eksportu
     updateProductTrends().then(() => renderInventoryExport());
+
+    // DODAJEMY TĘ LINIKĘ:
+    window.updateTimeBasedGreeting();
 }
 
 function resetCartAndInventoryExport() {
@@ -1992,7 +1997,7 @@ window.generateQuoteExport = async function() {
 
 window.finalizeQuoteExport = function(employeeName) {
     lastGeneratedReportID = `EXP-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-    const date = getFormattedDate();
+    const date = getFormattedDateTime();
     
     let employeeText = `PRACOWNIK: ${employeeName.toUpperCase()}`;
     if (currentCustomerSSNExport !== "") employeeText += `<br>KLIENT (SSN): ${currentCustomerSSNExport}`;
@@ -2542,11 +2547,12 @@ window.renderMyStatsDisplay = function() {
     if (txCount === 0 && displayPeriodTotal > 0) txCount = Object.keys(itemCounts).length > 0 ? 1 : 0; 
     let avgTx = txCount > 0 ? Math.round(displayPeriodTotal / txCount) : 0;
     
-    document.getElementById('ms-today').innerText = displayPeriodTotal + '$';
-    document.getElementById('ms-alltime').innerText = allTimeTotal + '$';
-    document.getElementById('ms-count').innerText = txCount;
-    document.getElementById('ms-avg').innerText = avgTx + '$';
-    document.getElementById('ms-items').innerText = periodItemsQty;
+    // Uruchomienie animacji: (element, wartość, czas_trwania_w_ms, czy_dodac_formatowanie_pieniedzy)
+    window.animateCountUp(document.getElementById('ms-today'), displayPeriodTotal, 1500, true);
+    window.animateCountUp(document.getElementById('ms-alltime'), allTimeTotal, 2000, true); // Dłuższy czas, bo to gruba kwota
+    window.animateCountUp(document.getElementById('ms-count'), txCount, 1500, false);
+    window.animateCountUp(document.getElementById('ms-avg'), avgTx, 1500, true);
+    window.animateCountUp(document.getElementById('ms-items'), periodItemsQty, 1500, false);
     document.getElementById('ms-topitem').innerText = topItem.length > 15 ? topItem.substring(0, 15) + '...' : topItem;
     const labelEl = document.getElementById('ms-label-items');
     if(labelEl) labelEl.innerText = currentStatsType === 'skup' ? 'Skupione sztuki' : 'Sprzedane sztuki';
@@ -4294,6 +4300,120 @@ window.removeSavedProfile = function(index, event) {
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof renderSavedProfiles === 'function') renderSavedProfiles();
 });
+
+// ==========================================
+// SYSTEM INTELIGENTNYCH POWITAŃ KASJERA
+// ==========================================
+window.updateTimeBasedGreeting = function() {
+    const now = new Date();
+    const hours = now.getHours();
+    let greetingText = "";
+    let iconClass = "";
+
+    if (hours >= 6 && hours < 12) {
+        greetingText = `Nowy dzień, nowy hajs. Odpalamy kasę, ${currentEmployeeName}.`;
+        iconClass = "fas fa-bolt text-warning";
+    } else if (hours >= 12 && hours < 18) {
+        greetingText = `Godziny szczytu, ${currentEmployeeName}. Kręcimy grube kwity.`;
+        iconClass = "fas fa-money-bill-wave text-success";
+    } else if (hours >= 18 && hours < 23) {
+        greetingText = `Słońce zachodzi, stawki rosną. Pilnuj towaru, ${currentEmployeeName}.`;
+        iconClass = "fas fa-user-secret text-danger";
+    } else {
+        greetingText = `Miasto śpi, my zarabiamy, ${currentEmployeeName}. Tylko zaufane deale.`;
+        iconClass = "fas fa-moon text-info";
+    }
+
+    const skupGreeting = document.getElementById('time-greeting-skup');
+    const exportGreeting = document.getElementById('time-greeting-export');
+    const fullHtml = `<i class="${iconClass}"></i> ${greetingText}`;
+
+    if (skupGreeting) skupGreeting.innerHTML = fullHtml;
+    if (exportGreeting) exportGreeting.innerHTML = fullHtml;
+}
+
+// ==========================================
+// ZEGAR CZASU RZECZYWISTEGO (Na żywo)
+// ==========================================
+window.startRealTimeClock = function() {
+    function updateClock() {
+        const now = new Date();
+        const dd = String(now.getDate()).padStart(2, '0');
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const yyyy = now.getFullYear();
+        
+        const hh = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        const ss = String(now.getSeconds()).padStart(2, '0');
+        
+        // Budujemy nową datę z godziną, minutą i sekundą
+        const dateString = `<i class="far fa-clock"></i> ${dd}.${mm}.${yyyy} | ${hh}:${min}:${ss}`;
+        
+        const dateSkup = document.getElementById('header-date');
+        const dateExport = document.getElementById('header-date-export');
+        
+        if (dateSkup) dateSkup.innerHTML = dateString;
+        if (dateExport) dateExport.innerHTML = dateString;
+
+        // Mały bonus: jeśli zegar wbije idealnie pełną godzinę (np. z 17:59 na 18:00), 
+        // to dyskretnie odświeżamy też powitanie!
+        if (min === '00' && ss === '00') {
+            if (typeof updateTimeBasedGreeting === 'function') updateTimeBasedGreeting();
+        }
+    }
+    
+    // Odświeżaj co 1 sekundę (1000ms)
+    setInterval(updateClock, 1000);
+    // Odpal od razu przy wywołaniu, żeby nie czekać sekundy na pojawienie się daty
+    updateClock();
+}
+
+// Uruchomienie zegara w tle natychmiast po wejściu na stronę
+document.addEventListener('DOMContentLoaded', () => {
+    window.startRealTimeClock();
+});
+
+// ==========================================
+// ANIMACJE LICZNIKÓW (Count-Up)
+// ==========================================
+window.animateCountUp = function(element, target, duration, isMoney = false) {
+    if (!element) return;
+    
+    // Zabezpieczenie przed błędem z pustymi danymi (np. NaN)
+    const finalTarget = Number(target) || 0; 
+    const startValue = 0;
+    const startTime = performance.now();
+
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Funkcja Easingu (easeOutExpo) - zaczyna szybko, zwalnia na końcu
+        const easeOut = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+        
+        const currentValue = Math.floor(startValue + (finalTarget - startValue) * easeOut);
+        
+        // Zastosowanie Twojej wbudowanej funkcji formatMoney, jeśli to waluta
+        if (isMoney) {
+            element.innerText = (window.formatMoney ? window.formatMoney(currentValue) : currentValue) + '$';
+        } else {
+            element.innerText = currentValue;
+        }
+
+        if (progress < 1) {
+            requestAnimationFrame(update);
+        } else {
+            // Wyrównanie do dokładnej kwoty końcowej na sam koniec
+            if (isMoney) {
+                element.innerText = (window.formatMoney ? window.formatMoney(finalTarget) : finalTarget) + '$';
+            } else {
+                element.innerText = finalTarget;
+            }
+        }
+    }
+    
+    requestAnimationFrame(update);
+}
 
 setInterval(checkPagerMessages, 15000);
 

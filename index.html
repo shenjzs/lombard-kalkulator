@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Kasa fiskalna</title>
-    <link id="theme-style" rel="stylesheet" href="style.css?v=4.2.4">
+    <link id="theme-style" rel="stylesheet" href="style.css?v=4.2.5">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -101,15 +101,14 @@
 
     <div id="main-app" class="hidden">
         <div id="view-skup">
-            <div class="container container-pt40">
-                <header>
+    <div class="container container-pt40">
+        <header>
                     <h1>EL CARTEL PAWN SHOP</h1>
-                    <div class="header-meta">
-                        <span><i class="fas fa-calculator"></i> WYCEŃ TOWARY / SYSTEM SKUPU PRZEDMIOTÓW</span>
-                        <span id="header-date"><i class="far fa-calendar-alt"></i> --.--.----</span>
+                    <div class="header-meta" style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                        <div id="time-greeting-skup" class="time-greeting-box" style="margin-bottom: 0;"></div>
+                        <span id="header-date"><i class="far fa-clock"></i> --.--.---- --:--:--</span>
                     </div>
-					<div class="tabs-bar" id="skup-tabs-container">
-					</div>
+                    <div class="tabs-bar" id="skup-tabs-container"></div>
                 </header>
 
                 <div class="search-container">
@@ -217,13 +216,13 @@
         <div id="view-export" class="hidden">
             <div class="container container-pt40">
                 <header>
-				<h1>EL CARTEL EXPORT</h1>
-				<div class="header-meta">
-				<span><i class="fas fa-truck-loading"></i> SYSTEM RAPORTOWANIA O SPRZEDAŻY PRZEDMIOTÓW</span>
-				<span id="header-date-export"><i class="far fa-calendar-alt"></i> --.--.----</span>
-				</div> <div class="tabs-bar" id="sprzedaz-tabs-container">
-				</div>
-		</header>
+                    <h1>EL CARTEL EXPORT</h1>
+                    <div class="header-meta" style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                        <div id="time-greeting-export" class="time-greeting-box" style="margin-bottom: 0;"></div>
+                        <span id="header-date-export"><i class="far fa-clock"></i> --.--.---- --:--:--</span>
+                    </div>
+                    <div class="tabs-bar" id="sprzedaz-tabs-container"></div>
+                </header>
 
                 <div class="search-container">
                     <i class="fas fa-search search-icon-left-export"></i>
@@ -791,6 +790,6 @@
     <audio id="sound-error" src="sounds/error.mp3" preload="auto"></audio>
     <audio id="sound-notification" src="sounds/notification.mp3" preload="auto"></audio>
 
-    <script src="script.js?v=4.2.4"></script>
+    <script src="script.js?v=4.2.5"></script>
 </body>
 </html>
