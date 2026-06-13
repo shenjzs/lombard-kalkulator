@@ -1,4 +1,4 @@
-const APP_VERSION = "4.2.5";
+const APP_VERSION = "4.3.5";
 
 // ==========================================
 // KONFIGURACJA
@@ -83,6 +83,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.key === 'Enter') login();
         });
     }
+    
+    // --- INICJALIZACJA ZAPISANEGO PROFILU NA STARCIE ---
+    if (typeof window.checkSavedBossProfile === 'function') window.checkSavedBossProfile();
 });
 
 // Nasłuchiwanie scrolla, żeby zwinąć pasek w ikonki
@@ -109,6 +112,24 @@ async function login() {
 
         if (data.isValid) {
             if (data.role && data.role.toLowerCase() === 'szef') {
+                // --- SYSTEM ZAPAMIĘTYWANIA PROFILU ---
+                const rememberMeCheckbox = document.getElementById('remember-me-checkbox');
+                if (rememberMeCheckbox && rememberMeCheckbox.checked) {
+                    let savedProfiles = JSON.parse(localStorage.getItem('elcartel_gold_profiles') || '[]');
+                    savedProfiles = savedProfiles.filter(p => p.name !== data.name);
+                    savedProfiles.push({ 
+                        name: data.name, 
+                        pin: pin, 
+                        photo: data.photo || '',
+                        ssn: data.ssn || '---',
+                        dateZatrudnienia: data.dateZatrudnienia || 'Brak danych',
+                        rank: data.rank || 'Pracownik' // Pobieranie faktycznego stopnia z bazy
+                    });
+                    localStorage.setItem('elcartel_gold_profiles', JSON.stringify(savedProfiles));
+                    if (typeof renderSavedProfiles === 'function') renderSavedProfiles();
+                }
+                // ------------------------------------
+
                 // --- EFEKT FACE ID (otwieranie kłódki) ---
                 const mainIcon = document.querySelector('.login-icon');
                 if (mainIcon) {
@@ -166,6 +187,79 @@ async function login() {
         btn.innerHTML = 'Zaloguj <i class="fas fa-lock"></i>';
     }
 }
+
+// ==========================================
+// FUNKCJE SYSTEMU SZYBKIEGO LOGOWANIA
+// ==========================================
+window.renderSavedProfiles = function() {
+    const container = document.getElementById('saved-profiles-container');
+    if (!container) return;
+    const profiles = JSON.parse(localStorage.getItem('elcartel_gold_profiles') || '[]');
+    
+    if (profiles.length === 0) {
+        container.innerHTML = '';
+        container.style.display = 'none';
+        return;
+    }
+    
+    container.style.display = 'flex';
+    let html = '';
+
+    profiles.forEach((p, index) => {
+        const avatarHtml = p.photo && p.photo !== "" 
+            ? `<img src="${p.photo}" class="saved-profile-avatar" alt="${p.name}">` 
+            : `<div class="saved-profile-avatar" style="display:flex; justify-content:center; align-items:center; font-size:1.5rem; color:var(--text-secondary);"><i class="fas fa-user-tie"></i></div>`;
+        
+        html += `
+            <div class="saved-profile-card" onclick="quickLogin('${p.pin}')">
+                ${avatarHtml}
+                <span class="saved-profile-name">${p.name}</span>
+                <button class="remove-profile-btn" onclick="removeSavedProfile(${index}, event)" title="Usuń zapisany profil"><i class="fas fa-times"></i></button>
+                
+                <div class="profile-mini-stats">
+                    <div class="stats-header">Zapisany profil</div>
+                    <div class="stats-row">
+                        <span><i class="fas fa-star text-secondary"></i> Stopień:</span>
+                        <strong style="color: var(--accent-color); font-weight: 800;">${p.rank || 'Pracownik'}</strong>
+                    </div>
+                    <div class="stats-row">
+                        <span><i class="fas fa-hashtag text-secondary"></i> SSN:</span>
+                        <strong class="text-white-inline">${p.ssn || '---'}</strong>
+                    </div>
+                    <div class="stats-row">
+                        <span><i class="fas fa-calendar-alt text-secondary"></i> Zatrudnienie:</span>
+                        <strong class="text-white-inline" style="font-size: 0.75rem;">${p.dateZatrudnienia || 'Brak danych'}</strong>
+                    </div>
+                    <div class="stats-hint">Kliknij, aby zalogować</div>
+                </div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+}
+
+window.quickLogin = function(pin) {
+    const pinInput = document.getElementById('employee-login-pin');
+    if (pinInput) {
+        pinInput.value = pin;
+        window.login(); 
+    }
+}
+
+window.removeSavedProfile = function(index, event) {
+    event.stopPropagation(); 
+    let profiles = JSON.parse(localStorage.getItem('elcartel_gold_profiles') || '[]');
+    profiles.splice(index, 1);
+    localStorage.setItem('elcartel_gold_profiles', JSON.stringify(profiles));
+    renderSavedProfiles();
+    if (typeof showNotice === 'function') {
+        showNotice("Usunięto zapisany profil.", "info");
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof renderSavedProfiles === 'function') renderSavedProfiles();
+});
 
 // ==========================================
 // KOREKTA ZALEGŁEGO MAGAZYNU (MODAL)

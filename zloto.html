@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Przetapianie złota</title>
-    <link rel="stylesheet" href="style-zloto.css?v=4.2.5">
+    <link rel="stylesheet" href="style-zloto.css?v=4.3.5">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -42,10 +42,23 @@
             <i class="fas fa-lock login-icon"></i>
             <h2>Rozpocznij zmianę</h2>
             <p>Wprowadź swój kod PIN, aby odblokować panel odlewni.</p>
-            <input type="password" id="employee-login-pin" placeholder="****" class="pin-input" maxlength="4">
+            
+            <div id="login-normal-form">
+                <input type="password" id="employee-login-pin" placeholder="****" class="pin-input" maxlength="4" style="margin-bottom: 20px;">
+            </div>
+
             <button onclick="login()" id="login-btn" class="login-btn">
                 Zaloguj <i class="fas fa-lock"></i>
             </button>
+
+            <div class="remember-me-container" style="margin-top: 20px;">
+                <label class="emp-checkbox-label" style="width: 100%; justify-content: center; margin-bottom: 0; border-color: rgba(255,255,255,0.1); background: rgba(0,0,0,0.3);">
+                    <input type="checkbox" id="remember-me-checkbox" class="emp-checkbox-input">
+                    <span class="emp-access-text" style="color: var(--text-secondary);">Zapamiętaj mnie</span>
+                </label>
+            </div>
+
+            <div id="saved-profiles-container" class="saved-profiles-container"></div>
         </div>
     </div>
 
@@ -233,6 +246,6 @@
     </div>
 
     <div id="toast-container" class="toast-container"></div>
-    <script src="zloto-script.js?v=4.2.5"></script>
+    <script src="zloto-script.js?v=4.3.5"></script>
 </body>
 </html>

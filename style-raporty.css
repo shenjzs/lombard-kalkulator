@@ -2598,6 +2598,166 @@ header h1 {
 }
 
 /* ==========================================================================
+   SYSTEM SZYBKIEGO LOGOWANIA (ZAPISANE PROFILE)
+   ========================================================================== */
+.saved-profiles-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px dashed rgba(255,255,255,0.1);
+}
+
+.saved-profile-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: var(--transition-normal);
+    position: relative;
+    width: 95px;
+}
+
+.saved-profile-card:hover {
+    transform: translateY(-5px);
+}
+
+.saved-profile-avatar {
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    object-fit: cover;
+    transition: var(--transition-normal);
+    background: var(--card-bg);
+}
+
+.saved-profile-card:hover .saved-profile-avatar {
+    border-color: #ffffff;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.25);
+}
+
+.saved-profile-name {
+    font-size: 0.75rem;
+    color: var(--text-primary);
+    font-weight: 700;
+    text-align: center;
+    width: 100%;
+    word-wrap: break-word;
+    line-height: 1.2;
+}
+
+.remove-profile-btn {
+    position: absolute;
+    top: -5px;
+    right: 12px;
+    background: var(--danger);
+    color: white;
+    border: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 0.7rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: 0.2s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    z-index: 10;
+}
+
+.saved-profile-card:hover .remove-profile-btn {
+    opacity: 1;
+}
+
+.remove-profile-btn:hover {
+    transform: scale(1.15);
+}
+
+.profile-mini-stats {
+    position: absolute;
+    bottom: 115%; 
+    left: 50%;
+    transform: translateX(-50%) translateY(15px);
+    background: rgba(15, 23, 42, 0.98);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px 14px;
+    border-radius: 14px;
+    width: max-content;
+    min-width: 210px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.9);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 100;
+    pointer-events: none;
+}
+
+.profile-mini-stats::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: rgba(15, 23, 42, 0.98) transparent transparent transparent;
+}
+
+.saved-profile-card:hover .profile-mini-stats {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+.stats-header {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 5px;
+    text-align: center;
+    font-weight: 800;
+}
+
+.stats-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.stats-row span {
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.text-white-inline {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.stats-hint {
+    font-size: 0.65rem;
+    color: var(--accent-color);
+    text-align: center;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+/* ==========================================================================
    ANIMACJE WYLOGOWANIA (ZAMYKANA KŁÓDKA I POWRÓT EKRANU)
    ========================================================================== */
 .icon-lock-anim {

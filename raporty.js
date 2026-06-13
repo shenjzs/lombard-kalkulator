@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "4.2.5"; // Normalizacja nazw produktów
+const APP_VERSION = "4.3.5"; // Normalizacja nazw produktów
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
@@ -172,6 +172,24 @@ async function loginBoss() {
         if (data.isValid) { 
             if (data.role && data.role.toLowerCase().trim() === 'szef') {
                 
+                // --- SYSTEM ZAPAMIĘTYWANIA PROFILU ---
+                const rememberMeCheckbox = document.getElementById('remember-me-checkbox');
+                if (rememberMeCheckbox && rememberMeCheckbox.checked) {
+                    let savedProfiles = JSON.parse(localStorage.getItem('elcartel_boss_profiles') || '[]');
+                    savedProfiles = savedProfiles.filter(p => p.name !== data.name);
+                    savedProfiles.push({ 
+                        name: data.name, 
+                        pin: pin, 
+                        photo: data.photo || '',
+                        ssn: data.ssn || '---',
+                        dateZatrudnienia: data.dateZatrudnienia || 'Brak danych',
+                        rank: data.rank || 'Pracownik' // <--- TUTAJ: pobieramy faktyczny stopień z bazy
+                    });
+                    localStorage.setItem('elcartel_boss_profiles', JSON.stringify(savedProfiles));
+                    if (typeof renderSavedProfiles === 'function') renderSavedProfiles();
+                }
+                // ------------------------------------
+                
                 // --- EFEKT FACE ID (otwieranie kłódki) ---
                 const mainIcon = document.querySelector('.login-icon');
                 if (mainIcon) {
@@ -236,7 +254,6 @@ async function loginBoss() {
     } catch (e) {
         showNotice("Błąd połączenia z bazą PIN!", "danger");
     } finally {
-        // Resetujemy guzik tylko, jeśli logowanie się NIE udało (żeby nie przerywać animacji)
         if (!document.querySelector('.login-card').classList.contains('login-zoom-in')) {
             btn.disabled = false;
             btn.innerHTML = 'Zaloguj <i class="fas fa-unlock"></i>';
@@ -270,7 +287,6 @@ window.logoutBoss = function() {
         if (mainIcon) {
             mainIcon.className = 'fas fa-unlock login-icon';
             
-            // Wydłużone opóźnienie: czeka aż karta w pełni wyląduje (550ms)
             setTimeout(() => {
                 mainIcon.className = 'fas fa-lock login-icon icon-lock-anim';
                 setTimeout(() => mainIcon.classList.remove('icon-lock-anim'), 500);
@@ -278,8 +294,12 @@ window.logoutBoss = function() {
         }
 
         currentEmployeeName = "";
-        document.getElementById('boss-pin-input').value = "";
         document.getElementById('logged-boss-name').innerText = "---";
+        
+        // --- ZAPISANE PROFILE ---
+        document.getElementById('boss-pin-input').value = "";
+        if (typeof renderSavedProfiles === 'function') renderSavedProfiles();
+        // ------------------------------------
 
         setTimeout(() => loginCard.classList.remove('login-zoom-out'), 450);
         showNotice("Pomyślnie wylogowano z systemu.", "info");
@@ -2396,13 +2416,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Podpięcie predictive fetch dla analityki w panelu szefa
     const attachPreload = (id, preloader) => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('mouseenter', preloader);
     };
 
-    // Nasłuch na ikonki/przyciski menadżerskie (na starcie i w trakcie używania)
     document.querySelectorAll('.manage-emp-btn').forEach(btn => {
         btn.addEventListener('mouseenter', () => {
             const onclickCode = btn.getAttribute('onclick') || '';
@@ -2410,19 +2428,19 @@ document.addEventListener('DOMContentLoaded', () => {
             if (onclickCode.includes('openBonusesManager')) window.preloadBonusesData();
             if (onclickCode.includes('openClientsManager')) window.preloadLoyaltyData();
             if (onclickCode.includes('openLoyaltySettings')) window.preloadLoyaltySettingsData();
-            if (onclickCode.includes('openSystemLogs')) window.preloadLogsData(); // Nowy prefetch dla logów
+            if (onclickCode.includes('openSystemLogs')) window.preloadLogsData(); 
         });
     });
 
-    // ==========================================
-    // SCROLL TO TOP BUTTON WSTRZYKIWANIE
-    // ==========================================
     const scrollBtnHTML = `
         <button id="scrollToTopBtn" class="scroll-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" title="Wróć na górę">
             <i class="fas fa-arrow-up"></i>
         </button>
     `;
     document.body.insertAdjacentHTML('beforeend', scrollBtnHTML);
+
+    // --- INICJALIZACJA ZAPISANYCH PROFILI ---
+    if (typeof renderSavedProfiles === 'function') renderSavedProfiles();
 });
 
 window.toggleTable = function(id, header) {
@@ -2432,6 +2450,114 @@ window.toggleTable = function(id, header) {
         header.classList.toggle('collapsed');
     }
 };
+
+// ==========================================
+// PAMIĘĆ PROFILU (ZAPISANE LOGOWANIE SZEFA)
+// ==========================================
+window.checkSavedBossProfile = function() {
+    const savedPin = localStorage.getItem('cartel_boss_pin');
+    const savedName = localStorage.getItem('cartel_boss_name');
+    
+    const normalForm = document.getElementById('login-normal-form');
+    const savedProfile = document.getElementById('login-saved-profile');
+    
+    if (savedPin && savedName) {
+        const pinInput = document.getElementById('boss-pin-input');
+        // Uzupełnia pole automatycznie tylko wtedy, kiedy jest puste
+        if(pinInput && !pinInput.value) pinInput.value = savedPin;
+        
+        const rememberCheckbox = document.getElementById('remember-boss-profile');
+        if (rememberCheckbox) rememberCheckbox.checked = true;
+        
+        const nameDisplay = document.getElementById('saved-boss-name-display');
+        if(nameDisplay) nameDisplay.innerText = savedName;
+        
+        const initialDisplay = document.getElementById('saved-boss-initial');
+        if(initialDisplay) initialDisplay.innerText = savedName.charAt(0).toUpperCase();
+        
+        // Zostawiamy formularz widoczny, pokazujemy profil pod spodem
+        if (normalForm) normalForm.classList.remove('hidden');
+        if (savedProfile) {
+            savedProfile.classList.remove('hidden');
+            savedProfile.style.display = 'flex'; 
+        }
+    } else {
+        if (normalForm) normalForm.classList.remove('hidden');
+        if (savedProfile) {
+            savedProfile.classList.add('hidden');
+            savedProfile.style.display = 'none';
+        }
+    }
+}
+
+// ==========================================
+// FUNKCJE SYSTEMU SZYBKIEGO LOGOWANIA
+// ==========================================
+window.renderSavedProfiles = function() {
+    const container = document.getElementById('saved-profiles-container');
+    if (!container) return;
+    const profiles = JSON.parse(localStorage.getItem('elcartel_boss_profiles') || '[]');
+    
+    if (profiles.length === 0) {
+        container.innerHTML = '';
+        container.style.display = 'none';
+        return;
+    }
+    
+    container.style.display = 'flex';
+    let html = '';
+
+    profiles.forEach((p, index) => {
+        const avatarHtml = p.photo && p.photo !== "" 
+            ? `<img src="${p.photo}" class="saved-profile-avatar" alt="${p.name}">` 
+            : `<div class="saved-profile-avatar" style="display:flex; justify-content:center; align-items:center; font-size:1.5rem; color:var(--text-secondary);"><i class="fas fa-user-tie"></i></div>`;
+        
+        html += `
+            <div class="saved-profile-card" onclick="quickLogin('${p.pin}')">
+                ${avatarHtml}
+                <span class="saved-profile-name">${p.name}</span>
+                <button class="remove-profile-btn" onclick="removeSavedProfile(${index}, event)" title="Usuń zapisany profil"><i class="fas fa-times"></i></button>
+                
+                <div class="profile-mini-stats">
+                    <div class="stats-header">Zapisany profil</div>
+                    <div class="stats-row">
+                        <span><i class="fas fa-star text-secondary"></i> Stopień:</span>
+                        <strong style="color: var(--accent-color); font-weight: 800;">${p.rank || 'Pracownik'}</strong>
+                    </div>
+                    <div class="stats-row">
+                        <span><i class="fas fa-hashtag text-secondary"></i> SSN:</span>
+                        <strong class="text-white-inline">${p.ssn || '---'}</strong>
+                    </div>
+                    <div class="stats-row">
+                        <span><i class="fas fa-calendar-alt text-secondary"></i> Zatrudnienie:</span>
+                        <strong class="text-white-inline" style="font-size: 0.75rem;">${p.dateZatrudnienia || 'Brak danych'}</strong>
+                    </div>
+                    <div class="stats-hint">Kliknij, aby zalogować</div>
+                </div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+}
+
+window.quickLogin = function(pin) {
+    const pinInput = document.getElementById('boss-pin-input');
+    if (pinInput) {
+        pinInput.value = pin;
+        if(typeof window.loginBoss === 'function') window.loginBoss(); 
+    }
+}
+
+window.removeSavedProfile = function(index, event) {
+    event.stopPropagation(); 
+    let profiles = JSON.parse(localStorage.getItem('elcartel_boss_profiles') || '[]');
+    profiles.splice(index, 1);
+    localStorage.setItem('elcartel_boss_profiles', JSON.stringify(profiles));
+    renderSavedProfiles();
+    if (typeof showNotice === 'function') {
+        showNotice("Usunięto zapisany profil.", "info");
+    }
+}
 
 // ==========================================
 // SYSTEM AUTOMATYCZNEJ AKTUALIZACJI STRONY

@@ -1160,7 +1160,7 @@ header h1 {
 .cart-footer {
     padding: 25px;
     border-top: 1px solid var(--border-color);
-    background: rgba(15, 23, 42, 1);
+    background: var(--card-bg);
 }
 
 .cart-total-row {
@@ -3274,7 +3274,7 @@ body:has(.cart-sidebar.active) .online-widget {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: rgba(15, 23, 42, 0.4);
+    background: rgba(45, 27, 27, 0.4);
     padding: 6px 12px;
     border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.05);

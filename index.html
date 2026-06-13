@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Kasa fiskalna</title>
-    <link id="theme-style" rel="stylesheet" href="style.css?v=4.2.5">
+    <link id="theme-style" rel="stylesheet" href="style.css?v=4.3.5">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -87,15 +87,21 @@
             <i class="fas fa-lock login-icon"></i>
             <h2>Rozpocznij zmianę</h2>
             <p>Wprowadź swój kod PIN, aby odblokować kasę i rozpocząć przyjmowanie klientów.</p>
+            
             <input type="password" id="employee-login-pin" placeholder="****" class="pin-input" maxlength="4">
+            
             <button id="login-btn-action" class="login-btn">
                 Zaloguj <i class="fas fa-unlock"></i>
             </button>
-			<div class="remember-me-container" style="margin-top: 15px; text-align: center;">
-    <input type="checkbox" id="remember-me-checkbox">
-    <label for="remember-me-checkbox" style="color: var(--text-secondary); font-size: 0.85rem; cursor: pointer;">Zapamiętaj mnie na tym urządzeniu</label>
-</div>
-<div id="saved-profiles-container" class="saved-profiles-container"></div>
+
+            <div class="remember-me-container" style="margin-top: 15px;">
+                <label class="emp-checkbox-label">
+                    <input type="checkbox" id="remember-me-checkbox" class="emp-checkbox-input">
+                    <span class="emp-access-text">Zapamiętaj mnie</span>
+                </label>
+            </div>
+
+            <div id="saved-profiles-container" class="saved-profiles-container"></div>
         </div>
     </div>
 
@@ -790,6 +796,6 @@
     <audio id="sound-error" src="sounds/error.mp3" preload="auto"></audio>
     <audio id="sound-notification" src="sounds/notification.mp3" preload="auto"></audio>
 
-    <script src="script.js?v=4.2.5"></script>
+    <script src="script.js?v=4.3.5"></script>
 </body>
 </html>
