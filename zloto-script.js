@@ -1,4 +1,4 @@
-const APP_VERSION = "4.3.5";
+const APP_VERSION = "4.3.6";
 
 // ==========================================
 // KONFIGURACJA
@@ -539,20 +539,42 @@ async function processSmelting() {
     };
 
     try {
+        // PANCERNY UKŁAD 2-KOLUMNOWY DLA ZŁOTA
+        const zysk = payload.revenue - payload.total;
+        const profitText = zysk >= 0 ? `+${zysk}$` : `${zysk}$`;
+
+        const embedFields = [
+            { 
+                name: "Dane operacji", 
+                value: `**👤 Pracownik:**\n\`${currentEmployeeName}\`\n\n**📦 Przetopiono:**\n\`${payload.items}\``, 
+                inline: true 
+            },
+            { 
+                name: "Rozliczenie finansowe", 
+                value: `**📉 Koszt materiałów:**\n**${payload.total}$**\n\n**📈 Wartość sztabek:**\n**${payload.revenue}$**\n\n**💰 Zysk na czysto:**\n**${profitText}**`, 
+                inline: true 
+            }
+        ];
+
         const discordPayload = {
+            username: currentEmployeeName || "Pracownik",
             embeds: [{
                 title: "🔥 NOWY WYTOP ZŁOTA",
                 color: 15571200,
-                fields: [
-                    { name: "Pracownik", value: currentEmployeeName, inline: true },
-                    { name: "Wydatki na skup", value: payload.total + "$", inline: true },
-                    { name: "Wartość sztabek", value: payload.revenue + "$", inline: true },
-                    { name: "Zysk na operacji", value: (payload.revenue - payload.total) + "$", inline: false },
-                    { name: "Wykorzystane surowce", value: payload.items }
-                ],
-                timestamp: new Date().toISOString()
+                fields: embedFields,
+                timestamp: new Date().toISOString(),
+                footer: { text: "System EL CARTEL ODLEWNIA" }
             }]
         };
+
+        // Wyciąganie zdjęcia pracownika z pamięci przeglądarki (żeby awatar działał tak jak w kasie)
+        try {
+            const profiles = JSON.parse(localStorage.getItem('elcartel_gold_profiles') || '[]');
+            const currentProfile = profiles.find(p => p.name === currentEmployeeName);
+            if (currentProfile && currentProfile.photo && currentProfile.photo.trim() !== "") {
+                discordPayload.avatar_url = currentProfile.photo;
+            }
+        } catch (e) {}
         
         const formData = new FormData();
         formData.append("payload_json", JSON.stringify(discordPayload));

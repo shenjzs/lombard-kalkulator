@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "4.3.5"; // Normalizacja nazw produktów
+const APP_VERSION = "4.3.6"; // Normalizacja nazw produktów
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
@@ -118,7 +118,8 @@ window.addSystemLog = async function(type, description) {
 // ==========================================
 window.formatMoney = function(amount) {
     if (isNaN(amount)) return "0";
-    return Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    // Używamy \u00A0 (twardej spacji), żeby liczby nigdy nie łamały się do nowej linii!
+    return Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "\u00A0");
 };
 
 // ==========================================
@@ -2336,32 +2337,87 @@ window.sendReportToDiscord = async function() {
             scale: 2, 
             backgroundColor: "#0f172a",
             logging: false,
-            useCORS: true
+            useCORS: true,
+            onclone: (clonedDoc) => {
+                // Trik: Przed strzeleniem fotki modyfikujemy wygląd "w locie"
+                const clonedArea = clonedDoc.getElementById('report-visual-card');
+                if (clonedArea) {
+                    // 1. Zmuszamy tło obrazka, by rozszerzyło się do wielkości wszystkich 4 kafelków
+                    clonedArea.style.setProperty('width', 'max-content', 'important');
+                    clonedArea.style.setProperty('padding', '40px', 'important');
+                    
+                    // 2. Formatujemy same kafelki z kwotami
+                    const bigNumbers = clonedArea.querySelectorAll('#v-buy, #v-sell, #v-bal, #v-bonus');
+                    bigNumbers.forEach(num => {
+                        if (num) {
+                            num.style.setProperty('font-size', '2.6rem', 'important'); // Delikatnie większe cyfry
+                            num.style.setProperty('margin-top', '15px', 'important'); // Odstęp od nagłówka
+                            
+                            // Pobieramy "rodzica" (czyli sam kafelek) i wymuszamy układ pionowy
+                            const parentCard = num.parentElement;
+                            if (parentCard) {
+                                parentCard.style.setProperty('display', 'flex', 'important');
+                                parentCard.style.setProperty('flex-direction', 'column', 'important');
+                                parentCard.style.setProperty('align-items', 'center', 'important');
+                                parentCard.style.setProperty('justify-content', 'center', 'important');
+                                parentCard.style.setProperty('text-align', 'center', 'important');
+                                parentCard.style.setProperty('padding', '30px 40px', 'important'); // Dodatkowy oddech wewnątrz kafelka
+                            }
+                        }
+                    });
+                }
+            }
         });
         
         canvas.toBlob(async (blob) => {
             const formData = new FormData();
             formData.append("file", blob, "raport_elcartel.png");
             
+            // PANCERNY UKŁAD 2-KOLUMNOWY DLA GŁÓWNEGO RAPORTU (BEZ SZARYCH TŁA NA LICZBACH)
+            const embedFields = [
+                {
+                    name: "📊 Finanse operacyjne",
+                    value: `**📉 Wydatki (skup):**\n**${totalBuyVal}**\n\n**📈 Przychody (sprzedaż):**\n**${totalSellVal}**\n\n**⚖️ Bilans brutto:**\n**${totalBalVal}**`,
+                    inline: true
+                },
+                {
+                    name: "💎 Podsumowanie netto",
+                    value: `**🎁 Wypłacone premie:**\n**${totalBonusVal}**\n\n**💰 Zysk na czysto:**\n**${totalProfitVal}**`,
+                    inline: true
+                },
+                {
+                    name: "🏆 Top zaopatrzeniowcy",
+                    value: topBuyStr,
+                    inline: true
+                },
+                {
+                    name: "🚚 Top sprzedający",
+                    value: topSellStr,
+                    inline: true
+                }
+            ];
+
             const payload = {
+                username: currentEmployeeName ? `${currentEmployeeName}` : "Szef zarządu",
                 embeds: [{
                     title: "🏛️ PROTOKÓŁ ANALITYCZNY ZARZĄDU EL CARTEL",
-                    description: `Dokładne zestawienie operacji finansowych dla okresu:\n📅 **${dFrom || "Początek"} — ${dTo || "Dziś"}**\n👤 Pracownik: **${empSelectValue === "ALL" ? "Wszyscy pracownicy" : empSelectValue}**`,
+                    description: `Dokładne zestawienie operacji finansowych dla okresu:\n📅 **${dFrom || "Początek"} — ${dTo || "Dziś"}**\n👤 Analizowani: **${empSelectValue === "ALL" ? "Wszyscy pracownicy" : empSelectValue}**`,
                     color: 3447003, 
-                    fields: [
-                        { name: "📉 Wydatki (skup)", value: `\`${totalBuyVal}\``, inline: true },
-                        { name: "📈 Przychody (sprzedaż)", value: `\`${totalSellVal}\``, inline: true },
-                        { name: "⚖️ Bilans", value: `\`${totalBalVal}\``, inline: true },
-                        { name: "🎁 Wypłacone premie", value: `\`${totalBonusVal}\``, inline: true },
-                        { name: "💎 Zysk netto", value: ` 💰 ${totalProfitVal}`, inline: false },
-                        { name: "🏆 Top zaopatrzeniowcy", value: topBuyStr, inline: true },
-                        { name: "🚚 Top sprzedający", value: topSellStr, inline: true }
-                    ],
+                    fields: embedFields,
                     image: { url: "attachment://raport_elcartel.png" },
                     timestamp: new Date().toISOString(),
                     footer: { text: `System EL CARTEL PAWN SHOP | ID: ${reportID}` }
                 }]
             };
+
+            // Wyciągnięcie zdjęcia szefa z kafelków profilu
+            try {
+                const profiles = JSON.parse(localStorage.getItem('elcartel_boss_profiles') || '[]');
+                const currentProfile = profiles.find(p => p.name === currentEmployeeName);
+                if (currentProfile && currentProfile.photo && currentProfile.photo.trim() !== "") {
+                    payload.avatar_url = currentProfile.photo;
+                }
+            } catch (e) {}
 
             formData.append("payload_json", JSON.stringify(payload));
             const res = await fetch(BOSS_DISCORD_WEBHOOK, { method: "POST", body: formData });

@@ -1,4 +1,4 @@
-const APP_VERSION = "4.3.5";
+const APP_VERSION = "4.3.6";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const DISCORD_WEBHOOK_URL_SKUP = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/skup"; 
@@ -1443,7 +1443,7 @@ function finalizeQuote(employeeName, finalPrice) {
     if(receiptIdDisplay) receiptIdDisplay.innerText = `NR: ${receiptID}`;
     
     let employeeText = `PRACOWNIK: ${employeeName.toUpperCase()}`;
-    if (currentCustomerSSN !== "") employeeText += `<br>KLIENT (SSN): ${currentCustomerSSN}`;
+    if (currentCustomerSSN !== "") employeeText += `<br>KLIENT [SSN]: ${currentCustomerSSN}`;
     const receiptEmployeeDisplay = document.getElementById('receipt-employee-display');
     if(receiptEmployeeDisplay) receiptEmployeeDisplay.innerHTML = employeeText;
     
@@ -1567,23 +1567,37 @@ window.sendToDiscord = async function() {
             const formData = new FormData();
             formData.append("file", blob, "paragon.png");
             
-            let employeeFieldValue = `**${employee}**`;
-            if (currentCustomerSSN !== "") employeeFieldValue += `\n(Klient SSN: **${currentCustomerSSN}**)`;
+            let employeeFieldValue = `**${currentEmployeeName}**`;
+
+            // PANCERNY UKŁAD 2-KOLUMNOWY
+            const embedFields = [
+                { 
+                    name: "Dane transakcji", 
+                    value: `**📋 Numer paragonu:**\n\`${receiptID}\`\n\n**🤝 Klient [SSN]:**\n\`${currentCustomerSSN !== "" ? currentCustomerSSN : "-"}\``, 
+                    inline: true 
+                },
+                { 
+                    name: "Rozliczenie", 
+                    value: `**👤 Pracownik:**\n${employeeFieldValue}\n\n**💰 Suma:**\n**${finalPriceText}**`, 
+                    inline: true 
+                }
+            ];
 
             const embedPayload = {
+                username: currentEmployeeName || "Pracownik",
                 embeds: [{
                     title: "📑 Wystawiono nowy paragon!",
                     color: 36991, 
-                    fields: [
-                        { name: "📋 Numer paragonu:", value: `\`${receiptID}\``, inline: true },
-                        { name: "👤 Pracownik:", value: employeeFieldValue, inline: true },
-                        { name: "💰 Suma:", value: `**${finalPriceText}**`, inline: false }
-                    ],
+                    fields: embedFields,
                     image: { url: "attachment://paragon.png" },
                     timestamp: new Date().toISOString(),
                     footer: { text: "System EL CARTEL PAWN SHOP" }
                 }]
             };
+
+            if (currentEmployeePhoto && currentEmployeePhoto.trim() !== "") {
+                embedPayload.avatar_url = currentEmployeePhoto;
+            }
 
             formData.append("payload_json", JSON.stringify(embedPayload));
             
@@ -2000,7 +2014,7 @@ window.finalizeQuoteExport = function(employeeName) {
     const date = getFormattedDateTime();
     
     let employeeText = `PRACOWNIK: ${employeeName.toUpperCase()}`;
-    if (currentCustomerSSNExport !== "") employeeText += `<br>KLIENT (SSN): ${currentCustomerSSNExport}`;
+    if (currentCustomerSSNExport !== "") employeeText += `<br>KLIENT [SSN]: ${currentCustomerSSNExport}`;
 
     const receiptHTML = `
         <div class="receipt receipt-shake">
@@ -2104,22 +2118,36 @@ window.sendToDiscordExport = async function() {
             formData.append("file", blob, "raport.png");
             
             let employeeFieldValue = `\`${currentEmployeeName}\``;
-            if (currentCustomerSSNExport !== "") employeeFieldValue += `\n(Klient SSN: **${currentCustomerSSNExport}**)`;
+
+            // PANCERNY UKŁAD 2-KOLUMNOWY
+            const embedFields = [
+                { 
+                    name: "Dane raportu", 
+                    value: `**📋 Nr raportu:**\n\`${lastGeneratedReportID}\`\n\n**🤝 Klient [SSN]:**\n\`${currentCustomerSSNExport !== "" ? currentCustomerSSNExport : "-"}\``, 
+                    inline: true 
+                },
+                { 
+                    name: "Rozliczenie", 
+                    value: `**👤 Pracownik:**\n${employeeFieldValue}\n\n**💰 Suma:**\n**${currentTotalExport}$**`, 
+                    inline: true 
+                }
+            ];
 
             const embedPayload = {
+                username: currentEmployeeName || "Pracownik",
                 embeds: [{
                     title: "🚛 NOWY RAPORT SPRZEDAŻY",
                     color: 15995922,
-                    fields: [
-                        { name: "👤 Pracownik:", value: employeeFieldValue, inline: true },
-                        { name: "📋 Nr raportu:", value: `\`${lastGeneratedReportID}\``, inline: true },
-                        { name: "💰 Suma:", value: `\`${currentTotalExport}$\``, inline: false }
-                    ],
+                    fields: embedFields,
                     image: { url: "attachment://raport.png" },
                     timestamp: new Date().toISOString(),
                     footer: { text: "System EL CARTEL EXPORT" }
                 }]
             };
+
+            if (currentEmployeePhoto && currentEmployeePhoto.trim() !== "") {
+                embedPayload.avatar_url = currentEmployeePhoto;
+            }
 
             formData.append("payload_json", JSON.stringify(embedPayload));
 
@@ -3467,7 +3495,7 @@ window.claimReward = async function(btn) {
                 title: "🎁 ODEBRANO NAGRODĘ LOJALNOŚCIOWĄ!",
                 color: 15844367, 
                 fields: [
-                    { name: "👤 Klient (SSN):", value: `\`${currentLoyaltyCustomer.ssn}\``, inline: true },
+                    { name: "👤 Klient [SSN]:", value: `\`${currentLoyaltyCustomer.ssn}\``, inline: true },
                     { name: "🧑‍💼 Wydał:", value: `\`${currentEmployeeName}\``, inline: true },
                     { name: "🏆 Nagroda:", value: `**${rewardName}** (Koszt: ${cost} pieczątek)`, inline: false }
                 ],
