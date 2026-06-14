@@ -245,6 +245,7 @@ const defaultExportInventory = [
     { name: "Zegarek", price: 200, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/hr_watch.webp" },
     { name: "Zepsuty telefon", price: 110, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/brokenphone.webp" },
     { name: "Sztabka złota", price: 15000, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/sztabka_zlota.webp" },
+	{ name: "Złota moneta", price: 230, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/goldcoin.webp" },
     { name: "Złota moneta z prezydentem", price: 250, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/prescoin42.webp" },
     { name: "Muszle morskie", price: 144, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_shells.webp" },
     { name: "Mała szara muszla", price: 108, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_seashell1.webp" },
