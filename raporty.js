@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "4.3.6"; // Normalizacja nazw produktów
+const APP_VERSION = "4.4.6"; // Normalizacja nazw produktów
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
@@ -215,7 +215,13 @@ async function loginBoss() {
                         btn.disabled = false;
                         btn.innerHTML = 'Zaloguj <i class="fas fa-unlock"></i>';
                         
-                        // Wejście głównego panelu
+                        // URUCHOMIENIE NOWEGO EKRANU ŁADOWANIA
+                        const loader = document.getElementById('global-loading-screen');
+                        const loaderStatus = document.getElementById('loader-status');
+                        if (loader) loader.classList.remove('hidden');
+                        if (loaderStatus) loaderStatus.innerText = "Kompilacja danych analitycznych...";
+                        
+                        // Wejście głównego panelu w tło (jeszcze ukrytego pod loaderem)
                         const dashboard = document.getElementById('dashboard-screen');
                         dashboard.classList.remove('hidden');
                         dashboard.classList.add('app-zoom-out');
@@ -225,9 +231,22 @@ async function loginBoss() {
                         
                         window.preloadEmployeesData().then(d => { if(d.employees) window.currentEmployeesList = d.employees; });
 
-                        loadRealData(); 
+                        // KLUCZOWE: Czekamy na przetworzenie tabel i wykresów
+                        loadRealData().then(() => {
+                            if (loaderStatus) loaderStatus.innerText = "Autoryzacja zakończona";
+                            
+                            // Miękkie zdjęcie loadera po załadowaniu wszystkiego
+                            setTimeout(() => {
+                                if (loader) loader.classList.add('hidden');
+                                dashboard.classList.remove('app-zoom-out');
+                            }, 600); // 600ms, żeby animacja nie urwała się zbyt brutalnie
+                        }).catch(() => {
+                            // W razie błędu awaryjnie wpuszczamy do panelu, żeby uniknąć wiecznego loadingu
+                            if (loader) loader.classList.add('hidden');
+                            dashboard.classList.remove('app-zoom-out');
+                            showNotice("Uwaga: Wystąpił problem przy ładowaniu statystyk.", "danger");
+                        });
                         
-                        setTimeout(() => { dashboard.classList.remove('app-zoom-out'); }, 600);
                     }, 400);
                 }, 600);
                 

@@ -1,4 +1,4 @@
-const APP_VERSION = "4.3.6";
+const APP_VERSION = "4.4.6";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const DISCORD_WEBHOOK_URL_SKUP = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/skup"; 
@@ -657,6 +657,133 @@ window.logout = function() {
         showNotice("Zakończono zmianę. Wylogowano.", "info");
     }, 400);
 }
+
+// ==========================================
+// SYSTEM COFANIA (UNDO) DLA KOSZYKÓW
+// ==========================================
+window.undoStateSkup = null;
+window.undoStateExport = null;
+
+window.clearCartWithUndo = function() {
+    // 1. Zapisujemy obecny stan koszyka
+    window.undoStateSkup = {
+        inventory: JSON.parse(JSON.stringify(inventory)),
+        counts: JSON.parse(JSON.stringify(counts)),
+        ssn: document.getElementById('customer-ssn-input') ? document.getElementById('customer-ssn-input').value : "",
+        price: document.getElementById('final-price-input') ? document.getElementById('final-price-input').value : ""
+    };
+    
+    // 2. Standardowo czyścimy
+    resetCartAndInventory();
+    
+    // 3. Wyświetlamy powiadomienie z opcją cofnięcia
+    showUndoNotice('skup');
+};
+
+window.clearCartExportWithUndo = function() {
+    window.undoStateExport = {
+        exportInventory: JSON.parse(JSON.stringify(exportInventory)),
+        countsExport: JSON.parse(JSON.stringify(countsExport)),
+        ssn: document.getElementById('customer-ssn-input-export') ? document.getElementById('customer-ssn-input-export').value : ""
+    };
+    
+    resetCartAndInventoryExport();
+    showUndoNotice('export');
+};
+
+window.restoreCart = function() {
+    if (!window.undoStateSkup) return;
+    
+    // 1. Przywracamy dane z pamięci
+    inventory = JSON.parse(JSON.stringify(window.undoStateSkup.inventory));
+    counts = JSON.parse(JSON.stringify(window.undoStateSkup.counts));
+    
+    const ssnInput = document.getElementById('customer-ssn-input');
+    if(ssnInput) ssnInput.value = window.undoStateSkup.ssn;
+    currentCustomerSSN = window.undoStateSkup.ssn;
+
+    const priceInput = document.getElementById('final-price-input');
+    if(priceInput) priceInput.value = window.undoStateSkup.price;
+    
+    // 2. Czyścimy pamięć i odświeżamy widok
+    window.undoStateSkup = null;
+    renderInventory();
+    calculateTotal();
+    
+    // 3. Zamykamy powiadomienie ratunkowe
+    const activeUndo = document.getElementById('undo-toast-skup');
+    if(activeUndo) activeUndo.remove();
+    
+    showNotice("Przywrócono wyczyszczony koszyk!", "success");
+};
+
+window.restoreCartExport = function() {
+    if (!window.undoStateExport) return;
+    
+    exportInventory = JSON.parse(JSON.stringify(window.undoStateExport.exportInventory));
+    countsExport = JSON.parse(JSON.stringify(window.undoStateExport.countsExport));
+    
+    const ssnInput = document.getElementById('customer-ssn-input-export');
+    if(ssnInput) ssnInput.value = window.undoStateExport.ssn;
+    currentCustomerSSNExport = window.undoStateExport.ssn;
+    
+    window.undoStateExport = null;
+    renderInventoryExport();
+    calculateTotalExport();
+    
+    const activeUndo = document.getElementById('undo-toast-export');
+    if(activeUndo) activeUndo.remove();
+    
+    showNotice("Przywrócono wyczyszczoną listę!", "success");
+};
+
+window.showUndoNotice = function(type) {
+    const container = document.getElementById('toast-container');
+    if(!container) return;
+    
+    // Usuń poprzednie powiadomienie tego typu, żeby nie spamować ekranu
+    const existing = document.getElementById(`undo-toast-${type}`);
+    if(existing) existing.remove();
+
+    const duration = 15000; // 15 sekund na reakcję
+    const t = document.createElement('div');
+    t.className = `toast warning`;
+    t.id = `undo-toast-${type}`;
+    t.style.display = 'flex';
+    t.style.flexDirection = 'column';
+    t.style.alignItems = 'flex-start';
+    t.style.gap = '10px';
+    t.style.paddingRight = '25px';
+
+    const msg = type === 'skup' ? "Koszyk skupu został wyczyszczony." : "Lista sprzedaży została wyczyszczona.";
+    const onClickFunc = type === 'skup' ? "window.restoreCart()" : "window.restoreCartExport()";
+
+    // Wstrzykujemy własny przycisk do standardowego powiadomienia
+    t.innerHTML = `
+        <div style="font-weight: 600;">${msg}</div>
+        <button onclick="${onClickFunc}" style="background: var(--card-bg); border: 1px solid var(--warning); color: var(--warning); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; width: 100%; justify-content: center;" onmouseover="this.style.background='var(--warning)'; this.style.color='#fff';" onmouseout="this.style.background='var(--card-bg)'; this.style.color='var(--warning)';">
+            <i class="fas fa-undo"></i> Przywróć koszyk
+        </button>
+    `;
+    
+    const progress = document.createElement('div');
+    progress.className = 'toast-progress';
+    progress.style.animationDuration = `${duration}ms`;
+    t.appendChild(progress);
+    
+    container.appendChild(t);
+    window.playSystemSound('warning'); // Ostrzegawczy dźwięk przy czyszczeniu
+    
+    // Automatyczne usuwanie po 15 sekundach
+    setTimeout(() => { 
+        if (document.body.contains(t)) {
+            t.style.opacity = '0'; 
+            setTimeout(() => t.remove(), 300); 
+            if (type === 'skup') window.undoStateSkup = null;
+            if (type === 'export') window.undoStateExport = null;
+        }
+    }, duration);
+};
 
 window.toggleUserMenu = function() {
     document.getElementById('user-dropdown').classList.toggle('active');
@@ -1363,7 +1490,7 @@ window.filterCategory = function(cat, btnElement) {
 
 function applyFilters() {
     const searchInputEl = document.getElementById('search-input');
-    const term = searchInputEl ? searchInputEl.value.toLowerCase() : "";
+    const term = searchInputEl ? window.removePolishDiacritics(searchInputEl.value) : "";
     const adSection = document.getElementById('ad-section');
     const itemsList = document.getElementById('items-list');
     const asortymentHeader = document.getElementById('asortyment-header-wrapper');
@@ -1378,7 +1505,7 @@ function applyFilters() {
         if(asortymentHeader) asortymentHeader.classList.remove('hidden');
         if(itemsList) {
             itemsList.querySelectorAll('.item-card').forEach(card => {
-                const name = card.getAttribute('data-name') || '';
+                const name = window.removePolishDiacritics(card.getAttribute('data-name') || '');
                 const cat = card.getAttribute('data-category') || '';
                 const match = name.includes(term) && (currentCategory === 'wszystkie' || cat === currentCategory);
                 if (match) card.classList.remove('hidden');
@@ -1963,11 +2090,11 @@ window.filterCategoryExport = function(cat, btnElement) {
 
 function applyFiltersExport() {
     const searchInputExportEl = document.getElementById('search-input-export');
-    const term = searchInputExportEl ? searchInputExportEl.value.toLowerCase() : "";
+    const term = searchInputExportEl ? window.removePolishDiacritics(searchInputExportEl.value) : "";
     const viewExport = document.getElementById('view-export');
     if(viewExport) {
         viewExport.querySelectorAll('.item-card:not(.custom-item)').forEach(card => {
-            const dataName = card.getAttribute('data-name');
+            const dataName = window.removePolishDiacritics(card.getAttribute('data-name') || '');
             if(dataName) {
                 const match = dataName.includes(term) && (currentCategoryExport === 'wszystkie' || card.getAttribute('data-category') === currentCategoryExport);
                 if(match) card.classList.remove('hidden');
@@ -3835,8 +3962,152 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('login-btn-action')?.addEventListener('click', login);
 
-    document.getElementById('search-input')?.addEventListener('input', applyFilters);
-    document.getElementById('search-input-export')?.addEventListener('input', applyFiltersExport);
+    // ==========================================
+    // FUNKCJA POMOCNICZA: USUWANIE POLSKICH ZNAKÓW
+    // ==========================================
+    window.removePolishDiacritics = function(str) {
+        if (!str) return "";
+        const diacriticsMap = {
+            'ą': 'a', 'ć': 'c', 'ę': 'e', 'ł': 'l', 'ń': 'n', 'ó': 'o', 'ś': 's', 'ź': 'z', 'ż': 'z',
+            'Ą': 'a', 'Ć': 'c', 'Ę': 'e', 'Ł': 'l', 'Ń': 'n', 'Ó': 'o', 'Ś': 's', 'Ź': 'z', 'Ż': 'z'
+        };
+        return str.replace(/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, match => diacriticsMap[match]).toLowerCase();
+    };
+
+    // ==========================================
+    // SMART INPUT - WYSZUKIWARKA I SZYBKIE DODAWANIE (SKUP)
+    // ==========================================
+    const searchInputEl = document.getElementById('search-input');
+    if (searchInputEl) {
+        searchInputEl.addEventListener('input', applyFilters);
+        searchInputEl.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const rawQuery = this.value.trim();
+                if (!rawQuery) return;
+
+                const queries = rawQuery.split(',');
+                let itemsAdded = false;
+                let hasErrors = false;
+
+                queries.forEach(query => {
+                    const cleanQuery = query.trim();
+                    if (!cleanQuery) return;
+
+                    let itemName = cleanQuery;
+                    let qty = 1;
+
+                    // SPRAWDZANIE DWÓCH WARIANTÓW:
+                    const prefixMatch = cleanQuery.match(/^[xX*]\s*(\d+)\s+(.+)$/);
+                    const suffixMatch = cleanQuery.match(/(.+?)\s*[xX*]\s*(\d+)$/);
+
+                    if (prefixMatch) {
+                        qty = parseInt(prefixMatch[1], 10);
+                        itemName = prefixMatch[2].trim();
+                    } else if (suffixMatch) {
+                        itemName = suffixMatch[1].trim();
+                        qty = parseInt(suffixMatch[2], 10);
+                    }
+
+                    const normalizedSearch = window.removePolishDiacritics(itemName);
+                    
+                    // KROK 1: Szukamy idealnego dopasowania
+                    let index = inventory.findIndex(item => window.removePolishDiacritics(item.name) === normalizedSearch);
+                    
+                    // KROK 2: Jeśli nie ma idealnego, szukamy czy nazwa ZAWIERA wpisane słowo (np. "laptop" w "komputer (laptop)")
+                    if (index === -1) {
+                        index = inventory.findIndex(item => window.removePolishDiacritics(item.name).includes(normalizedSearch));
+                    }
+
+                    if (index !== -1) {
+                        window.updateCount(index, qty); 
+                        showNotice(`Dodano do koszyka: "${inventory[index].name}" [x${qty}]`, 'success');
+                        itemsAdded = true;
+                    } else {
+                        showNotice(`Nie znaleziono asortymentu: "${itemName}"`, 'warning');
+                        hasErrors = true;
+                    }
+                });
+
+                if (itemsAdded) {
+                    this.value = ''; 
+                    applyFilters(); 
+                }
+                
+                if (hasErrors) {
+                    this.classList.add('error-shake');
+                    setTimeout(() => this.classList.remove('error-shake'), 400);
+                }
+            }
+        });
+    }
+
+    // ==========================================
+    // SMART INPUT - WYSZUKIWARKA I SZYBKIE DODAWANIE (SPRZEDAŻ)
+    // ==========================================
+    const searchInputExportEl = document.getElementById('search-input-export');
+    if (searchInputExportEl) {
+        searchInputExportEl.addEventListener('input', applyFiltersExport);
+        searchInputExportEl.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const rawQuery = this.value.trim();
+                if (!rawQuery) return;
+
+                const queries = rawQuery.split(',');
+                let itemsAdded = false;
+                let hasErrors = false;
+
+                queries.forEach(query => {
+                    const cleanQuery = query.trim();
+                    if (!cleanQuery) return;
+
+                    let itemName = cleanQuery;
+                    let qty = 1;
+
+                    const prefixMatch = cleanQuery.match(/^[xX*]\s*(\d+)\s+(.+)$/);
+                    const suffixMatch = cleanQuery.match(/(.+?)\s*[xX*]\s*(\d+)$/);
+
+                    if (prefixMatch) {
+                        qty = parseInt(prefixMatch[1], 10);
+                        itemName = prefixMatch[2].trim();
+                    } else if (suffixMatch) {
+                        itemName = suffixMatch[1].trim();
+                        qty = parseInt(suffixMatch[2], 10);
+                    }
+
+                    const normalizedSearch = window.removePolishDiacritics(itemName);
+                    
+                    // KROK 1: Szukamy idealnego dopasowania
+                    let index = exportInventory.findIndex(item => window.removePolishDiacritics(item.name) === normalizedSearch);
+                    
+                    // KROK 2: Jeśli nie ma idealnego, szukamy czy nazwa ZAWIERA wpisane słowo
+                    if (index === -1) {
+                        index = exportInventory.findIndex(item => window.removePolishDiacritics(item.name).includes(normalizedSearch));
+                    }
+
+                    if (index !== -1) {
+                        window.updateCountExport(index, qty);
+						showNotice(`Dodano do koszyka: "${exportInventory[index].name}" [x${qty}]`, 'success');
+                        itemsAdded = true;
+                    } else {
+                        showNotice(`Nie znaleziono asortymentu: "${itemName}"`, 'warning');
+                        hasErrors = true;
+                    }
+                });
+
+                if (itemsAdded) {
+                    this.value = ''; 
+                    applyFiltersExport(); 
+                }
+                
+                if (hasErrors) {
+                    this.classList.add('error-shake');
+                    setTimeout(() => this.classList.remove('error-shake'), 400);
+                }
+            }
+        });
+    }
 
     document.querySelectorAll('#skup-categories .cat-btn').forEach(btn => {
         btn.addEventListener('click', (e) => filterCategory(e.currentTarget.dataset.category, e.currentTarget));
@@ -3872,8 +4143,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const ssnInputExport = document.getElementById('customer-ssn-input-export');
     if(ssnInputExport) ssnInputExport.addEventListener('keypress', function(e) { if (e.key === 'Enter') generateQuoteExport(); });
 
-    document.getElementById('reset-btn')?.addEventListener('click', () => { resetCartAndInventory(); showNotice("Wyczyszczono koszyk!", "warning"); });
-    document.getElementById('reset-btn-export')?.addEventListener('click', () => { resetCartAndInventoryExport(); showNotice("Wyczyszczono listę!", "warning"); });
+    // PODPIĘCIE NOWYCH PRZYCISKÓW Z FUNKCJĄ COFANIA (UNDO)
+    document.getElementById('reset-btn')?.addEventListener('click', window.clearCartWithUndo);
+    document.getElementById('reset-btn-export')?.addEventListener('click', window.clearCartExportWithUndo);
 
     document.getElementById('close-cart-btn')?.addEventListener('click', toggleCart);
     document.getElementById('close-cart-btn-export')?.addEventListener('click', toggleCartExport);
