@@ -356,7 +356,7 @@ document.addEventListener('scroll', function() {
 // =========================================================
 
 // Konfiguracja Wirtualnego Magazynu
-const MAX_WAREHOUSE_SLOTS = 261;
+const MAX_WAREHOUSE_SLOTS = 3393;
 let virtualWarehouse = {};
 
 function getItemSlotSize(itemName) {
