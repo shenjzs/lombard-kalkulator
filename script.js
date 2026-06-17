@@ -171,7 +171,7 @@ const defaultInventory = [
     { name: "Głośnik", min: 145, max: 145, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_speaker.webp", slots: 4, maxStack: 1 },
     { name: "Telewizor", min: 600, max: 600, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_tv.webp", slots: 4, maxStack: 1 },
     { name: "Zegarek", min: 160, max: 160, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/hr_watch.webp", slots: 1, maxStack: 1 },
-    { name: "Zepsuty telefon", min: 95, max: 95, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/brokenphone.webp", slots: 6, maxStack: 5 },
+    { name: "Zepsuty telefon", min: 95, max: 95, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/brokenphone.webp", slots: 4, maxStack: 5 },
     { name: "Złota bransoletka", min: 200, max: 200, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/goldenbracelet.webp", slots: 2, maxStack: 1 },
     { name: "Złota moneta", min: 200, max: 200, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/goldcoin.webp", slots: 1, maxStack: 20 },
     { name: "Złota moneta z prezydentem", min: 200, max: 200, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/prescoin42.webp", slots: 1, maxStack: 5 },
@@ -243,7 +243,7 @@ const defaultExportInventory = [
     { name: "Głośnik", price: 180, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_speaker.webp", slots: 4, maxStack: 1 },
     { name: "Telewizor", price: 750, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/hr_tv.webp", slots: 4, maxStack: 1 },
     { name: "Zegarek", price: 200, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/hr_watch.webp", slots: 1, maxStack: 1 },
-    { name: "Zepsuty telefon", price: 110, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/brokenphone.webp", slots: 6, maxStack: 5 },
+    { name: "Zepsuty telefon", price: 110, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/brokenphone.webp", slots: 4, maxStack: 5 },
     { name: "Sztabka złota", price: 15000, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/sztabka_zlota.webp", slots: 1, maxStack: 1 },
     { name: "Złota moneta", price: 230, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/goldcoin.webp", slots: 1, maxStack: 20 },
     { name: "Złota moneta z prezydentem", price: 250, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/prescoin42.webp", slots: 1, maxStack: 5 },
@@ -357,7 +357,7 @@ document.addEventListener('scroll', function() {
 
 // Konfiguracja Wirtualnego Magazynu
 const MAX_WAREHOUSE_SLOTS = 261;
-let virtualWarehouse = JSON.parse(localStorage.getItem('elcartel_warehouse')) || {};
+let virtualWarehouse = {};
 
 function getItemSlotSize(itemName) {
     // Szukamy przedmiotu po nazwie w głównej bazie ekwipunku
@@ -4794,7 +4794,8 @@ window.updateWarehouse = function(items, actionType) {
         const percent = (totalUsedSlots / MAX_WAREHOUSE_SLOTS) * 100;
         const roundedPercent = Math.round(percent);
         
-        // Wywołanie powiadomienia (używamy showNotice do wbudowanych powiadomień systemu)
+        // POWIADOMIENIA TYMCZASOWO UKRYTE
+        /*
         if (roundedPercent >= 100) {
             const msg = "❌ Magazyn jest w pełni ZAPEŁNIONY!";
             if (typeof showNotice === 'function') showNotice(msg, "error");
@@ -4804,10 +4805,11 @@ window.updateWarehouse = function(items, actionType) {
             if (typeof showNotice === 'function') showNotice(msg, "warning");
             else alert(msg);
         }
+        */
     }
     // =======================================
     
-    localStorage.setItem('elcartel_warehouse', JSON.stringify(virtualWarehouse));
+    // Zapis do localStorage został usunięty, bazujemy na systemie chmurowym
     renderWarehouse();
 };
 
@@ -4892,10 +4894,15 @@ window.renderWarehouse = function() {
     }
 };
 
-window.openWarehouse = function() {
+window.openWarehouse = async function() {
     document.getElementById('user-dropdown').classList.remove('active');
-    renderWarehouse();
     document.getElementById('warehouse-modal').classList.add('active');
+    
+    // Ustawiamy ekran ładowania na wypadek, gdyby API działało wolniej
+    const grid = document.getElementById('warehouse-grid');
+    if (grid) grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--accent-color);"><i class="fas fa-circle-notch fa-spin fa-3x"></i><p style="margin-top: 15px;">Synchronizacja w toku...</p></div>';
+    
+    await window.syncWarehouseFromDatabase();
 };
 
 // Nasłuchiwanie przycisków
@@ -4906,7 +4913,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     // Wywołanie przy starcie żeby zaktualizować % na górnym pasku
-    setTimeout(renderWarehouse, 500); 
+    setTimeout(window.syncWarehouseFromDatabase, 500); 
 });
 
 // =========================================================
@@ -5016,6 +5023,64 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('tutorial-btn-skup')?.addEventListener('click', window.startTutorial);
     document.getElementById('tutorial-btn-export')?.addEventListener('click', window.startTutorial);
 });
+
+window.syncWarehouseFromDatabase = async function() {
+    try {
+        const reports = await window.preloadReportsData();
+        virtualWarehouse = {};
+
+        // Ustaw datę i godzinę, od której chcesz zacząć zliczać prawdziwy magazyn.
+        // Przedmioty skupione/sprzedane przed tą datą zostaną zignorowane.
+        const resetTimestamp = parseDate("17.06.2026 00:00").getTime(); 
+
+        reports.forEach(row => {
+            if (!row.name || !row.type || !row.date) return;
+            if (row.type === 'changelog' || row.type === 'pager_message') return;
+
+            // Filtrowanie starych logów odpowiedzialnych za przepełnienie slotów
+            const rowTime = parseDate(row.date).getTime();
+            if (rowTime < resetTimestamp) return;
+
+            let rawName = String(row.name).trim();
+
+            // FIX: Zabezpieczenie przed błędami z wyszukiwarki.
+            // Konwertuje omyłkowe "Obrazy" na "Obrazy ścienne" w locie.
+            if (rawName.toLowerCase() === "obraz") {
+                rawName = "Obraz ścienny";
+            }
+
+            // Ignorujemy wielkość liter przy szukaniu przedmiotu, aby uniknąć duplikatów
+            const foundItem = defaultInventory.find(i => i.name.toLowerCase() === rawName.toLowerCase()) 
+                           || defaultExportInventory.find(i => i.name.toLowerCase() === rawName.toLowerCase());
+
+            const finalName = foundItem ? foundItem.name : rawName;
+
+            if (!virtualWarehouse[finalName]) {
+                virtualWarehouse[finalName] = { qty: 0, image: null };
+                if (foundItem && foundItem.image) virtualWarehouse[finalName].image = foundItem.image;
+            }
+
+            const qty = parseInt(row.qty) || 1;
+
+            if (row.type === 'skup') {
+                virtualWarehouse[finalName].qty += qty;
+            } else if (row.type === 'sprzedaz') {
+                virtualWarehouse[finalName].qty -= qty;
+            }
+        });
+
+        // Usuwanie przedmiotów, których ilość spadła do 0 lub poniżej
+        for (const name in virtualWarehouse) {
+            if (virtualWarehouse[name].qty <= 0) {
+                delete virtualWarehouse[name];
+            }
+        }
+
+        renderWarehouse();
+    } catch (e) {
+        console.error("Błąd synchronizacji magazynu z bazą:", e);
+    }
+};
 
 // ==========================================
 // AUTOMATYCZNE WYLOGOWANIE I BLOKADA PRZY ZAMKNIĘCIU OKNA
