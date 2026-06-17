@@ -4014,3 +4014,45 @@ body:has(.modal.active) {
     font-family: "Font Awesome 6 Free" !important;
     font-weight: 900 !important;
 }
+
+/* Dedykowane style dla wyszukiwarki w magazynie */
+#warehouse-modal .search-container {
+    width: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.4); /* Ciemniejsze, dopasowane do modalu tło */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 2px 5px;
+    transition: 0.3s ease;
+}
+
+#warehouse-modal .search-container:focus-within {
+    border-color: var(--warning); /* Podświetlenie na kolor magazynu przy kliknięciu */
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+}
+
+#warehouse-modal #warehouse-search-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    padding: 12px 12px 12px 45px; /* Miejsce na lupę z lewej strony */
+    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+}
+
+#warehouse-modal .search-container .search-icon-left {
+    position: absolute;
+    left: 18px;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    pointer-events: none;
+    transition: 0.3s;
+}
+
+#warehouse-modal .search-container:focus-within .search-icon-left {
+    color: var(--warning);
+}

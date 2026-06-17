@@ -177,7 +177,7 @@ const defaultInventory = [
     { name: "Złota moneta z prezydentem", min: 200, max: 200, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/prescoin42.webp", slots: 1, maxStack: 5 },
     { name: "Złote kolczyki", min: 200, max: 200, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/goldenearrings.webp", slots: 2, maxStack: 1 },
     { name: "Muszle morskie", min: 120, max: 120, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_shells.webp", slots: 2, maxStack: 5 },
-    { name: "Mała szara muszla", min: 90, max: 90, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_seashell1.webp", slots: 1, maxStack: 5 },
+    { name: "Mała szara muszla", min: 90, max: 90, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_seashell1.webp", slots: 1, maxStack: 10 },
     { name: "Gwiazda morska", min: 80, max: 80, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_star.webp", slots: 1, maxStack: 5 },
     { name: "Ząb rekina", min: 90, max: 90, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_sharktooth.webp", slots: 1, maxStack: 5 },
     { name: "Stary płaszcz piracki", min: 350, max: 350, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_coat.webp", slots: 6, maxStack: 5 },
@@ -248,7 +248,7 @@ const defaultExportInventory = [
     { name: "Złota moneta", price: 230, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/goldcoin.webp", slots: 1, maxStack: 20 },
     { name: "Złota moneta z prezydentem", price: 250, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/prescoin42.webp", slots: 1, maxStack: 5 },
     { name: "Muszle morskie", price: 144, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_shells.webp", slots: 2, maxStack: 5 },
-    { name: "Mała szara muszla", price: 108, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_seashell1.webp", slots: 1, maxStack: 5 },
+    { name: "Mała szara muszla", price: 108, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_seashell1.webp", slots: 1, maxStack: 10 },
     { name: "Gwiazda morska", price: 96, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_star.webp", slots: 1, maxStack: 5 },
     { name: "Ząb rekina", price: 108, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_sharktooth.webp", slots: 1, maxStack: 5 },
     { name: "Stary płaszcz piracki", price: 420, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_coat.webp", slots: 6, maxStack: 5 },
@@ -4819,40 +4819,48 @@ window.renderWarehouse = function() {
     const maxEl = document.getElementById('wh-max');
     const progressEl = document.getElementById('wh-progress-bar');
     const percentTextEl = document.getElementById('wh-percent-text');
+    const searchInput = document.getElementById('warehouse-search-input');
     
     if (!grid || !usedEl) return;
+
+    // Pobieramy wpisaną frazę i usuwamy polskie znaki dla ułatwienia szukania
+    const searchTerm = searchInput ? window.removePolishDiacritics(searchInput.value).trim() : '';
     
-    let totalUsedSlots = 0;
+    let totalUsedSlots = 0; // Do paska pojemności (całkowita zajętość)
+    let displayedUsedSlots = 0; // Do generowania siatki i łatania dziur (tylko wyszukane)
     let slotsHtml = '';
     
-    // Obliczanie zajętego miejsca i generowanie odpowiednich wielkości na siatce
     for (const [name, data] of Object.entries(virtualWarehouse)) {
         if (data.qty <= 0) continue;
 
         const slotsPerStack = getItemSlotSize(name);
         const maxStack = getItemMaxStack(name);
+        const stacksNeeded = Math.ceil(data.qty / maxStack);
         
-        let remainingQty = data.qty;
+        // Zawsze liczymy wszystko do całkowitej pojemności magazynu
+        totalUsedSlots += stacksNeeded * slotsPerStack;
 
+        // Sprawdzamy czy przedmiot pasuje do wyszukiwarki
+        const normalizedName = window.removePolishDiacritics(name);
+        if (!normalizedName.includes(searchTerm)) continue;
+
+        // Jeśli pasuje, to go rysujemy na siatce
+        let remainingQty = data.qty;
         while (remainingQty > 0) {
             const qtyInThisStack = Math.min(remainingQty, maxStack);
-            
-            // Każdy wygenerowany stack zajmuje faktyczne sloty
-            totalUsedSlots += slotsPerStack;
+            displayedUsedSlots += slotsPerStack;
             
             const imageHtml = data.image 
                 ? `<img src="${data.image}" alt="${name}">` 
                 : `<i class="fas fa-box wh-item-icon"></i>`;
                 
-            // === WIZUALNE ROZCIĄGANIE PRZEDMIOTÓW (Span) ===
-            let spanStyle = '';
+            let spanStyle = 'aspect-ratio: 1 / 1;';
             if (slotsPerStack === 2) spanStyle = 'grid-column: span 2; aspect-ratio: 2 / 1;';
             else if (slotsPerStack === 3) spanStyle = 'grid-column: span 3; aspect-ratio: 3 / 1;';
             else if (slotsPerStack === 4) spanStyle = 'grid-column: span 2; grid-row: span 2; aspect-ratio: 1 / 1;';
             else if (slotsPerStack === 6) spanStyle = 'grid-column: span 3; grid-row: span 2; aspect-ratio: 3 / 2;';
             else if (slotsPerStack === 8) spanStyle = 'grid-column: span 4; grid-row: span 2; aspect-ratio: 2 / 1;';
             else if (slotsPerStack > 1) spanStyle = `grid-column: span ${slotsPerStack}; aspect-ratio: ${slotsPerStack} / 1;`;
-            // ===============================================
 
             slotsHtml += `
                 <div class="wh-slot" style="${spanStyle}" title="${name}\nIlość w tym slocie: ${qtyInThisStack} / ${maxStack}\nZajmuje: ${slotsPerStack} slot(ów)">
@@ -4865,23 +4873,22 @@ window.renderWarehouse = function() {
         }
     }
     
-    // Dopełnianie pustymi kafelkami (totalUsedSlots to teraz fizycznie zamalowane komórki siatki)
-    const renderLimit = Math.max(100, Math.ceil(totalUsedSlots / 10) * 10);
-    const emptySlotsNeeded = renderLimit - totalUsedSlots;
+    // Dopełnianie pustymi kafelkami (bazujemy na WYŚWIETLANYCH przedmiotach)
+    const baseLimit = Math.ceil(displayedUsedSlots / 10) * 10;
+    const emptySlotsNeeded = (baseLimit - displayedUsedSlots) + 100;
     
     for(let i = 0; i < emptySlotsNeeded; i++) {
-        slotsHtml += `<div class="wh-slot empty"></div>`;
+        slotsHtml += `<div class="wh-slot empty" style="aspect-ratio: 1 / 1;"></div>`;
     }
     
     grid.innerHTML = slotsHtml;
     
-    // Statystyki numeryczne
+    // Aktualizacja całkowitych statystyk (pokażą pełny magazyn, mimo włączonego filtra!)
     maxEl.innerText = MAX_WAREHOUSE_SLOTS;
     usedEl.innerText = totalUsedSlots;
     
     let percent = (totalUsedSlots / MAX_WAREHOUSE_SLOTS) * 100;
     if (percent > 100) percent = 100;
-    
     const roundedPercent = Math.round(percent);
     
     if (progressEl) progressEl.style.width = `${roundedPercent}%`;
@@ -4907,12 +4914,33 @@ window.openWarehouse = async function() {
 
 // Nasłuchiwanie przycisków
 document.addEventListener('DOMContentLoaded', () => {
+	// Nasłuchiwacz do wyszukiwarki w wirtualnym magazynie
+    document.getElementById('warehouse-search-input')?.addEventListener('input', window.renderWarehouse);
     document.getElementById('menu-warehouse')?.addEventListener('click', openWarehouse);
     document.getElementById('close-warehouse-btn')?.addEventListener('click', () => {
-        document.getElementById('warehouse-modal').classList.remove('active');
+    document.getElementById('warehouse-modal').classList.remove('active');
     });
     
-    // Wywołanie przy starcie żeby zaktualizować % na górnym pasku
+    // Obsługa nowego przycisku odświeżania
+    document.getElementById('refresh-warehouse-btn')?.addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        const icon = btn.querySelector('i');
+        
+        // Odpalamy animację ładowania
+        btn.disabled = true;
+        if (icon) icon.classList.add('fa-spin');
+        btn.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Ładowanie...';
+        
+        // Pobieramy dane
+        await window.syncWarehouseFromDatabase();
+        
+        // Przywracamy przycisk
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sync-alt"></i> Odśwież';
+        if (typeof showNotice === 'function') showNotice("Stan magazynu został zaktualizowany!", "success");
+    });
+
+    // Wywołanie przy starcie żeby zaktualizować % na górnym pasku przy logowaniu
     setTimeout(window.syncWarehouseFromDatabase, 500); 
 });
 
