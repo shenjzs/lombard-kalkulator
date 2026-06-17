@@ -4931,13 +4931,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (icon) icon.classList.add('fa-spin');
         btn.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Ładowanie...';
         
-        // Pobieramy dane
+        // KRYTYCZNE: Czyścimy pamięć podręczną, aby wymusić fizyczne pobranie nowych danych z Google Sheets
+        window.reportsFetchPromise = null; 
+        
+        // Pobieramy zaktualizowane dane
         await window.syncWarehouseFromDatabase();
         
         // Przywracamy przycisk
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-sync-alt"></i> Odśwież';
-        if (typeof showNotice === 'function') showNotice("Stan magazynu został zaktualizowany!", "success");
+        if (typeof showNotice === 'function') showNotice("Stan magazynu został zaktualizowany z bazy!", "success");
     });
 
     // Wywołanie przy starcie żeby zaktualizować % na górnym pasku przy logowaniu
