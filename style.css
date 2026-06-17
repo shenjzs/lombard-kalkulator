@@ -4020,3 +4020,205 @@ SMART WYSZUKIWARKA ALERTY
     20%, 60% { transform: translateX(-6px); }
     40%, 80% { transform: translateX(6px); }
 }
+
+/* ==========================================================================
+   WIRTUALNY MAGAZYN
+   ========================================================================== */
+.warehouse-capacity-wrapper {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    border-radius: 14px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+.capacity-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.capacity-value {
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: #fff;
+}
+
+.warehouse-grid-container {
+    width: 100%;
+    max-height: 50vh;
+    overflow-y: auto;
+    background: #1a1025; /* Ciemny, fioletowy odcień jak w grze */
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid #3d2b4f;
+}
+
+.warehouse-grid-container::-webkit-scrollbar { width: 6px; }
+.warehouse-grid-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+.warehouse-grid-container::-webkit-scrollbar-thumb { background: var(--warning); border-radius: 10px; }
+
+.warehouse-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 2px;
+    background: #3d2b4f;
+    border: 2px solid #3d2b4f;
+    grid-auto-flow: row dense; /* <--- TO JEST KLUCZOWE */
+}
+
+.wh-slot {
+    aspect-ratio: 1 / 1;
+    background: rgba(30, 20, 45, 0.9);
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: 0.2s;
+}
+
+.wh-slot:hover {
+    background: rgba(60, 40, 80, 0.9);
+}
+
+.wh-slot img {
+    max-width: 80%;
+    max-height: 80%;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+}
+
+.wh-slot .wh-item-icon {
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    opacity: 0.5;
+}
+
+.wh-item-qty {
+    position: absolute;
+    bottom: 2px;
+    right: 4px;
+    font-size: 0.7rem;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 1px 1px 2px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+}
+
+/* ==========================================================================
+   SAMOUCZEK (INTRO.JS CUSTOM DARK THEME)
+   ========================================================================== */
+.introjs-tooltip {
+    background-color: #1e293b !important; /* Twardy ciemny kolor tła */
+    color: #ffffff !important; /* Twardy biały kolor tekstu */
+    border: 1px solid var(--border-color) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(56, 189, 248, 0.2) !important;
+    min-width: 320px !important;
+}
+
+.introjs-tooltip-title {
+    font-weight: 800 !important;
+    color: var(--accent-color) !important;
+    font-size: 1.1rem !important;
+    margin-bottom: 5px !important;
+}
+
+.introjs-tooltiptext {
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.95rem !important;
+    line-height: 1.5 !important;
+    color: #ffffff !important; /* Twardy biały kolor tekstu */
+}
+
+/* Wymuszenie bieli także dla pogrubień i linków wewnątrz tekstu samouczka */
+.introjs-tooltiptext * {
+    color: #ffffff !important;
+}
+
+/* Przycisk zamknięcia (krzyżyk) na biało */
+.introjs-skipbutton {
+    color: #ffffff !important;
+}
+
+/* Kolorowanie strzałek dymku pod kolor ciemnego tła */
+.introjs-arrow.top { border-bottom-color: #1e293b !important; }
+.introjs-arrow.bottom { border-top-color: #1e293b !important; }
+.introjs-arrow.left { border-right-color: #1e293b !important; }
+.introjs-arrow.right { border-left-color: #1e293b !important; }
+
+.introjs-tooltipbuttons {
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding-top: 15px !important;
+}
+
+.introjs-button {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 8px !important;
+    text-shadow: none !important;
+    font-family: 'Inter', sans-serif !important;
+    transition: 0.3s ease !important;
+}
+
+.introjs-button:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+}
+
+/* Wyróżnienie przycisku Dalej / Zakończ */
+.introjs-nextbutton, .introjs-donebutton {
+    background-color: var(--accent-color) !important;
+    color: #000000 !important;
+    font-weight: 800 !important;
+    border-color: var(--accent-color) !important;
+    text-shadow: none !important;
+}
+
+.introjs-nextbutton:hover, .introjs-donebutton:hover {
+    filter: brightness(1.1) !important;
+}
+
+/* Kropeczki nawigacyjne */
+.introjs-bullets ul li a { background: rgba(255, 255, 255, 0.2) !important; }
+.introjs-bullets ul li a.active { background: var(--accent-color) !important; box-shadow: 0 0 8px rgba(56, 189, 248, 0.5) !important; }
+.introjs-helperLayer { background-color: rgba(56, 189, 248, 0.1) !important; border: 2px dashed var(--accent-color) !important; }
+
+/* Naprawa ikonek FontAwesome w przyciskach samouczka */
+.introjs-button i,
+.introjs-button .fas {
+    font-family: "Font Awesome 6 Free" !important;
+    font-weight: 900 !important;
+}
+
+/* ==========================================================================
+   PRZYCISK SAMOUCZKA OBOK KATEGORII
+   ========================================================================== */
+.tutorial-icon-btn {
+    background: transparent;
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    color: var(--text-secondary);
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.3rem;
+    transition: var(--transition-normal);
+    margin-left: 10px; /* Oddziela ikonkę od reszty przycisków */
+    opacity: 0.7;
+}
+
+.tutorial-icon-btn:hover {
+    background: rgba(56, 189, 248, 0.1);
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    transform: translateY(-2px);
+    opacity: 1;
+    box-shadow: 0 4px 15px rgba(56, 189, 248, 0.2);
+}

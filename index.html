@@ -7,11 +7,12 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Kasa fiskalna</title>
-    <link id="theme-style" rel="stylesheet" href="style.css?v=4.4.6">
+    <link id="theme-style" rel="stylesheet" href="style.css?v=4.5.6">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/introjs.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
@@ -57,6 +58,7 @@
 <div id="menu-achievements" class="dropdown-item"><i class="fas fa-trophy" style="color: var(--accent-color);"></i> Osiągnięcia</div>
 <div id="menu-my-stats" class="dropdown-item"><i class="fas fa-chart-pie"></i> Moje statystyki</div>
 <div id="menu-my-trans" class="dropdown-item"><i class="fas fa-list"></i> Moje transakcje</div>
+<div id="menu-warehouse" class="dropdown-item"><i class="fas fa-boxes" style="color: var(--warning);"></i> Magazyn</div>
 
 <div id="menu-pager" class="dropdown-item hidden" style="color: var(--accent-color);"><i class="fas fa-broadcast-tower"></i> Nadaj komunikat</div>
 
@@ -74,7 +76,6 @@
 <div id="admin-force-reload-btn" class="dropdown-item text-danger-bold hidden" onclick="window.forceGlobalReload()">
     <i class="fas fa-sync-alt"></i> Wymuś odświeżenie
 </div>
-
 <div id="menu-settings" class="dropdown-item"><i class="fas fa-cog"></i> Ustawienia</div>
 <div id="menu-logout" class="dropdown-item text-danger"><i class="fas fa-sign-out-alt"></i> Zakończ zmianę</div>
                 </div>
@@ -130,6 +131,7 @@
 					<button class="cat-btn" data-category="skarby"><i class="fas fa-skull-crossbones"></i> Skarby</button>
                     <button class="cat-btn" data-category="inne"><i class="fas fa-box-open"></i> Inne</button>
                     <button class="cat-btn btn-ad" data-category="reklama"><i class="fas fa-bullhorn"></i> Reklama</button>
+                    <button id="tutorial-btn-skup" class="tutorial-icon-btn" title="Jak obsługiwać kasę? (Samouczek)"><i class="fas fa-question-circle"></i></button>
                 </div>
 
                 <div id="ad-section" class="ad-card hidden">
@@ -242,6 +244,7 @@
                     <button class="cat-btn" data-category="dom"><i class="fas fa-home"></i> Dom</button>
 					<button class="cat-btn" data-category="skarby"><i class="fas fa-skull-crossbones"></i> Skarby</button>
                     <button class="cat-btn" data-category="inne"><i class="fas fa-box-open"></i> Inne</button>
+					<button id="tutorial-btn-export" class="tutorial-icon-btn" title="Jak obsługiwać kasę? (Samouczek)"><i class="fas fa-question-circle"></i></button>
                 </div>
 
                 <div class="asortyment-header">
@@ -789,13 +792,39 @@
 
     <div id="online-employees-widget" class="online-widget hidden"></div>
     <div id="toast-container" class="toast-container"></div>
+	<div id="warehouse-modal" class="modal">
+    <div class="modal-content settings-modal-content modal-w700">
+        <div class="settings-header">
+            <h2><i class="fas fa-boxes text-warning"></i> Wirtualny magazyn</h2>
+            <button id="close-warehouse-btn" class="settings-close-btn"><i class="fas fa-times"></i></button>
+        </div>
+        <p class="settings-desc">Aktualny stan asortymentu w firmie. Przedmioty automatycznie trafiają tutaj przy skupie i znikają przy sprzedaży.</p>
+		<p class="settings-desc">Magazyn nie jest do końca ukończony więc mogą występować błedy.</p>
+        
+        <div class="warehouse-capacity-wrapper">
+            <div class="flex-between-center mb-10">
+                <span class="capacity-label">Zajęte miejsce:</span>
+                <span class="capacity-value"><span id="wh-used">0</span> / <span id="wh-max">500</span> slotów</span>
+            </div>
+            <div class="id-progress-bg">
+                <div id="wh-progress-bar" class="id-progress-fill" style="background: linear-gradient(90deg, var(--warning), var(--danger));"></div>
+            </div>
+        </div>
+
+        <div class="warehouse-grid-container">
+            <div id="warehouse-grid" class="warehouse-grid">
+                </div>
+        </div>
+    </div>
+</div>
     
     <audio id="sound-login" src="sounds/login.mp3" preload="auto"></audio>
     <audio id="sound-logout" src="sounds/logout.mp3" preload="auto"></audio>
     <audio id="sound-cash" src="sounds/cash.mp3" preload="auto"></audio>
     <audio id="sound-error" src="sounds/error.mp3" preload="auto"></audio>
     <audio id="sound-notification" src="sounds/notification.mp3" preload="auto"></audio>
-
-    <script src="script.js?v=4.4.6"></script>
+	
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js"></script>
+    <script src="script.js?v=4.5.6"></script>
 </body>
 </html>
