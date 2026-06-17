@@ -4062,16 +4062,27 @@ SMART WYSZUKIWARKA ALERTY
 
 .warehouse-grid {
     display: grid;
-    grid-template-columns: repeat(10, 1fr);
+    /* Używamy minmax zamiast samego 1fr, wymusza to na przeglądarce idealnie równe rozłożenie resztek pikseli */
+    grid-template-columns: repeat(10, minmax(0, 1fr)); 
     gap: 2px;
     background: #3d2b4f;
     border: 2px solid #3d2b4f;
-    grid-auto-flow: row dense; /* <--- TO JEST KLUCZOWE */
+    grid-auto-flow: row dense;
+    
+    /* --- NOWE LINIJKI NAPRAWIAJĄCE KRZYWE RAMKI --- */
+    width: 100%;
+    box-sizing: border-box;
+    height: max-content; /* KRYTYCZNE: Odcina puste tło na dole, siatka kończy się równo z ostatnim kafelkiem */
+    align-content: start; /* Pakuje wszystkie kafelki ciasno do góry */
+    border-radius: 8px; /* Opcjonalne: delikatne zaokrąglenie rogów całego magazynu */
+    overflow: hidden; /* Przycina wszystko, co wychodzi poza zaokrąglone rogi */
 }
 
 .wh-slot {
     aspect-ratio: 1 / 1;
     background: rgba(30, 20, 45, 0.9);
+	width: 100%;
+    height: 100%;
     position: relative;
     display: flex;
     justify-content: center;
