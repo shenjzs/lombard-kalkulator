@@ -4067,3 +4067,24 @@ body:has(.modal.active) {
 #warehouse-modal .search-container:focus-within .search-icon-left {
     color: var(--warning);
 }
+
+/* --- ZNACZNIK BETA W MAGAZYNIE --- */
+.modal-title-flex {
+    display: flex;
+    align-items: center;
+}
+
+.modal-title-flex i {
+    margin-right: 10px;
+}
+
+.beta-badge {
+    font-size: 0.65rem;
+    background: var(--danger);
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 6px;
+    margin-left: 12px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}

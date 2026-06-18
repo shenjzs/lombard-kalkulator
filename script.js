@@ -176,38 +176,38 @@ const defaultInventory = [
     { name: "Złota moneta", min: 200, max: 200, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/goldcoin.webp", slots: 1, maxStack: 20 },
     { name: "Złota moneta z prezydentem", min: 200, max: 200, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/prescoin42.webp", slots: 1, maxStack: 5 },
     { name: "Złote kolczyki", min: 200, max: 200, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/goldenearrings.webp", slots: 2, maxStack: 1 },
-    { name: "Muszle morskie", min: 120, max: 120, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_shells.webp", slots: 2, maxStack: 5 },
-    { name: "Mała szara muszla", min: 90, max: 90, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_seashell1.webp", slots: 1, maxStack: 10 },
-    { name: "Gwiazda morska", min: 80, max: 80, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_star.webp", slots: 1, maxStack: 5 },
-    { name: "Ząb rekina", min: 90, max: 90, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_sharktooth.webp", slots: 1, maxStack: 5 },
-    { name: "Stary płaszcz piracki", min: 350, max: 350, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_coat.webp", slots: 6, maxStack: 5 },
-    { name: "Różowa perła", min: 550, max: 550, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_pinkpearl.webp", slots: 1, maxStack: 5 },
-    { name: "Zniszczona flaga piratów", min: 300, max: 300, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_flag.webp", slots: 2, maxStack: 5 },
-    { name: "Kapelusz piracki", min: 350, max: 350, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_hat.webp", slots: 6, maxStack: 5 },
-    { name: "Szkatuła ze złotymi łańcuchami", min: 750, max: 750, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_treasure.webp", slots: 6, maxStack: 5 },
-    { name: "Zabytkowa szabla", min: 600, max: 600, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_saber.webp", slots: 2, maxStack: 5 },
-    { name: "Legendarna fajka", min: 800, max: 800, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_pipe.webp", slots: 2, maxStack: 5 },
+    { name: "Muszle morskie", min: 90, max: 90, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_shells.webp", slots: 2, maxStack: 5 },
+    { name: "Mała szara muszla", min: 70, max: 70, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_seashell1.webp", slots: 1, maxStack: 10 },
+    { name: "Gwiazda morska", min: 60, max: 60, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_star.webp", slots: 1, maxStack: 5 },
+    { name: "Ząb rekina", min: 80, max: 80, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_sharktooth.webp", slots: 1, maxStack: 5 },
+    { name: "Stary płaszcz piracki", min: 200, max: 200, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_coat.webp", slots: 6, maxStack: 5 },
+    { name: "Różowa perła", min: 350, max: 350, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_pinkpearl.webp", slots: 1, maxStack: 5 },
+    { name: "Zniszczona flaga piratów", min: 200, max: 200, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_flag.webp", slots: 2, maxStack: 5 },
+    { name: "Kapelusz piracki", min: 200, max: 200, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_hat.webp", slots: 6, maxStack: 5 },
+    { name: "Szkatuła ze złotymi łańcuchami", min: 400, max: 400, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_treasure.webp", slots: 6, maxStack: 5 },
+    { name: "Zabytkowa szabla", min: 350, max: 350, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_saber.webp", slots: 2, maxStack: 5 },
+    { name: "Legendarna fajka", min: 400, max: 400, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_pipe.webp", slots: 2, maxStack: 5 },
     { name: "Zdobiona zapalniczka", min: 0, max: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/metallighter.webp", dynamicPrice: true, slots: 2, maxStack: 1 },
     { name: "Złoty zegarek", min: 0, max: 0, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/zloty_zegarek.webp", dynamicPrice: true, slots: 1, maxStack: 5 },
     { name: "Dziwny telefon", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/trapphone.webp", dynamicPrice: true, slots: 2, maxStack: 5 },
-    { name: "Dziwna paczka", min: 0, max: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/podejrzana_paczka.webp", dynamicPrice: true, slots: 4, maxStack: 5 },
+    { name: "Dziwna paczka", min: 0, max: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/podejrzana_paczka.webp", dynamicPrice: true, slots: 6, maxStack: 20 },
     { name: "Dziwny pendrive", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/pendrive.webp", dynamicPrice: true, slots: 1, maxStack: 5 },
     { name: "Zielony pendrive", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/pendrive_zielony.webp", dynamicPrice: true, slots: 1, maxStack: 5 },
     { name: "Prymitywny wkład do kamizelki", min: 0, max: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/armor_25.webp", dynamicPrice: true, slots: 4, maxStack: 20 },
-    { name: "Wytrych", min: 0, max: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/lockpick.webp", dynamicPrice: true, slots: 2, maxStack: 5 },
+    { name: "Wytrych", min: 0, max: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/lockpick.webp", dynamicPrice: true, slots: 2, maxStack: 2 },
     { name: "Tablet G6420", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/tablet_green.webp", dynamicPrice: true, slots: 1, maxStack: 1 },
-    { name: "Sprężyna", min: 0, max: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/spring.webp", dynamicPrice: true, slots: 4, maxStack: 10 },
-    { name: "Śmieci elektroniczne", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/electrotrash.webp", dynamicPrice: true, slots: 2, maxStack: 5 },
+    { name: "Sprężyna", min: 0, max: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/spring.webp", dynamicPrice: true, slots: 4, maxStack: 5 },
+    { name: "Śmieci elektroniczne", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/electrotrash.webp", dynamicPrice: true, slots: 4, maxStack: 3 },
     { name: "Moduł do telefonu", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/modul_telefoniczny.webp", dynamicPrice: true, slots: 2, maxStack: 5 },
     { name: "Elementy do laptopa", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/elementy_do_laptopa.webp", dynamicPrice: true, slots: 4, maxStack: 5 },
-    { name: "Krótkofalówka", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/radio.webp", dynamicPrice: true, slots: 2, maxStack: 5 },
+    { name: "Krótkofalówka", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/radio.webp", dynamicPrice: true, slots: 2, maxStack: 1 },
     { name: "Legitymacja Bobcat - Niko Bellic", min: 0, max: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/bobcat_entrance.webp", dynamicPrice: true, slots: 1, maxStack: 5 },
     { name: "Dekoder do alarmu", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/dekoder_house.webp", dynamicPrice: true, slots: 2, maxStack: 5 },
     { name: "Dekoder do pojazdu", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/decoder_car.webp", dynamicPrice: true, slots: 2, maxStack: 5 },
     { name: "Radio samochodowe", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/car_radio.webp", dynamicPrice: true, slots: 2, maxStack: 5 },
-    { name: "Antena", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/antena.webp", dynamicPrice: true, slots: 1, maxStack: 1 },
+    { name: "Antena", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/antena.webp", dynamicPrice: true, slots: 1, maxStack: 5 },
     { name: "Zardzewiała blacha", min: 0, max: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/zardzewialy_metal.webp", dynamicPrice: true, slots: 1, maxStack: 5 },
-    { name: "Cygaro Havana", min: 0, max: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/cygaro_havana.webp", dynamicPrice: true, slots: 1, maxStack: 1 },
+    { name: "Cygaro Havana", min: 0, max: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/cygaro_havana.webp", dynamicPrice: true, slots: 1, maxStack: 5 },
     { name: "Butelka rumu pirackiego", min: 0, max: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/rum_piracki.webp", dynamicPrice: true, slots: 2, maxStack: 1 }
 ];
 
@@ -247,38 +247,38 @@ const defaultExportInventory = [
     { name: "Sztabka złota", price: 15000, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/sztabka_zlota.webp", slots: 1, maxStack: 1 },
     { name: "Złota moneta", price: 230, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/goldcoin.webp", slots: 1, maxStack: 20 },
     { name: "Złota moneta z prezydentem", price: 250, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/prescoin42.webp", slots: 1, maxStack: 5 },
-    { name: "Muszle morskie", price: 144, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_shells.webp", slots: 2, maxStack: 5 },
-    { name: "Mała szara muszla", price: 108, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_seashell1.webp", slots: 1, maxStack: 10 },
-    { name: "Gwiazda morska", price: 96, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_star.webp", slots: 1, maxStack: 5 },
-    { name: "Ząb rekina", price: 108, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_sharktooth.webp", slots: 1, maxStack: 5 },
-    { name: "Stary płaszcz piracki", price: 420, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_coat.webp", slots: 6, maxStack: 5 },
-    { name: "Różowa perła", price: 660, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_pinkpearl.webp", slots: 1, maxStack: 5 },
-    { name: "Zniszczona flaga piratów", price: 360, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_flag.webp", slots: 2, maxStack: 5 },
-    { name: "Kapelusz piracki", price: 420, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_hat.webp", slots: 6, maxStack: 5 },
-    { name: "Szkatuła ze złotymi łańcuchami", price: 900, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_treasure.webp", slots: 6, maxStack: 5 },
-    { name: "Zabytkowa szabla", price: 720, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_saber.webp", slots: 2, maxStack: 5 },
-    { name: "Legendarna fajka", price: 960, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_pipe.webp", slots: 2, maxStack: 5 },
+    { name: "Muszle morskie", price: 108, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_shells.webp", slots: 2, maxStack: 5 },
+    { name: "Mała szara muszla", price: 84, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_seashell1.webp", slots: 1, maxStack: 10 },
+    { name: "Gwiazda morska", price: 72, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_star.webp", slots: 1, maxStack: 5 },
+    { name: "Ząb rekina", price: 96, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_sharktooth.webp", slots: 1, maxStack: 5 },
+    { name: "Stary płaszcz piracki", price: 240, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_coat.webp", slots: 6, maxStack: 5 },
+    { name: "Różowa perła", price: 420, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_pinkpearl.webp", slots: 1, maxStack: 5 },
+    { name: "Zniszczona flaga piratów", price: 240, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_flag.webp", slots: 2, maxStack: 5 },
+    { name: "Kapelusz piracki", price: 240, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_hat.webp", slots: 6, maxStack: 5 },
+    { name: "Szkatuła ze złotymi łańcuchami", price: 480, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_treasure.webp", slots: 6, maxStack: 5 },
+    { name: "Zabytkowa szabla", price: 420, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_saber.webp", slots: 2, maxStack: 5 },
+    { name: "Legendarna fajka", price: 480, category: "skarby", image: "https://img.realmgaming.eu/onbeat/items/pirates_pipe.webp", slots: 2, maxStack: 5 },
     { name: "Zdobiona zapalniczka", price: 22, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/metallighter.webp", slots: 2, maxStack: 1 },
     { name: "Złoty zegarek", price: 0, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/zloty_zegarek.webp", dynamicPrice: true, slots: 1, maxStack: 5 },
     { name: "Dziwny telefon", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/trapphone.webp", dynamicPrice: true, slots: 2, maxStack: 5 },
-    { name: "Dziwna paczka", price: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/podejrzana_paczka.webp", dynamicPrice: true, slots: 4, maxStack: 5 },
+    { name: "Dziwna paczka", price: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/podejrzana_paczka.webp", dynamicPrice: true, slots: 6, maxStack: 20 },
     { name: "Dziwny pendrive", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/pendrive.webp", dynamicPrice: true, slots: 1, maxStack: 5 },
     { name: "Zielony pendrive", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/pendrive_zielony.webp", dynamicPrice: true, slots: 1, maxStack: 5 },
     { name: "Prymitywny wkład do kamizelki", price: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/armor_25.webp", dynamicPrice: true, slots: 4, maxStack: 20 },
-    { name: "Wytrych", price: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/lockpick.webp", dynamicPrice: true, slots: 2, maxStack: 5 },
+    { name: "Wytrych", price: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/lockpick.webp", dynamicPrice: true, slots: 2, maxStack: 2 },
     { name: "Tablet G6420", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/tablet_green.webp", dynamicPrice: true, slots: 1, maxStack: 1 },
-    { name: "Sprężyna", price: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/spring.webp", dynamicPrice: true, slots: 4, maxStack: 10 },
-    { name: "Śmieci elektroniczne", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/electrotrash.webp", dynamicPrice: true, slots: 2, maxStack: 5 },
+    { name: "Sprężyna", price: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/spring.webp", dynamicPrice: true, slots: 4, maxStack: 5 },
+    { name: "Śmieci elektroniczne", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/electrotrash.webp", dynamicPrice: true, slots: 4, maxStack: 3 },
     { name: "Moduł do telefonu", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/modul_telefoniczny.webp", dynamicPrice: true, slots: 2, maxStack: 5 },
     { name: "Elementy do laptopa", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/elementy_do_laptopa.webp", dynamicPrice: true, slots: 4, maxStack: 5 },
-    { name: "Krótkofalówka", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/radio.webp", dynamicPrice: true, slots: 2, maxStack: 5 },
+    { name: "Krótkofalówka", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/radio.webp", dynamicPrice: true, slots: 2, maxStack: 1 },
     { name: "Legitymacja Bobcat - Niko Bellic", price: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/bobcat_entrance.webp", dynamicPrice: true, slots: 1, maxStack: 5 },
     { name: "Dekoder do alarmu", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/dekoder_house.webp", dynamicPrice: true, slots: 2, maxStack: 5 },
     { name: "Dekoder do pojazdu", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/decoder_car.webp", dynamicPrice: true, slots: 2, maxStack: 5 },
     { name: "Radio samochodowe", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/car_radio.webp", dynamicPrice: true, slots: 2, maxStack: 5 },
-    { name: "Antena", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/antena.webp", dynamicPrice: true, slots: 1, maxStack: 1 },
+    { name: "Antena", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/antena.webp", dynamicPrice: true, slots: 1, maxStack: 5 },
     { name: "Zardzewiała blacha", price: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/zardzewialy_metal.webp", dynamicPrice: true, slots: 1, maxStack: 5 },
-    { name: "Cygaro Havana", price: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/cygaro_havana.webp", dynamicPrice: true, slots: 1, maxStack: 1 },
+    { name: "Cygaro Havana", price: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/cygaro_havana.webp", dynamicPrice: true, slots: 1, maxStack: 5 },
     { name: "Butelka rumu pirackiego", price: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/rum_piracki.webp", dynamicPrice: true, slots: 2, maxStack: 1 }
 ];
 
@@ -4794,10 +4794,8 @@ window.updateWarehouse = function(items, actionType) {
         const percent = (totalUsedSlots / MAX_WAREHOUSE_SLOTS) * 100;
         const roundedPercent = Math.round(percent);
         
-        // POWIADOMIENIA TYMCZASOWO UKRYTE
-        /*
         if (roundedPercent >= 100) {
-            const msg = "❌ Magazyn jest w pełni ZAPEŁNIONY!";
+            const msg = "❌ Magazyn jest w pełni zapełniony!";
             if (typeof showNotice === 'function') showNotice(msg, "error");
             else alert(msg);
         } else if (roundedPercent >= 90) {
@@ -4805,7 +4803,7 @@ window.updateWarehouse = function(items, actionType) {
             if (typeof showNotice === 'function') showNotice(msg, "warning");
             else alert(msg);
         }
-        */
+        
     }
     // =======================================
     
@@ -4905,9 +4903,12 @@ window.openWarehouse = async function() {
     document.getElementById('user-dropdown').classList.remove('active');
     document.getElementById('warehouse-modal').classList.add('active');
     
-    // Ustawiamy ekran ładowania na wypadek, gdyby API działało wolniej
+    // Ustawiamy ekran ładowania
     const grid = document.getElementById('warehouse-grid');
-    if (grid) grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--accent-color);"><i class="fas fa-circle-notch fa-spin fa-3x"></i><p style="margin-top: 15px;">Synchronizacja w toku...</p></div>';
+    if (grid) grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--accent-color);"><i class="fas fa-circle-notch fa-spin fa-3x"></i><p style="margin-top: 15px;">Synchronizacja z bazą danych...</p></div>';
+    
+    // KRYTYCZNE: Zawsze wymuszamy świeże dane z bazy przy otwieraniu okna magazynu!
+    window.reportsFetchPromise = null;
     
     await window.syncWarehouseFromDatabase();
 };
