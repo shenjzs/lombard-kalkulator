@@ -42,6 +42,7 @@ window.addSystemLog = async function(type, description) {
             method: 'POST',
             body: JSON.stringify({
                 action: 'save_log',
+				date: getFormattedDateTime(),
                 employee: who,
                 type: type,
                 description: description
@@ -5149,9 +5150,10 @@ window.addEventListener('beforeunload', function(e) {
             keepalive: true,
             body: JSON.stringify({
                 action: 'save_log',
+				date: getFormattedDateTime(),
                 employee: currentEmployeeName,
                 type: 'WYLOGOWANIE',
-                description: 'Zamknięto kartę lub okno przeglądarki (Automatyczne wylogowanie).'
+                description: 'Zamknięto kartę lub okno przeglądarki (automatyczne wylogowanie).'
             })
         });
     }

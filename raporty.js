@@ -96,11 +96,19 @@ window.preloadLogsData = function() {
 // ==========================================
 window.addSystemLog = async function(type, description) {
     const who = currentEmployeeName || "Nieznany szef";
+    
+    // Generujemy polski czas z przeglądarki
+    const now = new Date();
+    const pad = n => n < 10 ? '0' + n : n;
+    const localDate = `${pad(now.getDate())}.${pad(now.getMonth()+1)}.${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    
     try {
         await fetch(REPORTS_API_URL, {
             method: 'POST',
+            headers: { 'Content-Type': 'application/json' }, // <--- DODANY NAGŁÓWEK
             body: JSON.stringify({
                 action: 'save_log',
+                date: localDate, // <--- LOKALNY CZAS ZAMIAST CZASU SERWERA
                 employee: who,
                 type: type,
                 description: description
@@ -2033,7 +2041,7 @@ async function loadBonusesToTable() {
         window.globalBonuses = data.bonuses || [];
 
         if (window.globalBonuses.length > 0) {
-            const sortedBonuses = window.globalBonuses.sort((a,b) => new Date(b.date) - new Date(a.date));
+            const sortedBonuses = window.globalBonuses.sort((a,b) => parseDate(b.date).getTime() - parseDate(a.date).getTime());
             tbody.innerHTML = sortedBonuses.map(b => {
                 let displayDate = b.date;
                 if (typeof displayDate === 'string' && displayDate.includes('T')) {
@@ -2193,7 +2201,7 @@ window.renderSystemLogs = function() {
         `;
     }
     
-    logsArray.sort((a, b) => new Date(b.date) - new Date(a.date));
+    logsArray.sort((a, b) => parseDate(b.date).getTime() - parseDate(a.date).getTime());
 
     // Filtrowanie po wpisanym tekście
     if (term) {
@@ -2232,11 +2240,13 @@ window.renderSystemLogs = function() {
             displayDate = new Date(displayDate).toLocaleString('pl-PL');
         }
         
+        let safeType = String(l.type || "").toUpperCase();
         let typeColor = "var(--text-secondary)";
-        if(l.type.includes("USUNIĘTO") || l.type.includes("KARA") || l.type.includes("BŁĄD") || l.type.includes("BŁĘDNY") || l.type.includes("WYLOGOWANIE")) typeColor = "var(--danger)";
-        else if(l.type.includes("NOWY") || l.type.includes("POCHWAŁA") || l.type.includes("ZALOGOWANO") || l.type.includes("LOGOWANIE")) typeColor = "var(--success)";
-        else if(l.type.includes("EDYCJA") || l.type.includes("ZMIANA") || l.type.includes("UPRAWNIENIA") || l.type.includes("USTAWIENIA")) typeColor = "var(--warning)";
-        else if(l.type.includes("PREMIA") || l.type.includes("KOREKTA")) typeColor = "var(--warning)";
+        
+        if(safeType.includes("USUNIĘTO") || safeType.includes("KARA") || safeType.includes("BŁĄD") || safeType.includes("BŁĘDNY") || safeType.includes("WYLOGOWANIE")) typeColor = "var(--danger)";
+        else if(safeType.includes("NOWY") || safeType.includes("POCHWAŁA") || safeType.includes("ZALOGOWANO") || safeType.includes("LOGOWANIE")) typeColor = "var(--success)";
+        else if(safeType.includes("EDYCJA") || safeType.includes("ZMIANA") || safeType.includes("UPRAWNIENIA") || safeType.includes("USTAWIENIA")) typeColor = "var(--warning)";
+        else if(safeType.includes("PREMIA") || safeType.includes("KOREKTA")) typeColor = "var(--warning)";
         else typeColor = "var(--accent-color)";
 
         return `
@@ -2244,7 +2254,7 @@ window.renderSystemLogs = function() {
                 <td style="font-size: 0.85rem; color: var(--text-secondary);">${displayDate}</td>
                 <td><strong style="color: white;"><i class="fas fa-user-shield"></i> ${l.employee}</strong></td>
                 <td style="text-align: center;">
-                    <span style="background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; color: ${typeColor}; border: 1px solid ${typeColor}40; text-transform: uppercase; white-space: nowrap; display: inline-block;">${l.type}</span>
+                    <span style="background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; color: ${typeColor}; border: 1px solid ${typeColor}40; text-transform: uppercase; white-space: nowrap; display: inline-block;">${safeType}</span>
                 </td>
                 <td style="color: var(--text-primary); font-size: 0.9rem; white-space: normal !important; text-align: left !important; line-height: 1.5; min-width: 300px;">
                     ${l.description}

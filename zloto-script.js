@@ -29,8 +29,10 @@ window.addSystemLog = async function(type, description) {
     try {
         fetch(REPORTS_API_URL, {
             method: 'POST',
+            headers: { 'Content-Type': 'application/json' }, // <--- DODANY NAGŁÓWEK
             body: JSON.stringify({
                 action: 'save_log',
+                date: getFormattedDateTime(), // <--- DODANY LOKALNY CZAS
                 employee: who,
                 type: type,
                 description: description
@@ -803,9 +805,11 @@ window.addEventListener('beforeunload', function() {
     if (currentEmployeeName) {
         fetch(REPORTS_API_URL, {
             method: 'POST',
+            headers: { 'Content-Type': 'application/json' }, // <--- DODANY NAGŁÓWEK
             keepalive: true,
             body: JSON.stringify({
                 action: 'save_log',
+                date: getFormattedDateTime(), // <--- DODANY LOKALNY CZAS
                 employee: currentEmployeeName,
                 type: 'WYLOGOWANIE',
                 description: 'Zamknięto kartę lub okno panelu odlewni (automatyczne wylogowanie).'
