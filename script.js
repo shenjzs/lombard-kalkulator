@@ -1,4 +1,4 @@
-const APP_VERSION = "4.5.6";
+const APP_VERSION = "4.5.7";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const DISCORD_WEBHOOK_URL_SKUP = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/skup"; 
@@ -1764,12 +1764,18 @@ window.sendToDiscord = async function() {
             
             const res = await fetch(DISCORD_WEBHOOK_URL_SKUP, { method: "POST", body: formData });
             if (res.ok) {
-                fetch(REPORTS_API_URL, { method: "POST", body: JSON.stringify(logPayload) }).catch(e => console.error(e));
+                // ZAPIS DO BAZY PRZEZ WORKERA (TŁUMACZA)
+                fetch(REPORTS_API_URL, { 
+                    method: "POST", 
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(logPayload) 
+                }).catch(e => console.error("Błąd zapisu:", e));
+
                 if (!isStatAddedForCurrentReceipt) {
                     addDailyStat(currentEmployeeName, finalPriceNumeric);
                     isStatAddedForCurrentReceipt = true;
                 }
-				// Wstaw to przed showNotice("Wysłano na Discord...");
+                // Wstaw to przed showNotice("Wysłano na Discord...");
                 window.updateWarehouse(itemsToLog, 'add');
                 showNotice("Wysłano na Discord i zaktualizowano obrót!", "success");
 
@@ -2316,10 +2322,16 @@ window.sendToDiscordExport = async function() {
 
             const res = await fetch(DISCORD_WEBHOOK_URL_EXPORT, { method: "POST", body: formData });
             if (res.ok) {
-                fetch(REPORTS_API_URL, { method: "POST", body: JSON.stringify(logPayload) }).catch(e => console.error(e));
+                // ZAPIS DO BAZY PRZEZ WORKERA (TŁUMACZA)
+                fetch(REPORTS_API_URL, { 
+                    method: "POST", 
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(logPayload) 
+                }).catch(e => console.error("Błąd zapisu:", e));
+
                 // Wstaw to przed showNotice("Wysłano raport na Discord!");
                 window.updateWarehouse(itemsToLog, 'remove');
-				showNotice("Wysłano raport na Discord!", "success");
+                showNotice("Wysłano raport na Discord!", "success");
 
                 window.addSystemLog('SPRZEDAŻ', `Zrealizowano sprzedaż [${lastGeneratedReportID}] na kwotę: ${currentTotalExport}$`);
 
@@ -3796,15 +3808,17 @@ setTimeout(checkUpdates, 3000);
 
 window.updateOnlineEmployees = async function() {
     try {
-        window.reportsFetchPromise = null;
-        const data = await window.preloadReportsData();
+        // ZMIANA: Nie czyścimy cache (reportsFetchPromise = null), żeby nie niszczyć płynności strony.
+        // Zamiast tego odpytujemy nowy lekki endpoint tylko o daty i nicki z dzisiaj.
+        const res = await fetch(`${REPORTS_API_URL}?action=get_online_activity&t=${Date.now()}`);
+        const data = await res.json();
         
         const now = new Date().getTime();
         const startOfToday = new Date().setHours(0, 0, 0, 0); 
         
         const empStats = new Map();
-
         const userTransactions = {};
+
         data.forEach(row => {
             if (row.employee && row.date && row.employee !== "System") {
                 const cleanName = String(row.employee).replace(/\s*\([^)]+\)/g, '').trim();
@@ -4487,16 +4501,13 @@ async function checkPagerMessages() {
     if (!currentEmployeeName) return; 
 
     try {
-        const res = await fetch(`${REPORTS_API_URL}?action=get_reports&t=${Date.now()}`);
-        const data = await res.json();
-        
-        const messages = data.filter(row => row.type === "pager_message");
+        // ZMIANA: Pobieramy tylko 20 ostatnich wiadomości z pagera, a nie całą historię kasy!
+        const res = await fetch(`${REPORTS_API_URL}?action=get_pager&t=${Date.now()}`);
+        const messages = await res.json();
         
         // --- INTERCEPTOR GLOBALNEGO ODŚWIEŻENIA (Kuloodporny na F5) ---
-        // Szukamy wszystkich komend odświeżenia
         const reloadMessages = messages.filter(m => String(m.name).startsWith("sys_reload"));
         if (reloadMessages.length > 0) {
-            // Znajdujemy najnowszą z nich
             const latestReload = reloadMessages.reduce((latest, current) => {
                 return parseInt(current.report_id) > parseInt(latest.report_id) ? current : latest;
             });
@@ -4505,7 +4516,6 @@ async function checkPagerMessages() {
             const reloadId = parts[1];
             const reason = parts[2] || "Brak podanego powodu";
             
-            // Jeśli gracz jeszcze nie kliknął w PRZYCISK dla tego konkretnego ID - pokazujemy!
             if (localStorage.getItem('last_sys_reload') !== reloadId) {
                 showForceReloadPrompt(reason, APP_VERSION, reloadId);
             }
@@ -4531,7 +4541,6 @@ async function checkPagerMessages() {
                 if (isGlobal || (isForMe && !isFromMe)) {
                     let msgText = m.name;
 
-                    // Pomijamy sys_reload w normalnych powiadomieniach, bo obsłużyliśmy go wyżej
                     if (msgText.startsWith("sys_reload")) {
                         if (msgTime > newestTimestamp) newestTimestamp = msgTime;
                         return; 
