@@ -1,8 +1,9 @@
-const APP_VERSION = "4.5.7";
+const APP_VERSION = "4.6.7";
 
 // ==========================================
 // KONFIGURACJA
 // ==========================================
+const ALLOWED_DISCORD_ROLES = ["1518034726512885851"];
 const DISCORD_WEBHOOK_URL = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/zloto"; 
 const PIN_API_URL = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/pin";
 const REPORTS_API_URL = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/reports";
@@ -18,6 +19,7 @@ const goldInventory = [
 const PRICE_PER_GOLD_BAR = 15000; 
 
 let currentEmployeeName = "";
+let currentEmployeeAvatar = ""; // Dodane na wzór głównego skryptu
 let currentCounts = {};
 let isBoss = false;
 
@@ -29,10 +31,10 @@ window.addSystemLog = async function(type, description) {
     try {
         fetch(REPORTS_API_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }, // <--- DODANY NAGŁÓWEK
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 action: 'save_log',
-                date: getFormattedDateTime(), // <--- DODANY LOKALNY CZAS
+                date: typeof getFormattedDateTime === 'function' ? getFormattedDateTime() : new Date().toLocaleString('pl-PL'),
                 employee: who,
                 type: type,
                 description: description
@@ -78,18 +80,6 @@ function getFormattedDate() {
     return `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const loginPinInput = document.getElementById('employee-login-pin');
-    if (loginPinInput) {
-        loginPinInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') login();
-        });
-    }
-    
-    // --- INICJALIZACJA ZAPISANEGO PROFILU NA STARCIE ---
-    if (typeof window.checkSavedBossProfile === 'function') window.checkSavedBossProfile();
-});
-
 // Nasłuchiwanie scrolla, żeby zwinąć pasek w ikonki
 document.addEventListener('scroll', function() {
     const navbar = document.querySelector('.navbar');
@@ -100,168 +90,272 @@ document.addEventListener('scroll', function() {
     }
 });
 
-async function login() {
-    const pin = document.getElementById('employee-login-pin').value;
-    const btn = document.getElementById('login-btn');
-    if (!pin) return showNotice("Wprowadź PIN!", "danger");
-
+// ==========================================
+// SYSTEM LOGOWANIA DISCORD OAUTH2 + KARTOTEKA IC + LIVE ROLE CHECK
+// ==========================================
+window.login = function() {
+    const btn = document.getElementById('login-btn-action') || document.getElementById('login-btn');
+    const originalBtnContent = btn.innerHTML;
+    
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Weryfikacja...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Oczekiwanie na Discord...';
 
-    try {
-        const response = await fetch(`${PIN_API_URL}?pin=${pin}`);
-        const data = await response.json();
+    const authUrl = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/auth/login";
+    const width = 500;
+    const height = 750;
+    const left = (screen.width / 2) - (width / 2);
+    const top = (screen.height / 2) - (height / 2);
 
-        if (data.isValid) {
-            if (data.role && data.role.toLowerCase() === 'szef') {
-                // --- SYSTEM ZAPAMIĘTYWANIA PROFILU ---
-                const rememberMeCheckbox = document.getElementById('remember-me-checkbox');
-                if (rememberMeCheckbox && rememberMeCheckbox.checked) {
-                    let savedProfiles = JSON.parse(localStorage.getItem('elcartel_gold_profiles') || '[]');
-                    savedProfiles = savedProfiles.filter(p => p.name !== data.name);
-                    savedProfiles.push({ 
-                        name: data.name, 
-                        pin: pin, 
-                        photo: data.photo || '',
-                        ssn: data.ssn || '---',
-                        dateZatrudnienia: data.dateZatrudnienia || 'Brak danych',
-                        rank: data.rank || 'Pracownik' // Pobieranie faktycznego stopnia z bazy
-                    });
-                    localStorage.setItem('elcartel_gold_profiles', JSON.stringify(savedProfiles));
-                    if (typeof renderSavedProfiles === 'function') renderSavedProfiles();
-                }
-                // ------------------------------------
+    const popup = window.open(authUrl, 'DiscordLogin', `width=${width},height=${height},top=${top},left=${left}`);
 
-                // --- EFEKT FACE ID (otwieranie kłódki) ---
-                const mainIcon = document.querySelector('.login-icon');
-                if (mainIcon) {
-                    mainIcon.classList.remove('fa-lock');
-                    mainIcon.classList.add('fa-unlock', 'icon-unlock-anim');
-                }
-
-                // Opóźnienie na zjazd ekranu, by było widać animację
-                setTimeout(() => {
-                    currentEmployeeName = data.name;
-                    isBoss = true;
-                    
-                    document.getElementById('logged-user-name').innerText = currentEmployeeName.toUpperCase();
-                    document.getElementById('login-screen').classList.remove('active');
-                    document.getElementById('main-app').style.display = 'block';
-                    document.getElementById('user-profile').style.display = 'block';
-                    document.getElementById('header-date').innerText = getFormattedDate();
-                    
-                    // DODANIE LOGU
-                    window.addSystemLog('LOGOWANIE', `Zalogowano do panelu odlewni.`);
-
-                    renderGoldItems();
-                    loadWarehouseData();
-
-                    document.getElementById('boss-stats-section').style.display = 'block';
-                    document.getElementById('admin-tools-trigger').style.display = 'block';
-                    loadGoldStats(); 
-                    
-                    showNotice(`Witaj w odlewni ${data.name}!`, "success");
-                    btn.disabled = false;
-                    btn.innerHTML = 'Zaloguj <i class="fas fa-lock"></i>';
-                }, 600);
-            } else {
-                showNotice("Nie jesteś uprawniony, aby się zalogować.", "danger");
-                document.getElementById('employee-login-pin').value = "";
+    const checkPopup = setInterval(() => {
+        if (!popup || popup.closed || popup.closed === undefined) {
+            clearInterval(checkPopup);
+            if (btn.disabled) {
                 btn.disabled = false;
-                btn.innerHTML = 'Zaloguj <i class="fas fa-lock"></i>';
-            }
-        } else {
-            showNotice("Nieprawidłowy PIN!", "danger");
-            window.addSystemLog('BŁĘDNY PIN', `Niewłaściwa próba autoryzacji do panelu odlewni (Użyto niepoprawnego kodu PIN w zloto.html).`);
-            btn.disabled = false;
-            btn.innerHTML = 'Zaloguj <i class="fas fa-lock"></i>';
-
-            // --- EFEKT BŁĘDNEGO PINU (trzęsienie) ---
-            const mainIcon = document.querySelector('.login-icon');
-            if (mainIcon) {
-                mainIcon.classList.add('icon-shake-anim');
-                setTimeout(() => mainIcon.classList.remove('icon-shake-anim'), 400);
+                btn.innerHTML = originalBtnContent;
+                showNotice("Anulowano logowanie przez Discord.", "warning");
             }
         }
-    } catch (error) {
-        showNotice("Błąd bazy PIN!", "danger");
-        btn.disabled = false;
-        btn.innerHTML = 'Zaloguj <i class="fas fa-lock"></i>';
-    }
-}
+    }, 1000);
 
-// ==========================================
-// FUNKCJE SYSTEMU SZYBKIEGO LOGOWANIA
-// ==========================================
-window.renderSavedProfiles = function() {
-    const container = document.getElementById('saved-profiles-container');
-    if (!container) return;
-    const profiles = JSON.parse(localStorage.getItem('elcartel_gold_profiles') || '[]');
-    
-    if (profiles.length === 0) {
-        container.innerHTML = '';
-        container.style.display = 'none';
-        return;
-    }
-    
-    container.style.display = 'flex';
-    let html = '';
+    const messageListener = function(event) {
+        if (event.origin !== "https://elcartel-wbhk.bcjds9j7ht.workers.dev") return;
 
-    profiles.forEach((p, index) => {
-        const avatarHtml = p.photo && p.photo !== "" 
-            ? `<img src="${p.photo}" class="saved-profile-avatar" alt="${p.name}">` 
-            : `<div class="saved-profile-avatar" style="display:flex; justify-content:center; align-items:center; font-size:1.5rem; color:var(--text-secondary);"><i class="fas fa-user-tie"></i></div>`;
+        if (event.data && event.data.type === "DISCORD_LOGIN_SUCCESS") {
+            window.removeEventListener('message', messageListener);
+            clearInterval(checkPopup);
+
+            const userData = event.data.user;
+
+            // --- ZAPAMIĘTYWANIE SESJI DISCORD ---
+            const rememberCheckbox = document.getElementById('remember-discord-checkbox');
+            if (rememberCheckbox && rememberCheckbox.checked) {
+                localStorage.setItem('elcartel_gold_discord_session', JSON.stringify(userData));
+            }
+            // -------------------------------------
+
+            window.executeLoginSequence(userData, btn, originalBtnContent);
+        }
+    };
+
+    window.addEventListener('message', messageListener);
+};
+
+window.executeLoginSequence = async function(userData, btnElement, originalBtnContent) {
+    if (btnElement) {
+        btnElement.disabled = true;
+        btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Weryfikacja rangi...';
+    }
+
+    try {
+        // 1. Sprawdzanie ról z serwera Discord
+        const roleRes = await fetch(`${REPORTS_API_URL}?action=check_access&discord_id=${userData.id}`);
+        const roleData = await roleRes.json();
         
-        html += `
-            <div class="saved-profile-card" onclick="quickLogin('${p.pin}')">
-                ${avatarHtml}
-                <span class="saved-profile-name">${p.name}</span>
-                <button class="remove-profile-btn" onclick="removeSavedProfile(${index}, event)" title="Usuń zapisany profil"><i class="fas fa-times"></i></button>
-                
-                <div class="profile-mini-stats">
-                    <div class="stats-header">Zapisany profil</div>
-                    <div class="stats-row">
-                        <span><i class="fas fa-star text-secondary"></i> Stopień:</span>
-                        <strong style="color: var(--accent-color); font-weight: 800;">${p.rank || 'Pracownik'}</strong>
-                    </div>
-                    <div class="stats-row">
-                        <span><i class="fas fa-hashtag text-secondary"></i> SSN:</span>
-                        <strong class="text-white-inline">${p.ssn || '---'}</strong>
-                    </div>
-                    <div class="stats-row">
-                        <span><i class="fas fa-calendar-alt text-secondary"></i> Zatrudnienie:</span>
-                        <strong class="text-white-inline" style="font-size: 0.75rem;">${p.dateZatrudnienia || 'Brak danych'}</strong>
-                    </div>
-                    <div class="stats-hint">Kliknij, aby zalogować</div>
-                </div>
-            </div>
-        `;
-    });
-    container.innerHTML = html;
-}
+        // Sprawdza, czy gracz ma przynajmniej jedno ID z naszej listy dozwolonych
+        const hasAccess = roleData.roles && roleData.roles.some(r => ALLOWED_DISCORD_ROLES.includes(r));
+        
+        if (!hasAccess) {
+            showNotice("Odmowa dostępu! Brak przypisanej rangi.", "danger");
+            if (btnElement) {
+                btnElement.disabled = false;
+                btnElement.innerHTML = originalBtnContent || `<i class="fab fa-discord"></i> Zaloguj przez Discord`;
+            }
+            localStorage.removeItem('elcartel_gold_discord_session'); // Zabezpieczenie: ubijamy lewą sesję
+            return;
+        }
 
-window.quickLogin = function(pin) {
-    const pinInput = document.getElementById('employee-login-pin');
-    if (pinInput) {
-        pinInput.value = pin;
-        window.login(); 
-    }
-}
+        // 2. Jeśli ma rolę, pobieramy kartotekę IC
+        if (btnElement) btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Pobieranie kartoteki...';
 
-window.removeSavedProfile = function(index, event) {
-    event.stopPropagation(); 
-    let profiles = JSON.parse(localStorage.getItem('elcartel_gold_profiles') || '[]');
-    profiles.splice(index, 1);
-    localStorage.setItem('elcartel_gold_profiles', JSON.stringify(profiles));
-    renderSavedProfiles();
-    if (typeof showNotice === 'function') {
-        showNotice("Usunięto zapisany profil.", "info");
+        const res = await fetch(`${REPORTS_API_URL}?action=get_employee&discord_id=${userData.id}`);
+        const empData = await res.json();
+
+        if (empData && empData.ic_name) {
+            window.completeLoginFlow(userData, empData, btnElement, originalBtnContent);
+        } else {
+            if (btnElement) {
+                btnElement.disabled = false;
+                btnElement.innerHTML = originalBtnContent;
+            }
+            document.getElementById('setup-avatar').value = userData.avatar || "";
+            document.getElementById('first-login-modal').classList.add('active');
+            window.tempDiscordUserData = userData; 
+        }
+    } catch (e) {
+        showNotice("Błąd połączenia z bazą Cartelu!", "danger");
+        if (btnElement) {
+            btnElement.disabled = false;
+            btnElement.innerHTML = originalBtnContent || `<i class="fab fa-discord"></i> Zaloguj przez Discord`;
+        }
     }
-}
+};
+
+window.saveFirstSetup = async function() {
+    const icName = document.getElementById('setup-ic-name').value.trim();
+    const ssn = document.getElementById('setup-ssn').value.trim();
+    const avatar = document.getElementById('setup-avatar').value.trim();
+
+    if (!icName || !ssn) return showNotice("Wypełnij Imię, Nazwisko i SSN!", "warning");
+
+    const btn = document.getElementById('save-setup-btn');
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Zapisywanie...';
+
+    try {
+        await fetch(REPORTS_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'save_employee',
+                discord_id: window.tempDiscordUserData.id,
+                ic_name: icName,
+                ssn: ssn,
+                avatar_url: avatar || window.tempDiscordUserData.avatar,
+                date: getFormattedDate()
+            })
+        });
+
+        document.getElementById('first-login-modal').classList.remove('active');
+        
+        const newEmpData = {
+            ic_name: icName,
+            ssn: ssn,
+            avatar_url: avatar || window.tempDiscordUserData.avatar,
+            rank: "Pracownik",
+            hire_date: getFormattedDate()
+        };
+        
+        window.completeLoginFlow(window.tempDiscordUserData, newEmpData, null, null);
+    } catch(e) {
+        showNotice("Wystąpił błąd podczas zapisu!", "danger");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+    }
+};
+
+window.completeLoginFlow = function(userData, empData, btnElement, originalBtnContent) {
+    const mainIcon = document.querySelector('.login-icon');
+    
+    // Budowanie pełnego adresu URL awatara - identycznie jak w script.js
+    const discordAvatarUrl = userData.avatar ? `https://cdn.discordapp.com/avatars/${userData.id}/${userData.avatar}.png` : "";
+    const finalAvatarUrl = empData.avatar_url || discordAvatarUrl;
+
+    if (mainIcon && finalAvatarUrl) {
+        mainIcon.outerHTML = `<img src="${finalAvatarUrl}" class="login-icon icon-unlock-anim" style="border-radius: 50%; width: 70px; height: 70px; border: 3px solid #22c55e; margin: 0 auto 20px auto; display: block; background: #0f172a;">`;
+    }
+
+    setTimeout(() => {
+        currentEmployeeName = empData.ic_name;
+        currentEmployeeAvatar = finalAvatarUrl; // Zapisanie pełnego linku do zmiennej globalnej
+        isBoss = true; 
+        
+        document.getElementById('logged-user-name').innerText = currentEmployeeName.toUpperCase();
+        document.getElementById('login-screen').classList.remove('active');
+        document.getElementById('main-app').style.display = 'block';
+        document.getElementById('user-profile').style.display = 'block';
+        document.getElementById('header-date').innerText = getFormattedDate();
+        
+        window.addSystemLog('LOGOWANIE', `Zalogowano do panelu odlewni (Postać IC: ${currentEmployeeName}).`);
+
+        renderGoldItems();
+        loadWarehouseData();
+
+        document.getElementById('boss-stats-section').style.display = 'block';
+        document.getElementById('admin-tools-trigger').style.display = 'block';
+        loadGoldStats(); 
+        
+        showNotice(`Witaj w odlewni, ${currentEmployeeName}!`, "success");
+        
+        if (btnElement) {
+            btnElement.disabled = false;
+            btnElement.innerHTML = originalBtnContent || `<i class="fab fa-discord"></i> Zaloguj przez Discord`;
+        }
+
+        // --- LIVE ROLE CHECK (WYKOPANIE Z PANELU PO UTRACIE RANGI) ---
+        if (window.accessCheckInterval) clearInterval(window.accessCheckInterval);
+        window.accessCheckInterval = setInterval(async () => {
+            try {
+                const res = await fetch(`${REPORTS_API_URL}?action=check_access&discord_id=${userData.id}`);
+                const data = await res.json();
+                const hasAccess = data.roles && data.roles.some(r => ALLOWED_DISCORD_ROLES.includes(r));
+                if (!hasAccess) {
+                    clearInterval(window.accessCheckInterval);
+                    showNotice("Utracono uprawnienia dostępu z poziomu serwera Discord!", "danger");
+                    window.logout(); 
+                }
+            } catch(e) {}
+        }, 60000); 
+        // -------------------------------------------------------------
+
+    }, 600);
+};
+
+window.checkSavedDiscordSession = function() {
+    const saved = localStorage.getItem('elcartel_gold_discord_session');
+    if (!saved) return;
+
+    try {
+        const userData = JSON.parse(saved);
+        if (!userData || !userData.name) return;
+        window.executeLoginSequence(userData, null, null);
+    } catch (e) {
+        console.error("Błąd odczytu sesji:", e);
+        localStorage.removeItem('elcartel_gold_discord_session');
+    }
+};
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (typeof renderSavedProfiles === 'function') renderSavedProfiles();
+    window.checkSavedDiscordSession();
 });
+
+// ==========================================
+// BEZPIECZNE WYLOGOWANIE Z SYSTEMU (ZŁOTO)
+// ==========================================
+window.logout = function() {
+    // --- CZYSZCZENIE TRWAŁEJ SESJI DISCORD ---
+    localStorage.removeItem('elcartel_gold_discord_session');
+    
+    // --- LIVE ROLE CHECK - CZYSZCZENIE INTERWAŁU ---
+    if (window.accessCheckInterval) clearInterval(window.accessCheckInterval);
+    // -------------------------------------------------------------
+
+    window.addSystemLog('WYLOGOWANIE', `Wylogowano z panelu odlewni.`);
+    
+    const mainApp = document.getElementById('main-app');
+    const loginScreen = document.getElementById('login-screen');
+    const loginCard = document.querySelector('.login-card');
+    const mainIcon = document.querySelector('.login-icon');
+
+    document.getElementById('user-dropdown').classList.remove('active');
+    document.getElementById('user-profile').style.display = 'none';
+
+    mainApp.classList.add('app-zoom-in');
+
+    setTimeout(() => {
+        mainApp.style.display = 'none';
+        
+        loginScreen.classList.add('active');
+        loginCard.classList.add('login-zoom-out');
+
+        // Przywracamy kłódkę (zamiana z Avatara Discorda)
+        if (mainIcon) {
+            mainIcon.outerHTML = '<i class="fas fa-unlock login-icon"></i>';
+            setTimeout(() => {
+                const newIcon = document.querySelector('.login-icon');
+                if (newIcon) {
+                    newIcon.className = 'fas fa-lock login-icon icon-lock-anim';
+                }
+            }, 550);
+        }
+
+        setTimeout(() => {
+            location.reload();
+        }, 1200);
+    }, 400);
+};
 
 // ==========================================
 // KOREKTA ZALEGŁEGO MAGAZYNU (MODAL)
@@ -541,7 +635,6 @@ async function processSmelting() {
     };
 
     try {
-        // PANCERNY UKŁAD 2-KOLUMNOWY DLA ZŁOTA
         const zysk = payload.revenue - payload.total;
         const profitText = zysk >= 0 ? `+${zysk}$` : `${zysk}$`;
 
@@ -559,8 +652,10 @@ async function processSmelting() {
         ];
 
         const discordPayload = {
-            username: currentEmployeeName || "Pracownik",
-            embeds: [{
+        username: currentEmployeeName ? `${currentEmployeeName} | EL CARTEL` : "EL CARTEL SYSTEM",
+        avatar_url: currentEmployeeAvatar || "", // Bezpośrednie użycie gotowego, pełnego linku
+        embeds: [
+            {
                 title: "🔥 NOWY WYTOP ZŁOTA",
                 color: 15571200,
                 fields: embedFields,
@@ -569,12 +664,11 @@ async function processSmelting() {
             }]
         };
 
-        // Wyciąganie zdjęcia pracownika z pamięci przeglądarki (żeby awatar działał tak jak w kasie)
+        // Wyciąganie zdjęcia pracownika z aktywnej sesji Discord
         try {
-            const profiles = JSON.parse(localStorage.getItem('elcartel_gold_profiles') || '[]');
-            const currentProfile = profiles.find(p => p.name === currentEmployeeName);
-            if (currentProfile && currentProfile.photo && currentProfile.photo.trim() !== "") {
-                discordPayload.avatar_url = currentProfile.photo;
+            const savedSession = JSON.parse(localStorage.getItem('elcartel_gold_discord_session') || '{}');
+            if (savedSession && savedSession.avatar) {
+                discordPayload.avatar_url = savedSession.avatar;
             }
         } catch (e) {}
         
@@ -692,42 +786,6 @@ window.loadGoldStats = async function() {
     }
 }
 
-function logout() {
-    window.addSystemLog('WYLOGOWANIE', `Wylogowano z panelu odlewni.`);
-    
-    const mainApp = document.getElementById('main-app');
-    const loginScreen = document.getElementById('login-screen');
-    const loginCard = document.querySelector('.login-card');
-    const mainIcon = document.querySelector('.login-icon');
-
-    document.getElementById('user-dropdown').classList.remove('active');
-    document.getElementById('user-profile').style.display = 'none';
-
-    mainApp.classList.add('app-zoom-in');
-
-    setTimeout(() => {
-        mainApp.style.display = 'none';
-        
-        loginScreen.classList.add('active');
-        loginCard.classList.add('login-zoom-out');
-
-        // Zostawiamy otwartą kłódkę na czas wjazdu karty
-        if (mainIcon) {
-            mainIcon.className = 'fas fa-unlock login-icon';
-            
-            // Wydłużone opóźnienie: czeka aż karta w pełni wyląduje (550ms)
-            setTimeout(() => {
-                mainIcon.className = 'fas fa-lock login-icon icon-lock-anim';
-            }, 550);
-        }
-
-        // Wydłużemy czas do restartu strony (550ms czekania + 500ms animacji = ok. 1200ms całkowitego czasu)
-        setTimeout(() => {
-            location.reload();
-        }, 1200);
-    }, 400);
-}
-
 function toggleUserMenu() {
     document.getElementById('user-dropdown').classList.toggle('active');
 }
@@ -805,11 +863,11 @@ window.addEventListener('beforeunload', function() {
     if (currentEmployeeName) {
         fetch(REPORTS_API_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }, // <--- DODANY NAGŁÓWEK
+            headers: { 'Content-Type': 'application/json' },
             keepalive: true,
             body: JSON.stringify({
                 action: 'save_log',
-                date: getFormattedDateTime(), // <--- DODANY LOKALNY CZAS
+                date: typeof getFormattedDateTime === 'function' ? getFormattedDateTime() : new Date().toLocaleString('pl-PL'),
                 employee: currentEmployeeName,
                 type: 'WYLOGOWANIE',
                 description: 'Zamknięto kartę lub okno panelu odlewni (automatyczne wylogowanie).'

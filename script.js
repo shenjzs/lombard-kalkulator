@@ -1,6 +1,13 @@
-const APP_VERSION = "4.5.7";
+const APP_VERSION = "4.6.7";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
+const ALLOWED_DISCORD_ROLES = ["1518034647219572746"];
+// Hierarchia stanowisk w firmie (od najwyższej do najniższej)
+const RANK_HIERARCHY = [
+    { id: "1499138968065806356", name: "Właściciel" },
+    { id: "1499145834644635839", name: "Kierownik" },
+    { id: "1499146687560552479", name: "Pracownik" }
+];
 const DISCORD_WEBHOOK_URL_SKUP = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/skup"; 
 const DISCORD_WEBHOOK_URL_EXPORT = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/export";
 const PIN_API_URL = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/pin";
@@ -432,190 +439,327 @@ window.switchView = function(view) {
     document.getElementById('user-dropdown').classList.remove('active');
 }
 
-window.login = async function() {
-    const pin = document.getElementById('employee-login-pin').value;
+// ==========================================
+// LOGOWANIE OAUTH2 DISCORD W KASIE Z AUTO-SYNC RANG
+// ==========================================
+window.login = function() {
     const btn = document.getElementById('login-btn-action');
-    if (!pin) return showNotice("Wprowadź PIN!", "danger");
-
+    const originalBtnContent = btn.innerHTML;
+    
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Weryfikacja...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Oczekiwanie na Discord...';
 
-    try {
-        const response = await fetch(`${PIN_API_URL}?pin=${pin}`);
-        const data = await response.json();
+    const authUrl = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/auth/login";
+    const width = 500;
+    const height = 750;
+    const left = (screen.width / 2) - (width / 2);
+    const top = (screen.height / 2) - (height / 2);
 
-        if (data.isValid) {
-            window.mySessionStart = new Date().getTime();
-            currentEmployeeName = data.name;
-            currentEmployeeRank = data.rank || "Pracownik"; 
-            
-            // TWARDE PRZYPISANIE SSN I DATY
-            currentEmployeeSsn = data.ssn && data.ssn !== "" ? String(data.ssn) : "---"; 
-            currentEmployeeDateZatrudnienia = data.dateZatrudnienia && data.dateZatrudnienia !== "" ? String(data.dateZatrudnienia) : "Brak danych";
-            
-            currentEmployeePhoto = data.photo || ""; 
+    const popup = window.open(authUrl, 'DiscordLogin', `width=${width},height=${height},top=${top},left=${left}`);
 
-            // --- SYSTEM ZAPAMIĘTYWANIA PROFILU ---
-            const rememberMeCheckbox = document.getElementById('remember-me-checkbox');
-            if (rememberMeCheckbox && rememberMeCheckbox.checked) {
-                let savedProfiles = JSON.parse(localStorage.getItem('elcartel_saved_profiles') || '[]');
-                savedProfiles = savedProfiles.filter(p => p.name !== currentEmployeeName);
-                savedProfiles.push({ 
-                    name: currentEmployeeName, 
-                    pin: pin, 
-                    photo: currentEmployeePhoto || '',
-                    ssn: currentEmployeeSsn || '---',
-                    dateZatrudnienia: currentEmployeeDateZatrudnienia || 'Brak danych',
-                    rank: currentEmployeeRank || 'Pracownik' // <--- TUTAJ DODALIŚMY STOPIEŃ
-                });
-                localStorage.setItem('elcartel_saved_profiles', JSON.stringify(savedProfiles));
-                if (typeof renderSavedProfiles === 'function') renderSavedProfiles();
-            }
-            // ------------------------------------		
-            
-            const adminChangelogBtn = document.getElementById('admin-changelog-btn');
-            const adminReportsBtn = document.getElementById('admin-reports-btn');
-            const adminReloadBtn = document.getElementById('admin-force-reload-btn');
-
-            if (adminChangelogBtn) {
-                if(isTravisVance() || currentEmployeeSsn === "4") adminChangelogBtn.classList.remove('hidden');
-                else adminChangelogBtn.classList.add('hidden');
-            }
-            if (adminReportsBtn) {
-                if(isTravisVance() || currentEmployeeSsn === "4") adminReportsBtn.classList.remove('hidden');
-                else adminReportsBtn.classList.add('hidden');
-            }
-            if (adminReloadBtn) {
-                if(isTravisVance() || currentEmployeeSsn === "4") adminReloadBtn.classList.remove('hidden');
-                else adminReloadBtn.classList.add('hidden');
-            }
-
-            // PAGER - Logika uprawnień po SSN
-            const menuPagerBtn = document.getElementById('menu-pager');
-            if (menuPagerBtn) {
-                if(currentEmployeeSsn === "4") {
-                    menuPagerBtn.classList.remove('hidden');
-                } else {
-                    menuPagerBtn.classList.add('hidden');
-                }
-            }
-
-            const loyaltyBtn = document.getElementById('loyalty-floating-btn');
-            if (loyaltyBtn) {
-                loyaltyBtn.classList.remove('hidden');
-            }
-
-            document.getElementById('logged-user-name').innerText = currentEmployeeName.toUpperCase();
-            document.getElementById('dropdown-user-name').innerText = currentEmployeeName;
-            document.getElementById('dropdown-user-rank').innerText = currentEmployeeRank;
-            
-            const navAvatar = document.getElementById('nav-user-avatar');
-            const navDefaultIcon = document.getElementById('nav-user-default-icon');
-            const dropAvatar = document.getElementById('dropdown-user-avatar');
-            const dropDefaultIcon = document.getElementById('dropdown-user-default-icon');
-
-            if (currentEmployeePhoto && currentEmployeePhoto !== "") {
-                navAvatar.src = currentEmployeePhoto;
-                navAvatar.classList.remove('hidden');
-                navDefaultIcon.classList.add('hidden');
-                
-                dropAvatar.src = currentEmployeePhoto;
-                dropAvatar.classList.remove('hidden');
-                dropDefaultIcon.classList.add('hidden');
-            } else {
-                navAvatar.classList.add('hidden');
-                navDefaultIcon.classList.remove('hidden');
-                
-                dropAvatar.classList.add('hidden');
-                dropDefaultIcon.classList.remove('hidden');
-            }
-
-            // --- EFEKT FACE ID (otwieranie kłódki) ---
-            const mainIcon = document.querySelector('.login-icon');
-            if (mainIcon) {
-                mainIcon.classList.remove('fa-lock', 'fa-user-lock');
-                mainIcon.classList.add('fa-unlock', 'icon-unlock-anim');
-            }
-
-            setTimeout(() => {
-                const loginCard = document.querySelector('.login-card');
-                loginCard.classList.add('login-zoom-in');
-                
-                setTimeout(() => {
-                    document.getElementById('login-screen').classList.remove('active');
-                    loginCard.classList.remove('login-zoom-in');
-                    btn.disabled = false;
-                    btn.innerHTML = 'Odblokuj system <i class="fas fa-unlock"></i>';
-                    
-                    const mainApp = document.getElementById('main-app');
-                    mainApp.classList.remove('hidden');
-                    mainApp.classList.add('app-zoom-out');
-                    
-                    document.getElementById('user-profile').classList.remove('hidden');
-                    
-                    const banner = document.getElementById('announcement-banner');
-                    if(banner) banner.classList.remove('hidden');
-
-                    window.addSystemLog('LOGOWANIE', `Pracownik zalogował się do systemu (Wersja: ${APP_VERSION}).`);
-
-                    showNotice(`Rozpoczęto zmianę: ${data.name}`, "success");
-                    
-                    initSkup();
-                    initExport();
-                    fetchChangelogData();
-                    switchView('skup');
-                    checkEmployeeBonuses();
-
-                    // =====================================================================
-                    // WYWOŁANIE SAMOUCZKA PO ZALOGOWANIU
-                    // =====================================================================
-                    if (!localStorage.getItem('elcartel_tutorial_seen')) {
-                        setTimeout(() => {
-                            window.startTutorial();
-                        }, 1000); 
-                    }
-                    // =====================================================================
-
-                    fetch(`${PIN_API_URL}?action=get_all`)
-                        .then(res => res.json())
-                        .then(d => { 
-                            if(d.employees) window.currentEmployeesList = d.employees; 
-                            updateOnlineEmployees(); 
-                        })
-                        .catch(e => console.error(e));
-                    
-                    onlineCheckInterval = setInterval(updateOnlineEmployees, 60000);
-                    
-                    setTimeout(() => { mainApp.classList.remove('app-zoom-out'); }, 600);
-                }, 400);
-
-            }, 600);
-
-       } else {
-            showNotice("Nieprawidłowy PIN!", "danger");
-            window.addSystemLog('BŁĘDNY PIN', `Niewłaściwa próba autoryzacji do systemu (Użyto niepoprawnego kodu PIN w index.html).`);
-            btn.disabled = false;
-            btn.innerHTML = 'Odblokuj system <i class="fas fa-unlock"></i>';
-
-            // --- EFEKT BŁĘDNEGO PINU (trzęsienie kłódki) ---
-            const mainIcon = document.querySelector('.login-icon');
-            if (mainIcon) {
-                mainIcon.classList.add('icon-shake-anim');
-                
-                setTimeout(() => {
-                    mainIcon.classList.remove('icon-shake-anim');
-                }, 400);
+    const checkPopup = setInterval(() => {
+        if (!popup || popup.closed || popup.closed === undefined) {
+            clearInterval(checkPopup);
+            if (btn.disabled) {
+                btn.disabled = false;
+                btn.innerHTML = originalBtnContent;
+                showNotice("Anulowano logowanie przez Discord.", "warning");
             }
         }
-    } catch (error) {
-        showNotice("Błąd połączenia z bazą PIN!", "danger");
-        console.error(error);
-        btn.disabled = false;
-        btn.innerHTML = 'Odblokuj system <i class="fas fa-unlock"></i>';
-    }
-}
+    }, 1000);
 
+    const messageListener = function(event) {
+        if (event.origin !== "https://elcartel-wbhk.bcjds9j7ht.workers.dev") return;
+
+        if (event.data && event.data.type === "DISCORD_LOGIN_SUCCESS") {
+            window.removeEventListener('message', messageListener);
+            clearInterval(checkPopup);
+
+            const userData = event.data.user;
+
+            // --- ZAPAMIĘTYWANIE SESJI DISCORD ---
+            const rememberCheckbox = document.getElementById('remember-discord-checkbox');
+            if (rememberCheckbox && rememberCheckbox.checked) {
+                localStorage.setItem('elcartel_discord_session', JSON.stringify(userData));
+            }
+            // -------------------------------------
+
+            window.executeLoginSequence(userData, btn, originalBtnContent);
+        }
+    };
+
+    window.addEventListener('message', messageListener);
+};
+
+window.executeLoginSequence = async function(userData, btnElement, originalBtnContent) {
+    if (btnElement) {
+        btnElement.disabled = true;
+        btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Weryfikacja rangi...';
+    }
+
+    try {
+        // 1. Sprawdzanie ról z serwera Discord
+        const roleRes = await fetch(`${REPORTS_API_URL}?action=check_access&discord_id=${userData.id}`);
+        const roleData = await roleRes.json();
+        
+        // Sprawdza, czy gracz ma przypisaną główną rolę dostępu
+        const hasAccess = roleData.roles && roleData.roles.some(r => ALLOWED_DISCORD_ROLES.includes(r));
+        
+        if (!hasAccess) {
+            showNotice("Odmowa dostępu! Brak przypisanej rangi.", "danger");
+            if (btnElement) {
+                btnElement.disabled = false;
+                btnElement.innerHTML = originalBtnContent || `<i class="fab fa-discord"></i> Zaloguj przez Discord`;
+            }
+            localStorage.removeItem('elcartel_discord_session');
+            return;
+        }
+
+        // --- Wyznaczanie stanowiska (rangi) na podstawie hierarchii z Discorda ---
+        let detectedRank = "Pracownik"; 
+        if (typeof RANK_HIERARCHY !== 'undefined') {
+            for (let r of RANK_HIERARCHY) {
+                if (roleData.roles && roleData.roles.includes(r.id)) {
+                    detectedRank = r.name;
+                    break;
+                }
+            }
+        }
+
+        // 2. Pobieramy kartotekę IC
+        if (btnElement) btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Pobieranie kartoteki...';
+        
+        const res = await fetch(`${REPORTS_API_URL}?action=get_employee&discord_id=${userData.id}`);
+        const empData = await res.json();
+
+        if (empData && empData.ic_name) {
+            
+            // --- Cicha aktualizacja bazy przy awansie lub degradacji na Discordzie ---
+            if (empData.rank !== detectedRank) {
+                fetch(REPORTS_API_URL, {
+                    method: "POST",
+                    body: JSON.stringify({ 
+                        action: "boss_edit_employee", 
+                        discord_id: userData.id, 
+                        ic_name: empData.ic_name, 
+                        ssn: empData.ssn, 
+                        rank: detectedRank 
+                    })
+                });
+                empData.rank = detectedRank; 
+            }
+
+            window.completeLoginFlow(userData, empData, btnElement, originalBtnContent);
+        } else {
+            if (btnElement) {
+                btnElement.disabled = false;
+                btnElement.innerHTML = originalBtnContent;
+            }
+            const avatarInput = document.getElementById('setup-avatar');
+            if (avatarInput) avatarInput.value = userData.avatar || "";
+            
+            const modal = document.getElementById('first-login-modal');
+            if (modal) modal.classList.add('active');
+            
+            window.tempDiscordUserData = userData; 
+            window.tempDetectedRank = detectedRank; 
+        }
+    } catch (e) {
+        console.error(e);
+        showNotice("Błąd połączenia z bazą Cartelu!", "danger");
+        if (btnElement) {
+            btnElement.disabled = false;
+            btnElement.innerHTML = originalBtnContent || `<i class="fab fa-discord"></i> Zaloguj przez Discord`;
+        }
+    }
+};
+
+window.saveFirstSetup = async function() {
+    const icName = document.getElementById('setup-ic-name').value.trim();
+    const ssn = document.getElementById('setup-ssn').value.trim();
+    const avatar = document.getElementById('setup-avatar').value.trim();
+
+    if (!icName || !ssn) return showNotice("Wypełnij Imię, Nazwisko i SSN!", "warning");
+
+    const btn = document.getElementById('save-setup-btn');
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Zapisywanie...';
+
+    try {
+        await fetch(REPORTS_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'save_employee',
+                discord_id: window.tempDiscordUserData.id,
+                ic_name: icName,
+                ssn: ssn,
+                avatar_url: avatar || window.tempDiscordUserData.avatar,
+                date: getFormattedDate()
+            })
+        });
+
+        // Natychmiastowe nałożenie poprawnej rangi na nowy profil
+        await fetch(REPORTS_API_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                action: "boss_edit_employee",
+                discord_id: window.tempDiscordUserData.id,
+                ic_name: icName,
+                ssn: ssn,
+                rank: window.tempDetectedRank
+            })
+        });
+
+        const modal = document.getElementById('first-login-modal');
+        if (modal) modal.classList.remove('active');
+        
+        const newEmpData = {
+            ic_name: icName,
+            ssn: ssn,
+            avatar_url: avatar || window.tempDiscordUserData.avatar,
+            rank: window.tempDetectedRank,
+            hire_date: getFormattedDate()
+        };
+        
+        window.completeLoginFlow(window.tempDiscordUserData, newEmpData, null, null);
+    } catch(e) {
+        showNotice("Wystąpił błąd podczas zapisu!", "danger");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
+    }
+};
+
+window.completeLoginFlow = function(userData, empData, btnElement, originalBtnContent) {
+    window.mySessionStart = new Date().getTime();
+    
+    currentEmployeeName = empData.ic_name;
+    currentEmployeeRank = empData.rank || "Pracownik"; 
+    currentEmployeeSsn = empData.ssn || "---"; 
+    currentEmployeeDateZatrudnienia = empData.hire_date || "Dziś"; 
+    currentEmployeePhoto = empData.avatar_url || userData.avatar; 
+
+    document.getElementById('logged-user-name').innerText = currentEmployeeName.toUpperCase();
+    document.getElementById('dropdown-user-name').innerText = currentEmployeeName;
+    document.getElementById('dropdown-user-rank').innerText = currentEmployeeRank;
+    
+    const navAvatar = document.getElementById('nav-user-avatar');
+    const navDefaultIcon = document.getElementById('nav-user-default-icon');
+    const dropAvatar = document.getElementById('dropdown-user-avatar');
+    const dropDefaultIcon = document.getElementById('dropdown-user-default-icon');
+
+    if (currentEmployeePhoto && currentEmployeePhoto !== "") {
+        if (navAvatar) { navAvatar.src = currentEmployeePhoto; navAvatar.classList.remove('hidden'); }
+        if (navDefaultIcon) navDefaultIcon.classList.add('hidden');
+        if (dropAvatar) { dropAvatar.src = currentEmployeePhoto; dropAvatar.classList.remove('hidden'); }
+        if (dropDefaultIcon) dropDefaultIcon.classList.add('hidden');
+    }
+
+    const adminChangelogBtn = document.getElementById('admin-changelog-btn');
+    const adminReportsBtn = document.getElementById('admin-reports-btn');
+    const adminReloadBtn = document.getElementById('admin-force-reload-btn');
+    const menuPagerBtn = document.getElementById('menu-pager');
+
+    if (adminChangelogBtn) adminChangelogBtn.classList.toggle('hidden', !isTravisVance());
+    if (adminReportsBtn) adminReportsBtn.classList.toggle('hidden', !isTravisVance());
+    if (adminReloadBtn) adminReloadBtn.classList.toggle('hidden', !isTravisVance());
+    if (menuPagerBtn) menuPagerBtn.classList.toggle('hidden', !isTravisVance());
+
+    const loyaltyBtn = document.getElementById('loyalty-floating-btn');
+    if (loyaltyBtn) loyaltyBtn.classList.remove('hidden');
+
+    const mainIcon = document.querySelector('.login-icon');
+    if (mainIcon) {
+        mainIcon.outerHTML = `<img src="${currentEmployeePhoto}" class="login-icon icon-unlock-anim" style="border-radius: 50%; width: 70px; height: 70px; border: 3px solid #22c55e; margin: 0 auto 20px auto; display: block; background: #0f172a;">`;
+    }
+
+    setTimeout(() => {
+        const loginCard = document.querySelector('.login-card');
+        if (loginCard) loginCard.classList.add('login-zoom-in');
+        
+        setTimeout(() => {
+            const loginScreen = document.getElementById('login-screen');
+            if (loginScreen) loginScreen.classList.remove('active');
+            if (loginCard) loginCard.classList.remove('login-zoom-in');
+            
+            if (btnElement) {
+                btnElement.disabled = false;
+                btnElement.innerHTML = originalBtnContent || `<i class="fab fa-discord"></i> Zaloguj przez Discord`;
+            }
+            
+            const mainApp = document.getElementById('main-app');
+            if (mainApp) {
+                mainApp.classList.remove('hidden');
+                mainApp.classList.add('app-zoom-out');
+            }
+            
+            const userProfile = document.getElementById('user-profile');
+            if (userProfile) userProfile.classList.remove('hidden');
+            
+            const banner = document.getElementById('announcement-banner');
+            if(banner) banner.classList.remove('hidden');
+
+            window.addSystemLog('LOGOWANIE', `Pracownik zalogował się do kasy (Postać IC: ${currentEmployeeName} | ${currentEmployeeRank}).`);
+            showNotice(`Witaj na zmianie, ${currentEmployeeName}!`, "success");
+            
+            if (typeof initSkup === 'function') initSkup();
+            if (typeof initExport === 'function') initExport();
+            if (typeof fetchChangelogData === 'function') fetchChangelogData();
+            if (typeof switchView === 'function') switchView('skup');
+            if (typeof checkEmployeeBonuses === 'function') checkEmployeeBonuses();
+
+            if (!localStorage.getItem('elcartel_tutorial_seen')) {
+                if (typeof window.startTutorial === 'function') setTimeout(() => { window.startTutorial(); }, 1000); 
+            }
+
+            fetch(`${PIN_API_URL}?action=get_all`)
+                .then(res => res.json())
+                .then(d => { 
+                    if(d.employees) window.currentEmployeesList = d.employees; 
+                    if (typeof updateOnlineEmployees === 'function') updateOnlineEmployees(); 
+                }).catch(e => console.error(e));
+            
+            if (typeof onlineCheckInterval !== 'undefined' && onlineCheckInterval) clearInterval(onlineCheckInterval);
+            if (typeof updateOnlineEmployees === 'function') {
+                window.onlineCheckInterval = setInterval(updateOnlineEmployees, 60000);
+            }
+
+            // --- LIVE ROLE CHECK (WYKOPANIE Z PANELU PO UTRACIE RANGI) ---
+            if (window.accessCheckInterval) clearInterval(window.accessCheckInterval);
+            window.accessCheckInterval = setInterval(async () => {
+                try {
+                    const res = await fetch(`${REPORTS_API_URL}?action=check_access&discord_id=${userData.id}`);
+                    const data = await res.json();
+                    const hasAccess = data.roles && data.roles.some(r => ALLOWED_DISCORD_ROLES.includes(r));
+                    if (!hasAccess) {
+                        clearInterval(window.accessCheckInterval);
+                        showNotice("Utracono uprawnienia dostępu z poziomu serwera Discord!", "danger");
+                        if (typeof window.logout === 'function') window.logout(); 
+                    }
+                } catch(e) {}
+            }, 60000); 
+            // -------------------------------------------------------------
+            
+            setTimeout(() => { if (mainApp) mainApp.classList.remove('app-zoom-out'); }, 600);
+        }, 400);
+
+    }, 600);
+};
+
+// ==========================================
+// BEZPIECZNE WYLOGOWANIE Z SYSTEMU (KASA)
+// ==========================================
 window.logout = function() {
+    // --- CZYSZCZENIE TRWAŁEJ SESJI DISCORD ---
+    localStorage.removeItem('elcartel_discord_session');
+    
+    // --- LIVE ROLE CHECK - CZYSZCZENIE INTERWAŁU ---
+    if (window.accessCheckInterval) clearInterval(window.accessCheckInterval);
+    // -------------------------------------------------------------
+
     window.addSystemLog('WYLOGOWANIE', `Pracownik zakończył zmianę i wylogował się.`);
     const mainApp = document.getElementById('main-app');
     const loginScreen = document.getElementById('login-screen');
@@ -637,11 +781,15 @@ window.logout = function() {
         loginScreen.classList.add('active');
         loginCard.classList.add('login-zoom-out');
 
+        // Przywracamy kłódkę (zamiana z Avatara Discorda z powrotem na ikonę systemową)
         if (mainIcon) {
-            mainIcon.className = 'fas fa-unlock login-icon';
+            mainIcon.outerHTML = '<i class="fas fa-unlock login-icon"></i>';
             setTimeout(() => {
-                mainIcon.className = 'fas fa-lock login-icon icon-lock-anim';
-                setTimeout(() => mainIcon.classList.remove('icon-lock-anim'), 500);
+                const newIcon = document.querySelector('.login-icon');
+                if (newIcon) {
+                    newIcon.className = 'fas fa-lock login-icon icon-lock-anim';
+                    setTimeout(() => newIcon.classList.remove('icon-lock-anim'), 500);
+                }
             }, 550);
         }
 
@@ -650,7 +798,11 @@ window.logout = function() {
         currentEmployeeSsn = "---";
         currentEmployeeDateZatrudnienia = "---";
         currentEmployeePhoto = ""; 
-        document.getElementById('employee-login-pin').value = "";
+        
+        // Zabezpieczenie przed błędem, jeśli pole na stary kod PIN zostało całkowicie usunięte z HTML
+        const pinInput = document.getElementById('employee-login-pin');
+        if (pinInput) pinInput.value = "";
+        
         document.getElementById('logged-user-name').innerText = "---";
         document.getElementById('dropdown-user-name').innerText = "---";
         document.getElementById('dropdown-user-rank').innerText = "---";
@@ -690,7 +842,7 @@ window.logout = function() {
         setTimeout(() => loginCard.classList.remove('login-zoom-out'), 450);
         showNotice("Zakończono zmianę. Wylogowano.", "info");
     }, 400);
-}
+};
 
 // ==========================================
 // SYSTEM COFANIA (UNDO) DLA KOSZYKÓW
@@ -2637,41 +2789,71 @@ window.deleteChangelog = async function(version) {
 
 window.openSettings = function() {
     document.getElementById('user-dropdown').classList.remove('active');
+    
+    // Zaciąganie danych do podglądu z pamięci podręcznej i zmiennych
+    const savedSession = JSON.parse(localStorage.getItem('elcartel_discord_session') || '{}');
+    document.getElementById('settings-discord-id').value = savedSession.id || "Brak danych";
+    document.getElementById('settings-ic-name').value = currentEmployeeName || "Brak danych";
+    document.getElementById('settings-ssn').value = currentEmployeeSsn || "---";
+    document.getElementById('settings-avatar-input').value = currentEmployeePhoto || "";
+
     document.getElementById('settings-modal').classList.add('active');
 }
 
 window.closeSettings = function() {
     document.getElementById('settings-modal').classList.remove('active');
-    document.getElementById('old-pin-input').value = '';
-    document.getElementById('new-pin-input').value = '';
-    document.getElementById('new-pin-confirm').value = '';
 }
 
-window.changeEmployeePin = async function() {
-    const oldPin = document.getElementById('old-pin-input').value;
-    const newPin = document.getElementById('new-pin-input').value;
-    const confirmPin = document.getElementById('new-pin-confirm').value;
+window.saveAccountSettings = async function() {
+    const newAvatar = document.getElementById('settings-avatar-input').value.trim();
+    const savedSession = JSON.parse(localStorage.getItem('elcartel_discord_session') || '{}');
+    const discordId = savedSession.id;
 
-    if (!oldPin || !newPin || !confirmPin) return showNotice("Wypełnij wszystkie pola!", "warning");
-    if (newPin !== confirmPin) return showNotice("Nowe kody PIN nie są identyczne!", "danger");
-    if (newPin.length < 4) return showNotice("Nowy PIN musi mieć dokładnie 4 cyfry!", "warning");
-    if (oldPin === newPin) return showNotice("Nowy PIN musi różnić się od starego!", "warning");
+    if (!discordId) return showNotice("Błąd autoryzacji sesji!", "danger");
 
-    const btn = document.getElementById('change-pin-btn');
+    const btn = document.getElementById('save-settings-btn');
     const originalHtml = btn.innerHTML;
-    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Zapisywanie...';
+    btn.disabled = true; 
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Zapisywanie...';
 
     try {
-        const response = await fetch(PIN_API_URL, { method: 'POST', body: JSON.stringify({ action: 'change_pin', old_pin: oldPin, new_pin: newPin, name: currentEmployeeName }) });
-        const data = await response.json();
-        if (data.success) { 
-            showNotice("PIN zmieniony!", "success"); 
-            window.addSystemLog('USTAWIENIA', 'Pracownik zmienił swój kod PIN.');
-            closeSettings(); 
-        } 
-        else { showNotice(data.message || "Błąd zmiany PINu!", "danger"); }
-    } catch (e) { showNotice("Błąd połączenia!", "danger"); } 
-    finally { btn.disabled = false; btn.innerHTML = originalHtml; }
+        // Zapis do Supabase nowego URL awatara
+        await fetch(REPORTS_API_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ 
+                action: 'save_employee', 
+                discord_id: discordId,
+                ic_name: currentEmployeeName,
+                ssn: currentEmployeeSsn,
+                avatar_url: newAvatar || savedSession.avatar, 
+                date: getFormattedDate()
+            }) 
+        });
+
+        // Cicha aktualizacja awatarów na stronie (Kłódka, Navbar, Dropdown)
+        currentEmployeePhoto = newAvatar || savedSession.avatar;
+        
+        const navAvatar = document.getElementById('nav-user-avatar');
+        const dropAvatar = document.getElementById('dropdown-user-avatar');
+        if (currentEmployeePhoto) {
+            if (navAvatar) navAvatar.src = currentEmployeePhoto;
+            if (dropAvatar) dropAvatar.src = currentEmployeePhoto;
+            
+            const mainIcon = document.querySelector('.login-icon');
+            if (mainIcon && mainIcon.tagName.toLowerCase() === 'IMG') {
+                mainIcon.src = currentEmployeePhoto;
+            }
+        }
+
+        showNotice("Ustawienia zostały zapisane!", "success"); 
+        window.addSystemLog('USTAWIENIA', 'Pracownik zaktualizował swoje zdjęcie profilowe.');
+        closeSettings(); 
+    } catch (e) { 
+        showNotice("Błąd połączenia z bazą!", "danger"); 
+    } finally { 
+        btn.disabled = false; 
+        btn.innerHTML = originalHtml; 
+    }
 }
 
 window.openMyStats = async function() {
@@ -4012,7 +4194,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     document.querySelectorAll('#menu-pager').forEach(btn => btn.addEventListener('click', window.openPagerPrompt));
 
-    document.getElementById('login-btn-action')?.addEventListener('click', login);
 
     // ==========================================
     // FUNKCJA POMOCNICZA: USUWANIE POLSKICH ZNAKÓW
@@ -4211,7 +4392,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('send-discord-btn-export')?.addEventListener('click', sendToDiscordExport);
 
     document.getElementById('close-settings-modal-btn')?.addEventListener('click', closeSettings);
-    document.getElementById('change-pin-btn')?.addEventListener('click', changeEmployeePin);
+    document.getElementById('save-settings-btn')?.addEventListener('click', window.saveAccountSettings);
 
     document.getElementById('close-my-stats-btn')?.addEventListener('click', closeMyStats);
     document.getElementById('my-stats-time-filter')?.addEventListener('change', (e) => changeStatsTimeRange(e.target.value));
@@ -4570,86 +4751,9 @@ async function checkPagerMessages() {
     } catch(e) {}
 }
 
-// ==========================================
-// FUNKCJE SYSTEMU SZYBKIEGO LOGOWANIA
-// ==========================================
-window.renderSavedProfiles = function() {
-    const container = document.getElementById('saved-profiles-container');
-    if (!container) return;
-    const profiles = JSON.parse(localStorage.getItem('elcartel_saved_profiles') || '[]');
-    
-    if (profiles.length === 0) {
-        container.innerHTML = '';
-        container.style.display = 'none';
-        return;
-    }
-    
-    container.style.display = 'flex';
-    let html = '';
-    
-    const now = new Date();
-    const dateStr = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
-
-    profiles.forEach((p, index) => {
-        const avatarHtml = p.photo && p.photo !== "" 
-            ? `<img src="${p.photo}" class="saved-profile-avatar" alt="${p.name}">` 
-            : `<div class="saved-profile-avatar" style="display:flex; justify-content:center; align-items:center; font-size:1.5rem; color:var(--text-secondary);"><i class="fas fa-user-tie"></i></div>`;
-        
-        const statKey = `elcartel_stats_${p.name}_${dateStr}`;
-        const dailyEarned = parseFloat(localStorage.getItem(statKey)) || 0;
-        
-        html += `
-            <div class="saved-profile-card" onclick="quickLogin('${p.pin}')">
-                ${avatarHtml}
-                <span class="saved-profile-name">${p.name}</span>
-                <button class="remove-profile-btn" onclick="removeSavedProfile(${index}, event)" title="Usuń zapisany profil"><i class="fas fa-times"></i></button>
-                
-                <div class="profile-mini-stats">
-                    <div class="stats-header">Zapisany profil</div>
-                    <div class="stats-row">
-                        <span><i class="fas fa-star text-secondary"></i> Stopień:</span>
-                        <strong style="color: var(--accent-color); font-weight: 800;">${p.rank || 'Pracownik'}</strong>
-                    </div>
-                    <div class="stats-row">
-                        <span><i class="fas fa-hashtag text-secondary"></i> SSN:</span>
-                        <strong class="text-white-inline">${p.ssn || '---'}</strong>
-                    </div>
-                    <div class="stats-row">
-                        <span><i class="fas fa-calendar-alt text-secondary"></i> Zatrudnienie:</span>
-                        <strong class="text-white-inline" style="font-size: 0.75rem;">${p.dateZatrudnienia || 'Brak danych'}</strong>
-                    </div>
-                    <div class="stats-row">
-                        <span><i class="fas fa-chart-line text-secondary"></i> Utarg dziś:</span>
-                        <strong class="text-success">${window.formatMoney ? window.formatMoney(dailyEarned) : dailyEarned}$</strong>
-                    </div>
-                    <div class="stats-hint">Kliknij, aby zalogować</div>
-                </div>
-            </div>
-        `;
-    });
-    container.innerHTML = html;
-}
-
-window.quickLogin = function(pin) {
-    const pinInput = document.getElementById('employee-login-pin');
-    if (pinInput) {
-        pinInput.value = pin;
-        window.login(); // Automatycznie uruchamia proces logowania
-    }
-}
-
-window.removeSavedProfile = function(index, event) {
-    event.stopPropagation(); // Zapobiega kliknięciu w avatar przy usuwaniu
-    let profiles = JSON.parse(localStorage.getItem('elcartel_saved_profiles') || '[]');
-    profiles.splice(index, 1);
-    localStorage.setItem('elcartel_saved_profiles', JSON.stringify(profiles));
-    renderSavedProfiles();
-    showNotice("Usunięto zapisany profil.", "info");
-}
-
-// Wywołaj renderowanie profili od razu po załadowaniu strony
+// Usunięto stare funkcje profili (zastąpione przez Discord OAuth2)
 document.addEventListener('DOMContentLoaded', () => {
-    if (typeof renderSavedProfiles === 'function') renderSavedProfiles();
+    window.checkSavedDiscordSession();
 });
 
 // ==========================================

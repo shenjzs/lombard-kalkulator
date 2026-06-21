@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Kasa fiskalna</title>
-    <link id="theme-style" rel="stylesheet" href="style.css?v=4.5.7">
+    <link id="theme-style" rel="stylesheet" href="style.css?v=4.6.7">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -83,26 +83,22 @@
         </div>
     </nav>
 
-    <div id="login-screen" class="login-container active">
+<div id="login-screen" class="login-container active">
         <div class="login-card">
             <i class="fas fa-lock login-icon"></i>
             <h2>Rozpocznij zmianę</h2>
-            <p>Wprowadź swój kod PIN, aby odblokować kasę i rozpocząć przyjmowanie klientów.</p>
+            <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">Weryfikacja tożsamości odbywa się poprzez bezpieczne połączenie serwera Cartelu z Discordem.</p>
             
-            <input type="password" id="employee-login-pin" placeholder="****" class="pin-input" maxlength="4">
-            
-            <button id="login-btn-action" class="login-btn">
-                Zaloguj <i class="fas fa-unlock"></i>
+            <button onclick="login()" id="login-btn-action" class="login-btn" style="background: #5865F2; border-color: #4752C4; color: white; width: 100%; display: flex; justify-content: center; align-items: center; gap: 10px; transition: 0.3s; box-shadow: 0 0 15px rgba(88, 101, 242, 0.4);">
+                <i class="fab fa-discord" style="font-size: 1.3rem;"></i> Zaloguj przez Discord
             </button>
 
-            <div class="remember-me-container" style="margin-top: 15px;">
-                <label class="emp-checkbox-label">
-                    <input type="checkbox" id="remember-me-checkbox" class="emp-checkbox-input">
-                    <span class="emp-access-text">Zapamiętaj mnie</span>
+            <div class="remember-me-container" style="margin-top: 20px;">
+                <label class="emp-checkbox-label" style="width: 100%; justify-content: center; margin-bottom: 0; border-color: rgba(255,255,255,0.1); background: rgba(0,0,0,0.3);">
+                    <input type="checkbox" id="remember-discord-checkbox" class="emp-checkbox-input" checked>
+                    <span class="emp-access-text" style="color: var(--text-secondary);">Zapamiętaj moją sesję</span>
                 </label>
             </div>
-
-            <div id="saved-profiles-container" class="saved-profiles-container"></div>
         </div>
     </div>
 
@@ -434,22 +430,31 @@
     <div id="settings-modal" class="modal">
         <div class="modal-content settings-modal-content">
             <div class="settings-header">
-                <h2><i class="fas fa-cog"></i> Ustawienia konta</h2>
+                <h2><i class="fas fa-cog text-accent-icon"></i> Ustawienia konta</h2>
                 <button id="close-settings-modal-btn" class="settings-close-btn"><i class="fas fa-times"></i></button>
             </div>
-            <p class="settings-desc">Zmień swój kod PIN lub ustawienia systemowe.</p>
+            <p class="settings-desc">Podgląd danych postaci oraz konfiguracja systemu El Cartel.</p>
             <div class="settings-form">
+                
                 <div class="input-group">
-                    <label>Obecny kod PIN</label>
-                    <input type="password" id="old-pin-input" placeholder="••••" class="settings-pin-input" maxlength="4">
+                    <label>Discord ID</label>
+                    <input type="text" id="settings-discord-id" class="settings-profile-input" readonly>
                 </div>
-                <div class="input-group">
-                    <label>Nowy kod PIN</label>
-                    <input type="password" id="new-pin-input" placeholder="••••" class="settings-pin-input highlight-input" maxlength="4">
+                <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                    <div class="input-group" style="flex: 2; margin-bottom: 0;">
+                        <label>Imię i Nazwisko (IC)</label>
+                        <input type="text" id="settings-ic-name" class="settings-profile-input" readonly>
+                    </div>
+                    <div class="input-group" style="flex: 1; margin-bottom: 0;">
+                        <label>SSN</label>
+                        <input type="text" id="settings-ssn" class="settings-profile-input" readonly>
+                    </div>
                 </div>
+
                 <div class="input-group">
-                    <label>Potwierdź nowy PIN</label>
-                    <input type="password" id="new-pin-confirm" placeholder="••••" class="settings-pin-input highlight-input" maxlength="4">
+                    <label>URL zdjęcia profilowego</label>
+                    <input type="text" id="settings-avatar-input" placeholder="https://..." class="settings-profile-input">
+                    <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">Zostaw puste, aby przywrócić domyślny awatar z serwera Discord.</p>
                 </div>
                 
                 <div class="audio-settings-wrapper" style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-top: 10px;">
@@ -463,7 +468,7 @@
                     </label>
                 </div>
 
-                <button id="change-pin-btn" class="settings-save-btn"><i class="fas fa-save"></i> Zapisz</button>
+                <button id="save-settings-btn" class="settings-save-btn btn-accent-submit"><i class="fas fa-save"></i> Zapisz zmiany</button>
             </div>
         </div>
     </div>
@@ -828,6 +833,33 @@
     </div>
 </div>
     
+	<div id="first-login-modal" class="modal z-10005">
+        <div class="modal-content settings-modal-content modal-w480">
+            <div class="settings-header">
+                <h2><i class="fas fa-id-card-alt text-accent-icon"></i> Kartoteka pracownika</h2>
+            </div>
+            <p class="settings-desc mb-20">Wygląda na to, że logujesz się tu po raz pierwszy. Wypełnij swoje dane In-Character, które będą widniały na paragonach i raportach w firmie.</p>
+            <div class="settings-form">
+                <div class="input-group">
+                    <label>Imię i Nazwisko (IC)</label>
+                    <input type="text" id="setup-ic-name" class="custom-input" placeholder="np. Travis Vance">
+                </div>
+                <div class="input-group">
+                    <label>Numer SSN</label>
+                    <input type="number" id="setup-ssn" class="custom-input" placeholder="np. 4512">
+                </div>
+                <div class="input-group">
+                    <label>URL zdjęcia profilowego (opcjonalnie)</label>
+                    <input type="text" id="setup-avatar" class="custom-input" placeholder="https://...">
+                    <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">Jeśli pole zostanie puste, system użyje Twojego avatara z Discorda.</p>
+                </div>
+                <button id="save-setup-btn" class="settings-save-btn btn-accent-submit" onclick="saveFirstSetup()" style="margin-top: 15px;">
+                    <i class="fas fa-check"></i> Zapisz i wejdź na zmianę
+                </button>
+            </div>
+        </div>
+    </div>
+	
     <audio id="sound-login" src="sounds/login.mp3" preload="auto"></audio>
     <audio id="sound-logout" src="sounds/logout.mp3" preload="auto"></audio>
     <audio id="sound-cash" src="sounds/cash.mp3" preload="auto"></audio>
@@ -835,6 +867,6 @@
     <audio id="sound-notification" src="sounds/notification.mp3" preload="auto"></audio>
 	
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js"></script>
-    <script src="script.js?v=4.5.7"></script>
+    <script src="script.js?v=4.6.7"></script>
 </body>
 </html>

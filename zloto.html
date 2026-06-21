@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Przetapianie złota</title>
-    <link rel="stylesheet" href="style-zloto.css?v=4.5.7">
+    <link rel="stylesheet" href="style-zloto.css?v=4.6.7">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -41,24 +41,18 @@
         <div class="login-card">
             <i class="fas fa-lock login-icon"></i>
             <h2>Rozpocznij zmianę</h2>
-            <p>Wprowadź swój kod PIN, aby odblokować panel odlewni.</p>
+            <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">Weryfikacja tożsamości odbywa się poprzez bezpieczne połączenie serwera Cartelu z Discordem.</p>
             
-            <div id="login-normal-form">
-                <input type="password" id="employee-login-pin" placeholder="****" class="pin-input" maxlength="4" style="margin-bottom: 20px;">
-            </div>
-
-            <button onclick="login()" id="login-btn" class="login-btn">
-                Zaloguj <i class="fas fa-lock"></i>
+            <button onclick="login()" id="login-btn-action" class="login-btn" style="background: #5865F2; border-color: #4752C4; color: white; width: 100%; display: flex; justify-content: center; align-items: center; gap: 10px; transition: 0.3s; box-shadow: 0 0 15px rgba(88, 101, 242, 0.4);">
+                <i class="fab fa-discord" style="font-size: 1.3rem;"></i> Zaloguj przez Discord
             </button>
 
             <div class="remember-me-container" style="margin-top: 20px;">
                 <label class="emp-checkbox-label" style="width: 100%; justify-content: center; margin-bottom: 0; border-color: rgba(255,255,255,0.1); background: rgba(0,0,0,0.3);">
-                    <input type="checkbox" id="remember-me-checkbox" class="emp-checkbox-input">
-                    <span class="emp-access-text" style="color: var(--text-secondary);">Zapamiętaj mnie</span>
+                    <input type="checkbox" id="remember-discord-checkbox" class="emp-checkbox-input" checked>
+                    <span class="emp-access-text" style="color: var(--text-secondary);">Zapamiętaj moją sesję</span>
                 </label>
             </div>
-
-            <div id="saved-profiles-container" class="saved-profiles-container"></div>
         </div>
     </div>
 
@@ -245,7 +239,34 @@
         </div>
     </div>
 
+<div id="first-login-modal" class="modal-overlay" style="z-index: 10005;">
+        <div class="settings-modal-content modal-box" style="max-width: 480px;">
+            <div class="settings-header">
+                <h2><i class="fas fa-id-card-alt text-accent"></i> Kartoteka Pracownika</h2>
+            </div>
+            <p class="settings-desc mb-20" style="margin-bottom: 20px;">Wygląda na to, że logujesz się do systemu po raz pierwszy. Wypełnij swoje dane In-Character.</p>
+            <div class="settings-form">
+                <div class="input-group" style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-secondary); font-size: 0.85rem;">Imię i Nazwisko (IC)</label>
+                    <input type="text" id="setup-ic-name" class="settings-pin-input" placeholder="np. Travis Vance" style="width: 100%; letter-spacing: normal;">
+                </div>
+                <div class="input-group" style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-secondary); font-size: 0.85rem;">Numer SSN</label>
+                    <input type="number" id="setup-ssn" class="settings-pin-input" placeholder="np. 4512" style="width: 100%; letter-spacing: normal;">
+                </div>
+                <div class="input-group" style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-secondary); font-size: 0.85rem;">URL zdjęcia profilowego (Opcjonalnie)</label>
+                    <input type="text" id="setup-avatar" class="settings-pin-input" placeholder="https://..." style="width: 100%; letter-spacing: normal;">
+                    <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">Jeśli pole zostanie puste, użyjemy avatara z Discorda.</p>
+                </div>
+                <button id="save-setup-btn" class="settings-save-btn" onclick="saveFirstSetup()" style="margin-top: 15px; width: 100%; background: rgba(34, 197, 94, 0.2); color: var(--success); border: 1px solid var(--success);">
+                    <i class="fas fa-check"></i> Zapisz i wejdź do odlewni
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="toast-container" class="toast-container"></div>
-    <script src="zloto-script.js?v=4.5.7"></script>
+    <script src="zloto-script.js?v=4.6.7"></script>
 </body>
 </html>
