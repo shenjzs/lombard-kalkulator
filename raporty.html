@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>El Cartel | Statystyki</title>
+    <link rel="stylesheet" href="style-raporty.css?v=4.5.7">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div id="global-loading-screen" class="global-loader-overlay hidden">
+        <div class="loader-content">
+            <div class="spinner-ring"></div>
+            <div class="spinner-ring-inner"></div>
+            <i class="fas fa-chart-pie loader-icon"></i>
+            <h2 class="loader-text-main">EL CARTEL ANALYTICS</h2>
+            <p class="loader-text-sub" id="loader-status">Pobieranie statystyk finansowych...</p>
+        </div>
+    </div>
+    <nav class="navbar">
+        <div class="nav-left">
+            <div class="nav-logo">
+                <i class="fas fa-chart-pie"></i> <span class="nav-text">EL CARTEL ANALYTICS</span>
+            </div>
+        </div>
+        <div class="nav-right">
+            <a href="index.html" class="nav-link-btn" title="Kasa (skup)">
+                <i class="fas fa-cash-register"></i> <span class="nav-text">Kasa (skup)</span>
+            </a>
+            <a href="index.html" class="nav-link-btn" title="Kasa (sprzedaż)">
+                <i class="fas fa-hand-holding-usd"></i> <span class="nav-text">Sprzedaj asortyment / NPC</span>
+            </a>
+            <a href="zloto.html" class="nav-link-btn" title="Przetop złoto">
+                <i class="fa-solid fa-temperature-half"></i> <span class="nav-text">Przetop złoto</span>
+            </a>
+            
+            <div id="user-profile" class="user-profile hidden">
+                <div class="user-profile-btn nav-link-btn" onclick="toggleUserMenu()" title="Mój profil">
+                    <i class="fas fa-user-shield"></i> <span class="nav-text" id="logged-boss-name">---</span> <i class="fas fa-chevron-down nav-text" style="font-size: 0.8rem; margin-left: 5px;"></i>
+                </div>
+                <div id="user-dropdown" class="user-dropdown">
+                    <div class="dropdown-item text-danger" onclick="logoutBoss()"><i class="fas fa-sign-out-alt"></i> Wyloguj</div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div id="login-screen" class="login-container active">
+        <div class="login-card">
+            <i class="fas fa-lock login-icon"></i>
+            <h2>Wymagana autoryzacja</h2>
+            <p>Wprowadź kod PIN, aby uzyskać dostęp do raportów finansowych.</p>
+            
+            <div id="login-normal-form">
+                <input type="password" id="boss-pin-input" placeholder="****" class="pin-input" maxlength="4" style="margin-bottom: 20px;">
+            </div>
+
+            <button onclick="loginBoss()" id="login-btn" class="login-btn">
+                Zaloguj <i class="fas fa-unlock"></i>
+            </button>
+
+            <div class="remember-me-container" style="margin-top: 20px;">
+                <label class="emp-checkbox-label" style="width: 100%; justify-content: center; margin-bottom: 0; border-color: rgba(255,255,255,0.1); background: rgba(0,0,0,0.3);">
+                    <input type="checkbox" id="remember-me-checkbox" class="emp-checkbox-input">
+                    <span class="emp-access-text" style="color: var(--text-secondary);">Zapamiętaj mnie</span>
+                </label>
+            </div>
+
+            <div id="saved-profiles-container" class="saved-profiles-container"></div>
+        </div>
+    </div>
+
+    <div id="dashboard-screen" class="container hidden">
+        <header>
+            <h1>RAPORTY FINANSOWE</h1>
+            <div class="header-meta">
+                <button onclick="openEmployeeManager()" class="manage-emp-btn"><i class="fas fa-users-cog"></i> Pracownicy</button>
+                <button onclick="openBonusesManager()" class="manage-emp-btn" style="color: var(--warning); border-color: rgba(245, 158, 11, 0.3);"><i class="fas fa-gift"></i> Premie</button>
+                <button onclick="openClientsManager()" class="manage-emp-btn" style="color: var(--accent-color); border-color: rgba(56, 189, 248, 0.3);"><i class="fas fa-users"></i> Baza klientów</button>
+                <button onclick="openLoyaltySettings()" class="manage-emp-btn" style="color: var(--success); border-color: rgba(34, 197, 94, 0.3);"><i class="fas fa-stamp"></i> Ustawienia lojalnościowe</button>
+                <button onclick="openSystemLogs()" class="manage-emp-btn" style="color: #a855f7; border-color: rgba(168, 85, 247, 0.3);"><i class="fas fa-list-alt"></i> Logi systemowe</button>
+            </div>
+        </header>
+
+        <div class="filters-bar">
+            <div class="filter-group">
+                <label>Pracownik:</label>
+                <select id="filter-employee">
+                    <option value="ALL">Wszyscy pracownicy</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label>Data od:</label>
+                <input type="date" id="filter-date-from">
+            </div>
+            <div class="filter-group">
+                <label>Data do:</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="date" id="filter-date-to">
+                    <button onclick="applyFilter()" id="ok-filter-btn" class="filter-btn success-btn" style="padding: 12px 20px;">
+                        OK
+                    </button>
+                </div>
+            </div>
+            <div class="filter-actions">
+                <button onclick="refreshPage()" class="filter-btn">
+                    <i class="fas fa-sync-alt" id="refresh-icon"></i> Odśwież statystyki
+                </button>
+                <button onclick="sendReportToDiscord()" id="send-report-btn" class="boss-discord-btn">
+                    <i class="fab fa-discord"></i> Wyślij raport na kanał
+                </button>
+            </div>
+        </div>
+
+        <div class="goal-section">
+            <div class="goal-header">
+                <div class="goal-title">
+                    <i class="fas fa-bullseye"></i> Cel finansowy (tygodniowy)
+                </div>
+                <div class="goal-settings">
+                    <input type="number" id="goal-amount-input" placeholder="Ustaw cel $" onchange="updateGoalValue(this.value)">
+                </div>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div id="goal-progress-fill" class="progress-fill" style="width: 0%"></div>
+                </div>
+                <div class="progress-stats">
+                    <span id="goal-current-status">Realizacja: 0$ / 0$</span>
+                    <span id="goal-percentage" class="goal-pct">0%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="kpi-grid">
+            <div class="kpi-card danger">
+                <div class="kpi-icon"><i class="fas fa-shopping-basket"></i></div>
+                <div class="kpi-info">
+                    <span class="kpi-label">Wypływ (skupione)</span>
+                    <span class="kpi-value" id="total-buy">0$</span>
+                </div>
+            </div>
+            <div class="kpi-card success">
+                <div class="kpi-icon"><i class="fas fa-truck-loading"></i></div>
+                <div class="kpi-info">
+                    <span class="kpi-label">Wpływ (sprzedane)</span>
+                    <span class="kpi-value" id="total-sell">0$</span>
+                </div>
+            </div>
+            <div class="kpi-card" style="border-bottom: 5px solid var(--warning);">
+                <div class="kpi-icon" style="background: rgba(245, 158, 11, 0.15); color: var(--warning);"><i class="fas fa-gift"></i></div>
+                <div class="kpi-info">
+                    <span class="kpi-label">Wypłacone premie</span>
+                    <span class="kpi-value" id="total-bonuses" style="color: var(--warning);">0$</span>
+                </div>
+            </div>
+            <div class="kpi-card info">
+                <div class="kpi-icon"><i class="fas fa-balance-scale"></i></div>
+                <div class="kpi-info">
+                    <span class="kpi-label">Bilans</span>
+                    <span class="kpi-value" id="total-balance">0$</span>
+                </div>
+            </div>
+            <div class="kpi-card highlight">
+                <div class="kpi-icon"><i class="fas fa-gem"></i></div>
+                <div class="kpi-info">
+                    <span class="kpi-label">Zysk (na czysto)</span>
+                    <span class="kpi-value" id="total-profit">0$</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-grid" style="margin-bottom: 35px;">
+            <div class="data-section">
+                <div class="section-header info-header">
+                    <h3><i class="fas fa-chart-bar"></i> TOP 5 produktów generujących przychód</h3>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="topItemsChart"></canvas>
+                </div>
+            </div>
+            <div class="data-section">
+                <div class="section-header highlight-header">
+                    <h3><i class="fas fa-chart-line"></i> Przepływ gotówki</h3>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="cashflowChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-grid" style="margin-bottom: 35px;">
+            <div class="data-section">
+                <div class="section-header highlight-header" style="color: var(--warning);">
+                    <h3><i class="fas fa-fire"></i> Godziny szczytu</h3>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="peakHoursChart"></canvas>
+                </div>
+            </div>
+            <div class="data-section">
+                <div class="section-header highlight-header" style="color: var(--warning);">
+                    <h3><i class="fas fa-gift"></i> Podział premii wg. pracowników</h3>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="bonusesChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="tables-container">
+            <div class="data-section">
+                <div class="section-header danger-header" onclick="toggleTable('buy-table-wrapper', this)" style="cursor: pointer;">
+                    <h3 style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                        <span><i class="fas fa-arrow-down"></i> Zestawienie skupu</span>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </h3>
+                </div>
+                <div class="table-wrapper" id="buy-table-wrapper">
+                    <div class="inner-table">
+                        <table class="modern-table">
+                            <thead>
+                                <tr>
+                                    <th>Przedmiot</th>
+                                    <th style="text-align: center;">Ilość</th>
+                                    <th style="text-align: right;">Wydano</th>
+                                </tr>
+                            </thead>
+                            <tbody id="buy-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="data-section">
+                <div class="section-header success-header" onclick="toggleTable('sell-table-wrapper', this)" style="cursor: pointer;">
+                    <h3 style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                        <span><i class="fas fa-arrow-up"></i> Zestawienie sprzedaży</span>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </h3>
+                </div>
+                <div class="table-wrapper" id="sell-table-wrapper">
+                    <div class="inner-table">
+                        <table class="modern-table">
+                            <thead>
+                                <tr>
+                                    <th>Przedmiot</th>
+                                    <th style="text-align: center;">Ilość</th>
+                                    <th style="text-align: right;">Zarobiono</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sell-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="ranking-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 35px; margin-top: 35px;">
+            <div class="data-section">
+                <div class="section-header info-header">
+                    <h3><i class="fas fa-cart-arrow-down"></i> Ranking skupu (zaopatrzenie)</h3>
+                </div>
+                <div class="table-wrapper">
+                    <div class="inner-table">
+                        <table class="modern-table">
+                            <thead>
+                                <tr>
+                                    <th>Miejsce</th>
+                                    <th>Pracownik</th>
+                                    <th style="text-align: right;">Suma Skupu</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ranking-buy-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="data-section">
+                <div class="section-header success-header">
+                    <h3><i class="fas fa-truck-loading"></i> Ranking sprzedaży + wywózka</h3>
+                </div>
+                <div class="table-wrapper">
+                    <div class="inner-table">
+                        <table class="modern-table">
+                            <thead>
+                                <tr>
+                                    <th>Miejsce</th>
+                                    <th>Pracownik</th>
+                                    <th style="text-align: right;">Suma sprzedaży</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ranking-sell-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="data-section" style="margin-top: 35px;">
+            <div class="section-header highlight-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                <h3 style="margin: 0;"><i class="fas fa-history"></i> Ostatnie operacje</h3>
+                
+                <div style="position: relative; width: 320px; max-width: 100%;">
+                    <i class="fas fa-search" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+                    <input type="text" id="feed-search-input" class="feed-search-input" placeholder="Szukaj ID, pracownika, towaru..." style="width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: white; padding: 10px 15px 10px 40px; border-radius: 12px; outline: none; font-size: 0.9rem; transition: 0.3s;">
+                </div>
+            </div>
+            <div class="feed-container" id="activity-feed-container">
+            </div>
+        </div>
+
+        <footer class="report-footer">
+            <p>Wygenerowano automatycznie przez system EL CARTEL ANALYTICS</p>
+            <p id="report-timestamp"></p>
+        </footer>
+    </div>
+
+    <div id="clients-manager-modal" class="emp-modal-overlay hidden">
+        <div class="emp-modal-content" style="max-width: 800px;">
+            <div class="emp-modal-header">
+                <h2 style="color: var(--accent-color);"><i class="fas fa-users"></i> Baza klientów (pieczątki)</h2>
+                <button onclick="closeClientsManager()" class="emp-close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="emp-modal-body">
+                <div style="position: relative; margin-bottom: 20px;">
+                    <i class="fas fa-search" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+                    <input type="text" id="client-search-input" placeholder="Wyszukaj klienta po numerze SSN..." class="emp-input" style="width: 100%; padding-left: 40px;" oninput="filterClients()">
+                </div>
+                
+                <div class="emp-table-container">
+                    <table class="modern-table emp-table">
+                        <thead>
+                            <tr>
+                                <th>Numer SSN Klienta</th>
+                                <th style="text-align: center;">Punkty Lojalnościowe</th>
+                                <th style="text-align: right;">Suma wygenerowana ($)</th>
+                                <th style="text-align: right;">Akcje</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clients-table-body">
+                            <tr><td colspan="4" style="text-align:center;">Ładowanie bazy klientów...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="reset-stamps-modal" class="emp-modal-overlay hidden" style="z-index: 10005;">
+        <div class="emp-modal-content" style="max-width: 400px; text-align: center;">
+            <div class="emp-modal-header" style="justify-content: center; position: relative;">
+                <h2 style="color: var(--danger);"><i class="fas fa-exclamation-triangle"></i> Reset punktów</h2>
+                <button onclick="closeResetStampsModal()" class="emp-close-btn" style="position: absolute; right: 20px;"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="emp-modal-body">
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Czy na pewno chcesz wyzerować pieczątki klienta o SSN: <strong id="reset-stamps-ssn" style="color: white;"></strong>?<br><br>
+                    Wprowadź swój PIN, aby potwierdzić.
+                </p>
+                <input type="hidden" id="reset-stamps-target-ssn">
+                <input type="password" id="reset-stamps-pin" placeholder="****" class="pin-input" maxlength="4" style="margin-bottom: 20px; width: 100%;">
+                <button onclick="confirmResetStamps()" id="confirm-reset-stamps-btn" class="danger-submit-btn" style="margin-top: 0; width: 100%;">
+                    <i class="fas fa-trash-alt"></i> Zresetuj pieczątki
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loyalty-settings-modal" class="emp-modal-overlay hidden">
+        <div class="emp-modal-content" style="max-width: 800px;">
+            <div class="emp-modal-header">
+                <h2 style="color: var(--success);"><i class="fas fa-stamp"></i> Ustawienia systemu lojalnościowego</h2>
+                <button onclick="closeLoyaltySettings()" class="emp-close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="emp-modal-body">
+                
+                <div class="data-section" style="margin-bottom: 25px; padding: 20px; background: rgba(0,0,0,0.2);">
+                    <h3 style="margin-bottom: 15px; color: var(--text-primary); font-size: 1.1rem;"><i class="fas fa-calculator"></i> Przelicznik punktów</h3>
+                    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                        <span style="color: var(--text-secondary);">Wydane</span>
+                        <input type="number" id="loyalty-rate-input" class="emp-input" placeholder="np. 1500" style="width: 120px; text-align: center; flex: none;">
+                        <span style="color: var(--text-secondary);">$ = 1 pieczątka</span>
+                        <button onclick="saveLoyaltyRate()" id="save-rate-btn" class="filter-btn success-btn" style="margin-left: auto;">Zapisz przelicznik</button>
+                    </div>
+                </div>
+
+                <div class="emp-add-form" style="border-color: rgba(34, 197, 94, 0.3); background: rgba(34, 197, 94, 0.05);">
+                    <input type="text" id="new-reward-name" placeholder="Nazwa nagrody (np. złoty zegarek)" class="emp-input">
+                    <input type="number" id="new-reward-cost" placeholder="Koszt (pieczątki)" class="emp-input" style="flex: 0.5; text-align: center;">
+                    <button onclick="addLoyaltyReward()" id="add-reward-btn" class="filter-btn success-btn" style="background: var(--success); color: #000; border: none;">
+                        <i class="fas fa-plus"></i> Dodaj nagrodę
+                    </button>
+                </div>
+                
+                <div class="emp-table-container">
+                    <table class="modern-table emp-table">
+                        <thead>
+                            <tr>
+                                <th>Nazwa Nagrody</th>
+                                <th style="text-align: center;">Koszt (pieczątki)</th>
+                                <th style="text-align: right;">Akcje</th>
+                            </tr>
+                        </thead>
+                        <tbody id="loyalty-rewards-table-body">
+                            <tr><td colspan="3" style="text-align:center;">Ładowanie nagród...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="bonuses-manager-modal" class="emp-modal-overlay hidden">
+        <div class="emp-modal-content" style="max-width: 800px;">
+            <div class="emp-modal-header">
+                <h2 style="color: var(--warning);"><i class="fas fa-gift"></i> Panel premiowy</h2>
+                <button onclick="closeBonusesManager()" class="emp-close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="emp-modal-body">
+                <div class="emp-add-form" style="border-color: rgba(245, 158, 11, 0.3); background: rgba(245, 158, 11, 0.05);">
+                    <select id="new-bonus-emp" class="emp-input">
+                        <option value="">Wybierz pracownika...</option>
+                    </select>
+                    <input type="number" id="new-bonus-amount" placeholder="Kwota ($)" class="emp-input" style="flex: 0.5; text-align: center;">
+                    <input type="text" id="new-bonus-reason" placeholder="Tytuł" class="emp-input">
+                    <button onclick="addBonus()" id="add-bonus-btn" class="filter-btn success-btn" style="background: var(--warning); color: #000; border: none;">
+                        <i class="fas fa-plus"></i> Wypłać
+                    </button>
+                </div>
+                
+                <div class="emp-table-container">
+                    <table class="modern-table emp-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Pracownik</th>
+                                <th>Tytuł</th>
+                                <th style="text-align: right;">Kwota</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bonuses-table-body">
+                            <tr><td colspan="4" style="text-align:center;">Ładowanie danych...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="employee-manager-modal" class="emp-modal-overlay hidden">
+        <div class="emp-modal-content">
+            <div class="emp-modal-header">
+                <h2><i class="fas fa-users-cog"></i> Zarządzanie pracownikami</h2>
+                <button onclick="closeEmployeeManager()" class="emp-close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="emp-modal-body">
+                <div class="emp-add-form">
+                    <input type="text" id="new-emp-name" placeholder="Imię i nazwisko IC" class="emp-input">
+                    <input type="password" id="new-emp-pin" placeholder="PIN (4 cyfry)" maxlength="4" class="emp-input pin-input-small">
+                    
+                    <select id="new-emp-rank" class="emp-input emp-select-rank">
+                        <option value="Właściciel">Właściciel</option>
+                        <option value="Kierownik">Kierownik</option>
+                        <option value="Pracownik">Pracownik</option>
+                        <option value="Praktykant" selected>Praktykant</option>
+                    </select>
+
+                    <label class="emp-checkbox-label">
+                        <input type="checkbox" id="new-emp-boss" class="emp-checkbox-input"> 
+                        <span class="emp-access-text">Dostęp do panelu</span>
+                    </label>
+                    <button onclick="addNewEmployee()" id="add-emp-btn" class="filter-btn success-btn"><i class="fas fa-user-plus"></i> Dodaj</button>
+                </div>
+                
+                <div class="emp-table-container">
+                    <table class="modern-table emp-table">
+                        <thead>
+                            <tr>
+                                <th>Pracownik</th>
+                                <th style="text-align: center;">Stopień</th>
+                                <th style="text-align: center;">Dostęp do panelu</th>
+                                <th style="text-align: right;">Akcje</th>
+                            </tr>
+                        </thead>
+                        <tbody id="emp-manager-table-body">
+                            <tr><td colspan="4" style="text-align:center;">Ładowanie danych...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-employee-modal" class="emp-modal-overlay hidden" style="z-index: 10000;">
+        <div class="emp-modal-content" style="max-width: 500px;">
+            <div class="emp-modal-header">
+                <h2><i class="fas fa-user-edit"></i> Edycja pracownika</h2>
+                <button onclick="closeEditEmployee()" class="emp-close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="emp-modal-body" style="padding-top: 15px;">
+                <div class="settings-form">
+                    <input type="hidden" id="edit-emp-pin">
+                    
+                    <div class="input-group">
+                        <label>Pracownik</label>
+                        <input type="text" id="edit-emp-name" class="emp-input" disabled style="opacity: 0.7; cursor: not-allowed;">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Stopień</label>
+                        <select id="edit-emp-rank" class="emp-input emp-select-rank">
+                            <option value="Właściciel">Właściciel</option>
+                            <option value="Kierownik">Kierownik</option>
+                            <option value="Pracownik">Pracownik</option>
+                            <option value="Praktykant">Praktykant</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Numer SSN</label>
+                        <input type="number" id="edit-emp-ssn" placeholder="np. 12345" class="emp-input">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Link do zdjęcia profilowego (URL)</label>
+                        <input type="text" id="edit-emp-photo" placeholder="https://..." class="emp-input">
+                    </div>
+                    
+                    <button onclick="saveEmployeeEdit()" id="save-edit-emp-btn" class="settings-save-btn" style="margin-top: 20px;">
+                        <i class="fas fa-save"></i> Zapisz zmiany
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="product-stats-modal" class="emp-modal-overlay hidden" style="z-index: 10010;">
+        <div class="emp-modal-content" style="max-width: 700px;">
+            <div class="emp-modal-header">
+                <h2 style="color: var(--accent-color);"><i class="fas fa-box-open"></i> Statystyki produktu</h2>
+                <button onclick="closeProductStats()" class="emp-close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="emp-modal-body">
+                <h3 id="ps-item-name" style="text-align: center; font-size: 1.8rem; margin-bottom: 20px; color: white;">Nazwa Produktu</h3>
+                
+                <div class="p-stat-box" style="text-align: center; margin-bottom: 20px; border: 1px solid var(--warning); background: rgba(245, 158, 11, 0.05);">
+                    <div style="font-size:0.75rem; color:var(--warning); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px; font-weight: 800;">Szacowany zysk na produkcie (Netto)</div>
+                    <div class="p-stat-val" id="ps-total-profit" style="color:var(--warning); text-shadow: 0 0 10px rgba(245,158,11,0.3);">0$</div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                    <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 16px; padding: 20px;">
+                        <h4 style="color: var(--danger); text-align: center; margin-bottom: 15px; font-weight: 800; font-size: 1.1rem;"><i class="fas fa-shopping-basket"></i> SKUP</h4>
+                        <div class="insight-row" style="margin-bottom: 8px;"><span class="insight-label">Wolumen</span> <span class="insight-value" id="ps-buy-qty">0 szt.</span></div>
+                        <div class="insight-row" style="margin-bottom: 8px;"><span class="insight-label">Wydano</span> <span class="insight-value" style="color: var(--danger);" id="ps-buy-val">0$</span></div>
+                        <div class="insight-row" style="margin-bottom: 8px;"><span class="insight-label">Śr. cena/szt.</span> <span class="insight-value" id="ps-buy-avg">0$</span></div>
+                        <div class="insight-row"><span class="insight-label">Min / Max</span> <span class="insight-value" id="ps-buy-minmax">0$ / 0$</span></div>
+                    </div>
+
+                    <div style="background: rgba(34, 197, 94, 0.05); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 16px; padding: 20px;">
+                        <h4 style="color: var(--success); text-align: center; margin-bottom: 15px; font-weight: 800; font-size: 1.1rem;"><i class="fas fa-truck-loading"></i> SPRZEDAŻ</h4>
+                        <div class="insight-row" style="margin-bottom: 8px;"><span class="insight-label">Wolumen</span> <span class="insight-value" id="ps-sell-qty">0 szt.</span></div>
+                        <div class="insight-row" style="margin-bottom: 8px;"><span class="insight-label">Zarobiono</span> <span class="insight-value" style="color: var(--success);" id="ps-sell-val">0$</span></div>
+                        <div class="insight-row" style="margin-bottom: 8px;"><span class="insight-label">Śr. cena/szt.</span> <span class="insight-value" id="ps-sell-avg">0$</span></div>
+                        <div class="insight-row"><span class="insight-label">Min / Max</span> <span class="insight-value" id="ps-sell-minmax">0$ / 0$</span></div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 25px; padding-top: 20px; border-top: 1px dashed rgba(255,255,255,0.1);">
+                    <h4 style="font-size: 0.9rem; font-weight: 800; color: var(--accent-color); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; text-align: center;"><i class="fas fa-chart-line"></i> Historia wahań ceny (Skup vs Sprzedaż)</h4>
+                    <div class="chart-wrapper" style="height: 250px; width: 100%; position: relative; padding: 0;">
+                        <canvas id="productDetailsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="system-logs-modal" class="emp-modal-overlay hidden" style="z-index: 10020;">
+        <div class="emp-modal-content" style="max-width: 950px;">
+            <div class="emp-modal-header">
+                <h2 style="color: #a855f7;"><i class="fas fa-list-alt"></i> Dziennik zdarzeń systemowych</h2>
+                <button onclick="closeSystemLogs()" class="emp-close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="emp-modal-body">
+                <div id="system-logs-stats-summary" style="display: flex; gap: 15px; margin-bottom: 20px; justify-content: space-between; flex-wrap: wrap;"></div>
+                
+                <div style="display: flex; gap: 15px; margin-bottom: 20px; align-items: center;">
+                    <div style="position: relative; flex-grow: 1;">
+                        <i class="fas fa-search" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+                        <input type="text" id="logs-search-input" placeholder="Wyszukaj logi (np. nazwa pracownika, usunięto pracownika, logowanie)..." class="emp-input" style="width: 100%; padding-left: 40px;" oninput="filterSystemLogs()">
+                    </div>
+                    <button id="refresh-logs-btn" onclick="refreshSystemLogs()" class="filter-btn success-btn" style="white-space: nowrap; height: 43px;">
+                        <i class="fas fa-sync-alt"></i> Odśwież
+                    </button>
+                </div>
+                
+                <div class="emp-table-container">
+                    <table class="modern-table emp-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 130px;">Data i czas</th>
+                                <th style="width: 160px;">Kto</th>
+                                <th style="width: 160px; text-align: center;">Typ akcji</th>
+                                <th style="text-align: left;">Opis zdarzenia</th>
+                            </tr>
+                        </thead>
+                        <tbody id="system-logs-table-body">
+                            <tr><td colspan="4" style="text-align:center;">Ładowanie logów...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="report-download-zone" style="position: absolute; left: -9999px;">
+        <div id="report-visual-card" class="visual-report-template">
+            <div class="v-report-header">
+                <div class="v-logo">EL CARTEL ANALYTICS</div>
+                <div class="v-title">RAPORT FINANSOWY</div>
+                <div class="v-date" id="v-report-date"></div>
+            </div>
+            <div class="v-main-stats" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="v-stat-box">
+                    <span class="v-label">ŁĄCZNE WYDATKI</span>
+                    <span class="v-value v-red" id="v-buy">0$</span>
+                </div>
+                <div class="v-stat-box">
+                    <span class="v-label">PREMIE</span>
+                    <span class="v-value" style="color: var(--warning);" id="v-bonus">0$</span>
+                </div>
+                <div class="v-stat-box">
+                    <span class="v-label">ŁĄCZNE PRZYCHODY</span>
+                    <span class="v-value v-green" id="v-sell">0$</span>
+                </div>
+                <div class="v-stat-box highlight">
+                    <span class="v-label">ZYSK NETTO</span>
+                    <span class="v-value" id="v-bal">0$</span>
+                </div>
+            </div>
+            <div class="v-tables">
+                <div class="v-table-col">
+                    <div class="v-table-title">NAJCZĘSTSZY SKUP</div>
+                    <div id="v-buy-rows"></div>
+                </div>
+                <div class="v-table-col">
+                    <div class="v-table-title">NAJCZĘSTSZA SPRZEDAŻ</div>
+                    <div id="v-sell-rows"></div>
+                </div>
+            </div>
+            <div class="v-footer">
+                <span>Dokument wygenerowany przez system EL CARTEL</span>
+                <span id="v-footer-id"></span>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
+    <script src="raporty.js?v=4.5.7"></script>
+</body>
+</html>
