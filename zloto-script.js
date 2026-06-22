@@ -1,4 +1,4 @@
-const APP_VERSION = "4.6.7";
+const APP_VERSION = "4.6.8";
 
 // ==========================================
 // KONFIGURACJA
@@ -128,10 +128,14 @@ window.login = function() {
 
             const userData = event.data.user;
 
-            // --- ZAPAMIĘTYWANIE SESJI DISCORD ---
+            // --- ZAPAMIĘTYWANIE SESJI DISCORD (NA 12 GODZIN) ---
             const rememberCheckbox = document.getElementById('remember-discord-checkbox');
             if (rememberCheckbox && rememberCheckbox.checked) {
-                localStorage.setItem('elcartel_gold_discord_session', JSON.stringify(userData));
+                const sessionData = {
+                    user: userData,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('elcartel_gold_discord_session', JSON.stringify(sessionData));
             }
             // -------------------------------------
 
@@ -143,6 +147,10 @@ window.login = function() {
 };
 
 window.executeLoginSequence = async function(userData, btnElement, originalBtnContent) {
+    // --- ZABEZPIECZENIE PRZED PODWÓJNYM LOGOWANIEM ---
+    if (window.isLoginInProgress) return;
+    window.isLoginInProgress = true;
+
     if (btnElement) {
         btnElement.disabled = true;
         btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Weryfikacja rangi...';
@@ -162,7 +170,8 @@ window.executeLoginSequence = async function(userData, btnElement, originalBtnCo
                 btnElement.disabled = false;
                 btnElement.innerHTML = originalBtnContent || `<i class="fab fa-discord"></i> Zaloguj przez Discord`;
             }
-            localStorage.removeItem('elcartel_gold_discord_session'); // Zabezpieczenie: ubijamy lewą sesję
+            localStorage.removeItem('elcartel_gold_discord_session'); 
+            window.isLoginInProgress = false; // Odblokowanie
             return;
         }
 
@@ -182,6 +191,7 @@ window.executeLoginSequence = async function(userData, btnElement, originalBtnCo
             document.getElementById('setup-avatar').value = userData.avatar || "";
             document.getElementById('first-login-modal').classList.add('active');
             window.tempDiscordUserData = userData; 
+            window.isLoginInProgress = false; // Odblokowanie
         }
     } catch (e) {
         showNotice("Błąd połączenia z bazą Cartelu!", "danger");
@@ -189,6 +199,7 @@ window.executeLoginSequence = async function(userData, btnElement, originalBtnCo
             btnElement.disabled = false;
             btnElement.innerHTML = originalBtnContent || `<i class="fab fa-discord"></i> Zaloguj przez Discord`;
         }
+        window.isLoginInProgress = false; // Odblokowanie
     }
 };
 
@@ -298,9 +309,27 @@ window.checkSavedDiscordSession = function() {
     if (!saved) return;
 
     try {
-        const userData = JSON.parse(saved);
-        if (!userData || !userData.name) return;
-        window.executeLoginSequence(userData, null, null);
+        const sessionData = JSON.parse(saved);
+        
+        // Kompatybilność wsteczna ze starymi sesjami oraz nowymi (z czasem)
+        const userData = sessionData.user ? sessionData.user : sessionData;
+        const timestamp = sessionData.timestamp || 0;
+        
+        // Obliczamy 12 godzin w milisekundach (12h * 60m * 60s * 1000ms = 43200000)
+        const TWELVE_HOURS = 43200000;
+        
+        if (timestamp > 0 && (Date.now() - timestamp > TWELVE_HOURS)) {
+            console.log("[System] Zapisana sesja wygasła po 12h. Wymagane ponowne logowanie.");
+            localStorage.removeItem('elcartel_gold_discord_session');
+            return;
+        }
+
+        if (!userData || !userData.id) return;
+        
+        const btn = document.getElementById('login-btn-action');
+        const originalHtml = btn ? btn.innerHTML : `<i class="fab fa-discord"></i> Zaloguj przez Discord`;
+
+        window.executeLoginSequence(userData, btn, originalHtml);
     } catch (e) {
         console.error("Błąd odczytu sesji:", e);
         localStorage.removeItem('elcartel_gold_discord_session');
@@ -315,6 +344,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // BEZPIECZNE WYLOGOWANIE Z SYSTEMU (ZŁOTO)
 // ==========================================
 window.logout = function() {
+    window.isLoginInProgress = false; // Zdejmuje blokadę po wylogowaniu
+
     // --- CZYSZCZENIE TRWAŁEJ SESJI DISCORD ---
     localStorage.removeItem('elcartel_gold_discord_session');
     

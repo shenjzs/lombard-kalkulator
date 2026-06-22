@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "4.6.7"; // Normalizacja nazw produktów
+const APP_VERSION = "4.6.8"; // Normalizacja nazw produktów
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
@@ -171,7 +171,7 @@ document.addEventListener('scroll', function() {
 });
 
 // ==========================================
-// SYSTEM LOGOWANIA DISCORD OAUTH2 + KARTOTEKA IC + LIVE ROLE CHECK (STATYSTYKI)
+// SYSTEM LOGOWANIA DISCORD OAUTH2 (STATYSTYKI) + 12H PAMIĘCI
 // ==========================================
 window.loginBoss = function() {
     const btn = document.getElementById('login-btn');
@@ -207,6 +207,17 @@ window.loginBoss = function() {
             clearInterval(checkPopup);
 
             const userData = event.data.user;
+
+            // --- ZAPAMIĘTYWANIE SESJI DISCORD (NA 12 GODZIN) ---
+            const rememberCheckbox = document.getElementById('remember-discord-checkbox');
+            if (rememberCheckbox && rememberCheckbox.checked) {
+                const sessionData = {
+                    user: userData,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('elcartel_discord_session', JSON.stringify(sessionData));
+            }
+            // -------------------------------------
             
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Weryfikacja ról...';
             try {
@@ -223,7 +234,6 @@ window.loginBoss = function() {
                     return;
                 }
 
-                // Poprawione przekazanie parametru btn
                 window.executeReportsLoginSequence(userData, roleData.roles, btn, originalBtnContent);
             } catch(e) {
                 console.error("Błąd weryfikacji ról:", e);
@@ -238,16 +248,19 @@ window.loginBoss = function() {
     window.addEventListener('message', messageListener);
 };
 
-// --- POBIERANIE DANYCH POSTACI IC I SYNCHRONIZACJA RANGI ---
 window.executeReportsLoginSequence = async function(userData, userRoles, btnElement, originalBtnContent) {
+    // --- ZABEZPIECZENIE PRZED PODWÓJNYM LOGOWANIEM ---
+    if (window.isLoginInProgress) return;
+    window.isLoginInProgress = true;
+
     if (btnElement) btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Pobieranie kartoteki...';
 
     try {
         const res = await fetch(`https://elcartel-wbhk.bcjds9j7ht.workers.dev/reports?action=get_employee&discord_id=${userData.id}`);
         const empData = await res.json();
 
-        // Wyznaczanie stanowiska (rangi) na podstawie ról z Discorda
-        let detectedRank = "Pracownik"; // Ranga domyślna
+        // Wyznaczanie stanowiska (rangi)
+        let detectedRank = "Pracownik"; 
         if (typeof RANK_HIERARCHY !== 'undefined') {
             for (let r of RANK_HIERARCHY) {
                 if (userRoles.includes(r.id)) {
@@ -258,7 +271,7 @@ window.executeReportsLoginSequence = async function(userData, userRoles, btnElem
         }
 
         if (empData && empData.ic_name) {
-            // Cicha aktualizacja bazy przy zmianie rangi
+            // Cicha aktualizacja bazy
             if (empData.rank !== detectedRank) {
                 fetch("https://elcartel-wbhk.bcjds9j7ht.workers.dev/reports", {
                     method: "POST",
@@ -287,6 +300,7 @@ window.executeReportsLoginSequence = async function(userData, userRoles, btnElem
             
             window.tempDiscordUserData = userData; 
             window.tempDetectedRank = detectedRank; 
+            window.isLoginInProgress = false; // Odblokowanie
         }
     } catch (e) {
         console.error("Błąd połączenia z bazą:", e);
@@ -295,6 +309,7 @@ window.executeReportsLoginSequence = async function(userData, userRoles, btnElem
             btnElement.disabled = false;
             btnElement.innerHTML = originalBtnContent;
         }
+        window.isLoginInProgress = false; // Odblokowanie
     }
 };
 
@@ -468,6 +483,7 @@ window.checkSavedDiscordSession = async function() {
 };
 
 window.logoutBoss = function() {
+	window.isLoginInProgress = false;
     localStorage.removeItem('elcartel_discord_session');
     
     if (window.accessCheckInterval) clearInterval(window.accessCheckInterval);
@@ -2798,36 +2814,41 @@ function showUpdatePrompt(serverVersion) {
     document.body.appendChild(div);
 }
 
-// ==========================================
-// AUTOMATYCZNE LOGOWANIE ZAPAMIĘTANEJ SESJI
-// ==========================================
-window.checkSavedDiscordSession = function() {
+window.checkSavedDiscordSession = async function() {
     const saved = localStorage.getItem('elcartel_discord_session');
-    if (!saved) return; // Brak zapisanej sesji, zostajemy na ekranie logowania
+    if (!saved) return;
 
     try {
-        const userData = JSON.parse(saved);
-        if (!userData || !userData.name) return;
+        const sessionData = JSON.parse(saved);
+        
+        // Kompatybilność wsteczna z nowymi (z czasem) i starymi logowaniami
+        const userData = sessionData.user ? sessionData.user : sessionData;
+        const timestamp = sessionData.timestamp || 0;
+        const TWELVE_HOURS = 43200000;
+        
+        // Wyrzucamy, jeśli minęło 12 godzin
+        if (timestamp > 0 && (Date.now() - timestamp > TWELVE_HOURS)) {
+            console.log("[System] Zapisana sesja wygasła po 12h. Wymagane ponowne logowanie.");
+            localStorage.removeItem('elcartel_discord_session');
+            return;
+        }
 
-        // Wstrzykujemy dane zalogowanego Szefa
-        currentEmployeeName = userData.name;
-        const nameDisplay = document.getElementById('logged-boss-name');
-        if (nameDisplay) nameDisplay.innerText = currentEmployeeName.toUpperCase();
+        if (!userData || !userData.id) return;
 
-        // Błyskawicznie przełączamy widoki bez animacji logowania
-        document.getElementById('login-screen').classList.remove('active');
-        document.getElementById('dashboard-screen').classList.remove('hidden');
-        document.getElementById('user-profile').classList.remove('hidden');
+        // Odświeżanie tokenów ról na żywo
+        const roleRes = await fetch(`https://elcartel-wbhk.bcjds9j7ht.workers.dev/reports?action=check_access&discord_id=${userData.id}`);
+        const roleData = await roleRes.json();
+        
+        const hasAccess = roleData.roles && roleData.roles.some(r => ALLOWED_DISCORD_ROLES.includes(r));
 
-        showNotice(`Witaj ponownie, ${userData.name}!`, "success");
+        if (!hasAccess) {
+            localStorage.removeItem('elcartel_discord_session');
+            return; 
+        }
 
-        // Pobieramy dane pracowników w tle
-        window.preloadEmployeesData().then(d => { if(d.employees) window.currentEmployeesList = d.employees; });
-
-        // Ładujemy statystyki finansowe
-        loadRealData().catch(() => {
-            showNotice("Uwaga: Wystąpił problem przy ładowaniu statystyk.", "danger");
-        });
+        const btn = document.getElementById('login-btn');
+        const btnHTML = btn ? btn.innerHTML : '';
+        window.executeReportsLoginSequence(userData, roleData.roles, btn, btnHTML);
 
     } catch (e) {
         console.error("Błąd odczytu sesji:", e);

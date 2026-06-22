@@ -1,4 +1,4 @@
-const APP_VERSION = "4.6.7";
+const APP_VERSION = "4.6.8";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const ALLOWED_DISCORD_ROLES = ["1518034647219572746"];
@@ -440,7 +440,7 @@ window.switchView = function(view) {
 }
 
 // ==========================================
-// LOGOWANIE OAUTH2 DISCORD W KASIE Z AUTO-SYNC RANG
+// LOGOWANIE OAUTH2 DISCORD W KASIE Z AUTO-SYNC RANG I PAMIĘCIĄ 12H
 // ==========================================
 window.login = function() {
     const btn = document.getElementById('login-btn-action');
@@ -477,10 +477,14 @@ window.login = function() {
 
             const userData = event.data.user;
 
-            // --- ZAPAMIĘTYWANIE SESJI DISCORD ---
+            // --- ZAPAMIĘTYWANIE SESJI DISCORD (NA 12 GODZIN) ---
             const rememberCheckbox = document.getElementById('remember-discord-checkbox');
             if (rememberCheckbox && rememberCheckbox.checked) {
-                localStorage.setItem('elcartel_discord_session', JSON.stringify(userData));
+                const sessionData = {
+                    user: userData,
+                    timestamp: Date.now() // Zapisujemy dokładny moment logowania
+                };
+                localStorage.setItem('elcartel_discord_session', JSON.stringify(sessionData));
             }
             // -------------------------------------
 
@@ -4755,6 +4759,45 @@ async function checkPagerMessages() {
 document.addEventListener('DOMContentLoaded', () => {
     window.checkSavedDiscordSession();
 });
+
+// ==========================================
+// PRZYWRACANIE ZAPISANEJ SESJI (WAŻNOŚĆ: 12 GODZIN)
+// ==========================================
+window.checkSavedDiscordSession = function() {
+    const saved = localStorage.getItem('elcartel_discord_session');
+    if (!saved) return;
+
+    try {
+        const sessionData = JSON.parse(saved);
+        
+        // Kompatybilność wsteczna ze starymi sesjami oraz nowymi (z czasem)
+        const userData = sessionData.user ? sessionData.user : sessionData;
+        const timestamp = sessionData.timestamp || 0;
+        
+        // Obliczamy 12 godzin w milisekundach (12h * 60m * 60s * 1000ms = 43200000)
+        const TWELVE_HOURS = 43200000;
+        
+        // Sprawdzamy czy czas minął. Jeśli tak -> usuwamy starą sesję i przerywamy logowanie
+        if (timestamp > 0 && (Date.now() - timestamp > TWELVE_HOURS)) {
+            console.log("[System] Zapisana sesja wygasła po 12h. Wymagane ponowne logowanie.");
+            localStorage.removeItem('elcartel_discord_session');
+            return;
+        }
+
+        if (!userData || !userData.id) return;
+
+        // Jeśli sesja jest wciąż ważna, przygotowujemy przycisk i puszczamy logowanie
+        const btn = document.getElementById('login-btn-action');
+        const originalHtml = btn ? btn.innerHTML : `<i class="fab fa-discord"></i> Zaloguj przez Discord`;
+        
+        // Puszczamy całą autoryzację od razu do przodu
+        window.executeLoginSequence(userData, btn, originalHtml);
+
+    } catch (e) {
+        console.error("Błąd odczytu pamięci podręcznej sesji:", e);
+        localStorage.removeItem('elcartel_discord_session');
+    }
+};
 
 // ==========================================
 // SYSTEM INTELIGENTNYCH POWITAŃ KASJERA
