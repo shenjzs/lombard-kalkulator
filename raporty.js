@@ -1,18 +1,11 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "4.6.7"; // Normalizacja nazw produktów
+const APP_VERSION = "4.5.7"; // Normalizacja nazw produktów
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
 // ==========================================
-const ALLOWED_DISCORD_ROLES = ["1518034764974657566"];
-// Hierarchia stanowisk w firmie (od najwyższej do najniższej)
-const RANK_HIERARCHY = [
-    { id: "1499138968065806356", name: "Właściciel" },
-    { id: "1499145834644635839", name: "Kierownik" },
-    { id: "1499146687560552479", name: "Pracownik" }
-];
 const PIN_API_URL = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/pin";
 const REPORTS_API_URL = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/reports";
 const BOSS_DISCORD_WEBHOOK = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/boss";
@@ -171,377 +164,175 @@ document.addEventListener('scroll', function() {
 });
 
 // ==========================================
-// SYSTEM LOGOWANIA DISCORD OAUTH2 + KARTOTEKA IC + LIVE ROLE CHECK (STATYSTYKI)
+// LOGOWANIE I AUTORYZACJA
 // ==========================================
-window.loginBoss = function() {
+async function loginBoss() {
+    const pin = document.getElementById('boss-pin-input').value;
     const btn = document.getElementById('login-btn');
-    const originalBtnContent = btn.innerHTML;
-    
+    if (!pin) return showNotice("Wprowadź PIN!", "danger");
+
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Oczekiwanie na Discord...';
-
-    const authUrl = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/auth/login";
-    const width = 500;
-    const height = 750;
-    const left = (screen.width / 2) - (width / 2);
-    const top = (screen.height / 2) - (height / 2);
-
-    const popup = window.open(authUrl, 'DiscordLogin', `width=${width},height=${height},top=${top},left=${left}`);
-
-    const checkPopup = setInterval(() => {
-        if (!popup || popup.closed || popup.closed === undefined) {
-            clearInterval(checkPopup);
-            if (btn.disabled) {
-                btn.disabled = false;
-                btn.innerHTML = originalBtnContent;
-                showNotice("Anulowano logowanie przez Discord.", "warning");
-            }
-        }
-    }, 1000);
-
-    const messageListener = async function(event) {
-        if (event.origin !== "https://elcartel-wbhk.bcjds9j7ht.workers.dev") return;
-
-        if (event.data && event.data.type === "DISCORD_LOGIN_SUCCESS") {
-            window.removeEventListener('message', messageListener);
-            clearInterval(checkPopup);
-
-            const userData = event.data.user;
-            
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Weryfikacja ról...';
-            try {
-                const roleRes = await fetch(`https://elcartel-wbhk.bcjds9j7ht.workers.dev/reports?action=check_access&discord_id=${userData.id}`);
-                const roleData = await roleRes.json();
-                
-                const hasAccess = roleData.roles && roleData.roles.some(r => ALLOWED_DISCORD_ROLES.includes(r));
-                
-                if (!hasAccess) {
-                    showNotice("Odmowa dostępu! Wymagana rola: Statystyki.", "danger");
-                    btn.disabled = false;
-                    btn.innerHTML = originalBtnContent;
-                    localStorage.removeItem('elcartel_discord_session');
-                    return;
-                }
-
-                // Poprawione przekazanie parametru btn
-                window.executeReportsLoginSequence(userData, roleData.roles, btn, originalBtnContent);
-            } catch(e) {
-                console.error("Błąd weryfikacji ról:", e);
-                showNotice("Błąd weryfikacji ról!", "danger");
-                btn.disabled = false;
-                btn.innerHTML = originalBtnContent;
-                return;
-            }
-        }
-    };
-
-    window.addEventListener('message', messageListener);
-};
-
-// --- POBIERANIE DANYCH POSTACI IC I SYNCHRONIZACJA RANGI ---
-window.executeReportsLoginSequence = async function(userData, userRoles, btnElement, originalBtnContent) {
-    if (btnElement) btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Pobieranie kartoteki...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Weryfikacja...';
 
     try {
-        const res = await fetch(`https://elcartel-wbhk.bcjds9j7ht.workers.dev/reports?action=get_employee&discord_id=${userData.id}`);
-        const empData = await res.json();
-
-        // Wyznaczanie stanowiska (rangi) na podstawie ról z Discorda
-        let detectedRank = "Pracownik"; // Ranga domyślna
-        if (typeof RANK_HIERARCHY !== 'undefined') {
-            for (let r of RANK_HIERARCHY) {
-                if (userRoles.includes(r.id)) {
-                    detectedRank = r.name;
-                    break;
+        const response = await fetch(`${PIN_API_URL}?pin=${pin}`);
+        const data = await response.json();
+        
+        if (data.isValid) { 
+            if (data.role && data.role.toLowerCase().trim() === 'szef') {
+                
+                // --- SYSTEM ZAPAMIĘTYWANIA PROFILU ---
+                const rememberMeCheckbox = document.getElementById('remember-me-checkbox');
+                if (rememberMeCheckbox && rememberMeCheckbox.checked) {
+                    let savedProfiles = JSON.parse(localStorage.getItem('elcartel_boss_profiles') || '[]');
+                    savedProfiles = savedProfiles.filter(p => p.name !== data.name);
+                    savedProfiles.push({ 
+                        name: data.name, 
+                        pin: pin, 
+                        photo: data.photo || '',
+                        ssn: data.ssn || '---',
+                        dateZatrudnienia: data.dateZatrudnienia || 'Brak danych',
+                        rank: data.rank || 'Pracownik' // <--- TUTAJ: pobieramy faktyczny stopień z bazy
+                    });
+                    localStorage.setItem('elcartel_boss_profiles', JSON.stringify(savedProfiles));
+                    if (typeof renderSavedProfiles === 'function') renderSavedProfiles();
                 }
-            }
-        }
+                // ------------------------------------
+                
+                // --- EFEKT FACE ID (otwieranie kłódki) ---
+                const mainIcon = document.querySelector('.login-icon');
+                if (mainIcon) {
+                    mainIcon.classList.remove('fa-lock', 'fa-user-shield');
+                    mainIcon.classList.add('fa-unlock', 'icon-unlock-anim');
+                }
 
-        if (empData && empData.ic_name) {
-            // Cicha aktualizacja bazy przy zmianie rangi
-            if (empData.rank !== detectedRank) {
-                fetch("https://elcartel-wbhk.bcjds9j7ht.workers.dev/reports", {
-                    method: "POST",
-                    body: JSON.stringify({ 
-                        action: "boss_edit_employee", 
-                        discord_id: userData.id, 
-                        ic_name: empData.ic_name, 
-                        ssn: empData.ssn, 
-                        rank: detectedRank 
-                    })
-                });
-                empData.rank = detectedRank; 
-            }
-
-            window.finalizeReportsLogin(userData, empData, btnElement, originalBtnContent);
-        } else {
-            if (btnElement) {
-                btnElement.disabled = false;
-                btnElement.innerHTML = originalBtnContent;
-            }
-            const avatarInput = document.getElementById('setup-avatar');
-            if (avatarInput) avatarInput.value = userData.avatar || "";
-            
-            const modal = document.getElementById('first-login-modal');
-            if (modal) modal.classList.add('active');
-            
-            window.tempDiscordUserData = userData; 
-            window.tempDetectedRank = detectedRank; 
-        }
-    } catch (e) {
-        console.error("Błąd połączenia z bazą:", e);
-        showNotice("Błąd połączenia z bazą Cartelu!", "danger");
-        if (btnElement) {
-            btnElement.disabled = false;
-            btnElement.innerHTML = originalBtnContent;
-        }
-    }
-};
-
-window.saveFirstSetup = async function() {
-    const icName = document.getElementById('setup-ic-name').value.trim();
-    const ssn = document.getElementById('setup-ssn').value.trim();
-    const avatar = document.getElementById('setup-avatar').value.trim();
-
-    if (!icName || !ssn) return showNotice("Wypełnij Imię, Nazwisko i SSN!", "warning");
-
-    const btn = document.getElementById('save-setup-btn');
-    const originalHtml = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Zapisywanie...';
-
-    const dzis = new Date();
-    const dataStr = `${String(dzis.getDate()).padStart(2, '0')}.${String(dzis.getMonth() + 1).padStart(2, '0')}.${dzis.getFullYear()}`;
-
-    try {
-        await fetch("https://elcartel-wbhk.bcjds9j7ht.workers.dev/reports", {
-            method: 'POST',
-            body: JSON.stringify({
-                action: 'save_employee',
-                discord_id: window.tempDiscordUserData.id,
-                ic_name: icName,
-                ssn: ssn,
-                avatar_url: avatar || window.tempDiscordUserData.avatar,
-                date: dataStr
-            })
-        });
-
-        await fetch("https://elcartel-wbhk.bcjds9j7ht.workers.dev/reports", {
-            method: "POST",
-            body: JSON.stringify({
-                action: "boss_edit_employee",
-                discord_id: window.tempDiscordUserData.id,
-                ic_name: icName,
-                ssn: ssn,
-                rank: window.tempDetectedRank
-            })
-        });
-
-        const modal = document.getElementById('first-login-modal');
-        if (modal) modal.classList.remove('active');
-        
-        const newEmpData = {
-            ic_name: icName,
-            ssn: ssn,
-            avatar_url: avatar || window.tempDiscordUserData.avatar,
-            rank: window.tempDetectedRank
-        };
-        
-        window.finalizeReportsLogin(window.tempDiscordUserData, newEmpData, null, null);
-    } catch(e) {
-        showNotice("Wystąpił błąd podczas zapisu!", "danger");
-    } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = originalHtml;
-        }
-    }
-};
-
-window.finalizeReportsLogin = function(userData, empData, btnElement, originalBtnContent) {
-    currentEmployeeName = empData.ic_name;
-    const nameDisplay = document.getElementById('logged-boss-name');
-    if (nameDisplay) nameDisplay.innerText = currentEmployeeName.toUpperCase();
-
-    const rememberCheckbox = document.getElementById('remember-discord-checkbox');
-    if (rememberCheckbox && rememberCheckbox.checked) {
-        localStorage.setItem('elcartel_discord_session', JSON.stringify(userData));
-    }
-
-    const mainIcon = document.querySelector('.login-icon');
-    if (mainIcon) {
-        const photoUrl = empData.avatar_url || userData.avatar;
-        mainIcon.outerHTML = `<img src="${photoUrl}" class="login-icon icon-unlock-anim" style="border-radius: 50%; width: 70px; height: 70px; border: 3px solid #22c55e; margin: 0 auto 20px auto; display: block; background: #0f172a;">`;
-    }
-
-    window.addSystemLog('LOGOWANIE', `Zalogowano do panelu statystyk (Postać IC: ${currentEmployeeName} | ${empData.rank}).`);
-
-    const loginCard = document.querySelector('.login-card');
-    if (loginCard) loginCard.classList.add('login-zoom-in');
-
-    setTimeout(() => {
-        const loginScreen = document.getElementById('login-screen');
-        if (loginScreen) loginScreen.classList.remove('active');
-        if (loginCard) loginCard.classList.remove('login-zoom-in');
-        
-        if (btnElement) {
-            btnElement.disabled = false;
-            btnElement.innerHTML = originalBtnContent || `<i class="fab fa-discord"></i> Zaloguj przez Discord`;
-        }
-        
-        const loader = document.getElementById('global-loading-screen');
-        const loaderStatus = document.getElementById('loader-status');
-        if (loader) loader.classList.remove('hidden');
-        if (loaderStatus) loaderStatus.innerText = "Kompilacja danych analitycznych...";
-        
-        const dashboard = document.getElementById('dashboard-screen');
-        if (dashboard) {
-            dashboard.classList.remove('hidden');
-            dashboard.classList.add('app-zoom-out');
-        }
-        
-        const userProfile = document.getElementById('user-profile');
-        if (userProfile) userProfile.classList.remove('hidden');
-        
-        showNotice(`Zalogowano jako: ${currentEmployeeName}`, "success");
-        
-        if(typeof window.preloadEmployeesData === 'function') {
-            window.preloadEmployeesData().then(d => { if(d.employees) window.currentEmployeesList = d.employees; });
-        }
-
-        if(typeof loadRealData === 'function') {
-            loadRealData().then(() => {
-                if (loaderStatus) loaderStatus.innerText = "Autoryzacja zakończona";
                 setTimeout(() => {
-                    if (loader) loader.classList.add('hidden');
-                    if (dashboard) dashboard.classList.remove('app-zoom-out');
+                    currentEmployeeName = data.name;
+                    document.getElementById('logged-boss-name').innerText = currentEmployeeName.toUpperCase();
+                    
+                    // DODANIE LOGU DO SYSTEMU
+                    window.addSystemLog('LOGOWANIE', `Zalogowano do panelu statystyk (IP/Urządzenie zweryfikowane).`);
+
+                    // --- ANIMACJA LOGOWANIA ---
+                    const loginCard = document.querySelector('.login-card');
+                    loginCard.classList.add('login-zoom-in');
+                    
+                    setTimeout(() => {
+                        document.getElementById('login-screen').classList.remove('active');
+                        loginCard.classList.remove('login-zoom-in');
+                        btn.disabled = false;
+                        btn.innerHTML = 'Zaloguj <i class="fas fa-unlock"></i>';
+                        
+                        // URUCHOMIENIE NOWEGO EKRANU ŁADOWANIA
+                        const loader = document.getElementById('global-loading-screen');
+                        const loaderStatus = document.getElementById('loader-status');
+                        if (loader) loader.classList.remove('hidden');
+                        if (loaderStatus) loaderStatus.innerText = "Kompilacja danych analitycznych...";
+                        
+                        // Wejście głównego panelu w tło (jeszcze ukrytego pod loaderem)
+                        const dashboard = document.getElementById('dashboard-screen');
+                        dashboard.classList.remove('hidden');
+                        dashboard.classList.add('app-zoom-out');
+                        
+                        document.getElementById('user-profile').classList.remove('hidden');
+                        showNotice(`Zalogowano pomyślnie jako ${data.name}`, "success");
+                        
+                        window.preloadEmployeesData().then(d => { if(d.employees) window.currentEmployeesList = d.employees; });
+
+                        // KLUCZOWE: Czekamy na przetworzenie tabel i wykresów
+                        loadRealData().then(() => {
+                            if (loaderStatus) loaderStatus.innerText = "Autoryzacja zakończona";
+                            
+                            // Miękkie zdjęcie loadera po załadowaniu wszystkiego
+                            setTimeout(() => {
+                                if (loader) loader.classList.add('hidden');
+                                dashboard.classList.remove('app-zoom-out');
+                            }, 600); // 600ms, żeby animacja nie urwała się zbyt brutalnie
+                        }).catch(() => {
+                            // W razie błędu awaryjnie wpuszczamy do panelu, żeby uniknąć wiecznego loadingu
+                            if (loader) loader.classList.add('hidden');
+                            dashboard.classList.remove('app-zoom-out');
+                            showNotice("Uwaga: Wystąpił problem przy ładowaniu statystyk.", "danger");
+                        });
+                        
+                    }, 400);
                 }, 600);
-            }).catch(() => {
-                if (loader) loader.classList.add('hidden');
-                if (dashboard) dashboard.classList.remove('app-zoom-out');
-                showNotice("Uwaga: Wystąpił problem przy ładowaniu statystyk.", "danger");
-            });
-        }
-        
-        // --- LIVE ROLE CHECK DLA RAPORTÓW ---
-        if (window.accessCheckInterval) clearInterval(window.accessCheckInterval);
-        window.accessCheckInterval = setInterval(async () => {
-            try {
-                const res = await fetch(`https://elcartel-wbhk.bcjds9j7ht.workers.dev/reports?action=check_access&discord_id=${userData.id}`);
-                const data = await res.json();
-                const hasAccess = data.roles && data.roles.some(r => ALLOWED_DISCORD_ROLES.includes(r));
-                if (!hasAccess) {
-                    clearInterval(window.accessCheckInterval);
-                    showNotice("Utracono uprawnienia dostępu z poziomu serwera Discord!", "danger");
-                    if(typeof window.logoutBoss === 'function') window.logoutBoss(); 
+                
+            } else {
+                showNotice("Odmowa! Brak uprawnień zarządcy.", "danger");
+                document.getElementById('boss-pin-input').value = ""; 
+                
+                // --- EFEKT BŁĘDNEGO PINU (trzęsienie) ---
+                const mainIcon = document.querySelector('.login-icon');
+                if (mainIcon) {
+                    mainIcon.classList.add('icon-shake-anim');
+                    setTimeout(() => mainIcon.classList.remove('icon-shake-anim'), 400);
                 }
-            } catch(e) {}
-        }, 60000);
-
-    }, 400);
-};
-
-window.checkSavedDiscordSession = async function() {
-    const saved = localStorage.getItem('elcartel_discord_session');
-    if (!saved) return;
-
-    try {
-        const userData = JSON.parse(saved);
-        if (!userData || !userData.name) return;
-
-        const roleRes = await fetch(`https://elcartel-wbhk.bcjds9j7ht.workers.dev/reports?action=check_access&discord_id=${userData.id}`);
-        const roleData = await roleRes.json();
-        
-        const hasAccess = roleData.roles && roleData.roles.some(r => ALLOWED_DISCORD_ROLES.includes(r));
-
-        if (!hasAccess) {
-            localStorage.removeItem('elcartel_discord_session');
-            return; 
+            }
+        } else {
+            showNotice("Nieprawidłowy PIN!", "danger");
+            
+            // --- EFEKT BŁĘDNEGO PINU (trzęsienie) ---
+            const mainIcon = document.querySelector('.login-icon');
+            if (mainIcon) {
+                mainIcon.classList.add('icon-shake-anim');
+                setTimeout(() => mainIcon.classList.remove('icon-shake-anim'), 400);
+            }
         }
-
-        window.executeReportsLoginSequence(userData, roleData.roles, document.getElementById('login-btn'), document.getElementById('login-btn') ? document.getElementById('login-btn').innerHTML : '');
-
     } catch (e) {
-        console.error("Błąd odczytu sesji:", e);
-        localStorage.removeItem('elcartel_discord_session');
+        showNotice("Błąd połączenia z bazą PIN!", "danger");
+    } finally {
+        if (!document.querySelector('.login-card').classList.contains('login-zoom-in')) {
+            btn.disabled = false;
+            btn.innerHTML = 'Zaloguj <i class="fas fa-unlock"></i>';
+        }
     }
-};
+}
 
 window.logoutBoss = function() {
-    localStorage.removeItem('elcartel_discord_session');
-    
-    if (window.accessCheckInterval) clearInterval(window.accessCheckInterval);
-
-    window.addSystemLog('WYLOGOWANIE', `Wylogowano z panelu statystyk.`);
-    
     const dashboard = document.getElementById('dashboard-screen');
     const loginScreen = document.getElementById('login-screen');
     const loginCard = document.querySelector('.login-card');
     const mainIcon = document.querySelector('.login-icon');
 
-    const userDropdown = document.getElementById('user-dropdown');
-    const userProfile = document.getElementById('user-profile');
-    if (userDropdown) userDropdown.classList.remove('active');
-    if (userProfile) userProfile.classList.add('hidden');
+    // DODANIE LOGU DO SYSTEMU
+    window.addSystemLog('WYLOGOWANIE', `Wylogowano bezpiecznie z panelu zarządzania.`);
 
-    if (dashboard) {
-        dashboard.classList.remove('app-zoom-out');
-        dashboard.classList.add('app-zoom-in');
-    }
+    document.getElementById('user-dropdown').classList.remove('active');
+    document.getElementById('user-profile').classList.add('hidden');
+
+    dashboard.classList.remove('app-zoom-out');
+    dashboard.classList.add('app-zoom-in');
 
     setTimeout(() => {
-        if (dashboard) {
-            dashboard.classList.add('hidden');
-            dashboard.classList.remove('app-zoom-in');
-        }
-        
-        if (loginScreen) loginScreen.classList.add('active');
-        if (loginCard) loginCard.classList.add('login-zoom-out');
+        dashboard.classList.add('hidden');
+        dashboard.classList.remove('app-zoom-in');
 
+        loginScreen.classList.add('active');
+        loginCard.classList.add('login-zoom-out');
+
+        // Zostawiamy otwartą kłódkę na czas wjazdu karty
         if (mainIcon) {
-            mainIcon.outerHTML = '<i class="fas fa-unlock login-icon"></i>';
+            mainIcon.className = 'fas fa-unlock login-icon';
+            
             setTimeout(() => {
-                const newIcon = document.querySelector('.login-icon');
-                if (newIcon) {
-                    newIcon.className = 'fas fa-lock login-icon icon-lock-anim';
-                }
+                mainIcon.className = 'fas fa-lock login-icon icon-lock-anim';
+                setTimeout(() => mainIcon.classList.remove('icon-lock-anim'), 500);
             }, 550);
         }
 
-        setTimeout(() => {
-            location.reload();
-        }, 1200);
+        currentEmployeeName = "";
+        document.getElementById('logged-boss-name').innerText = "---";
         
+        // --- ZAPISANE PROFILE ---
+        document.getElementById('boss-pin-input').value = "";
+        if (typeof renderSavedProfiles === 'function') renderSavedProfiles();
+        // ------------------------------------
+
+        setTimeout(() => loginCard.classList.remove('login-zoom-out'), 450);
+        showNotice("Pomyślnie wylogowano z systemu.", "info");
     }, 400);
-};
-
-window.checkSavedDiscordSession = async function() {
-    const saved = localStorage.getItem('elcartel_discord_session');
-    if (!saved) return;
-
-    try {
-        const userData = JSON.parse(saved);
-        if (!userData || !userData.name) return;
-
-        // Sprawdzanie roli z Discorda na żywo
-        const roleRes = await fetch(`https://elcartel-wbhk.bcjds9j7ht.workers.dev/reports?action=check_access&discord_id=${userData.id}`);
-        const roleData = await roleRes.json();
-        
-        const hasAccess = roleData.roles && roleData.roles.some(r => ALLOWED_DISCORD_ROLES.includes(r));
-
-        if (!hasAccess) {
-            localStorage.removeItem('elcartel_discord_session');
-            return; // Gracz stracił rolę dostępu do panelu
-        }
-
-        // Puszczamy go przez ścieżkę autoryzacji (z przekazaniem wszystkich ról do wyznaczenia stanowiska)
-        window.executeReportsLoginSequence(userData, roleData.roles, document.getElementById('login-btn'), document.getElementById('login-btn') ? document.getElementById('login-btn').innerHTML : '');
-
-    } catch (e) {
-        console.error("Błąd odczytu sesji:", e);
-        localStorage.removeItem('elcartel_discord_session');
-    }
-};
+}
 
 window.toggleUserMenu = function() {
     document.getElementById('user-dropdown').classList.toggle('active');
@@ -1307,137 +1098,6 @@ function renderCharts(groupedSell, dailyData, hourlyData, groupedBonuses) {
 }
 
 // ==========================================
-// KARTOTEKA PRACOWNIKÓW IC (MODUŁ ZARZĄDU SUPABASE)
-// ==========================================
-window.openEmployeeManager = function() {
-    const modal = document.getElementById('employee-manager-modal');
-    if (modal) modal.classList.remove('hidden');
-    window.loadEmployeesDirectory();
-};
-
-window.closeEmployeeManager = function() {
-    const modal = document.getElementById('employee-manager-modal');
-    if (modal) modal.classList.add('hidden');
-};
-
-window.loadEmployeesDirectory = async function() {
-    const tbody = document.getElementById('emp-manager-table-body');
-    if (!tbody) return;
-    
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 30px; color: #64748b;"><i class="fas fa-spinner fa-spin"></i> Pobieranie danych z centrali...</td></tr>';
-    
-    try {
-        const res = await fetch(`https://elcartel-wbhk.bcjds9j7ht.workers.dev/reports?action=get_all_employees&t=${new Date().getTime()}`);
-        const data = await res.json();
-        
-        if (!data.employees || data.employees.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 30px; color: var(--text-secondary);">Brak zarejestrowanych pracowników w bazie.</td></tr>';
-            return;
-        }
-
-        // Zapis do globalnej listy (przydaje się do innych modułów i wizytówek)
-        window.currentEmployeesList = data.employees;
-
-        let html = '';
-        data.employees.forEach(emp => {
-            const avatar = emp.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png';
-            html += `
-                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
-                    <td style="padding: 15px; display: flex; align-items: center; gap: 12px;">
-                        <img src="${avatar}" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #5865F2; object-fit: cover;">
-                        <strong style="color: #fff; font-size: 1rem;">${emp.ic_name}</strong>
-                    </td>
-                    <td style="padding: 15px; color: #cbd5e1; font-weight: 500; text-align: center;">${emp.ssn || '---'}</td>
-                    <td style="padding: 15px; color: var(--accent-color); font-weight: 600; text-align: center;">${emp.rank || 'Pracownik'}</td>
-                    <td style="padding: 15px; color: #94a3b8; font-size: 0.85rem; text-align: center;">${emp.hire_date || 'Brak danych'}</td>
-                    <td style="padding: 15px; text-align: right;">
-                        <button onclick="openEditEmployeeModal('${emp.discord_id}', '${emp.ic_name}', '${emp.ssn}', '${emp.rank}')" style="background: transparent; border: none; color: #3b82f6; cursor: pointer; margin-right: 15px; font-size: 1.1rem;" title="Edytuj profil"><i class="fas fa-edit"></i></button>
-                        <button onclick="deleteEmployeeProfile('${emp.discord_id}', '${emp.ic_name}')" style="background: transparent; border: none; color: #ef4444; cursor: pointer; font-size: 1.1rem;" title="Usuń kartotekę"><i class="fas fa-user-times"></i></button>
-                    </td>
-                </tr>
-            `;
-        });
-        tbody.innerHTML = html;
-        
-    } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 30px; color: var(--danger);"><i class="fas fa-exclamation-triangle"></i> Błąd połączenia z bazą danych Supabase.</td></tr>';
-    }
-};
-
-window.openEditEmployeeModal = function(id, name, ssn, rank) {
-    const modal = document.getElementById('edit-employee-modal');
-    if (modal) {
-        document.getElementById('edit-emp-discord-id').value = id;
-        document.getElementById('edit-emp-name').value = name && name !== 'undefined' ? name : '';
-        document.getElementById('edit-emp-ssn').value = ssn && ssn !== 'undefined' ? ssn : '';
-        document.getElementById('edit-emp-rank').value = rank && rank !== 'undefined' ? rank : 'Pracownik';
-        modal.classList.remove('hidden');
-    }
-};
-
-window.closeEditEmployeeModal = function() {
-    const modal = document.getElementById('edit-employee-modal');
-    if (modal) modal.classList.add('hidden');
-};
-
-window.saveEmployeeEdit = async function() {
-    const id = document.getElementById('edit-emp-discord-id').value;
-    const name = document.getElementById('edit-emp-name').value.trim();
-    const ssn = document.getElementById('edit-emp-ssn').value.trim();
-    const rank = document.getElementById('edit-emp-rank').value.trim();
-
-    if (!name) return showNotice("Imię pracownika nie może być puste!", "warning");
-
-    const btn = document.getElementById('btn-save-edit');
-    const origText = btn.innerText;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Zapisywanie...';
-    btn.disabled = true;
-
-    try {
-        await fetch("https://elcartel-wbhk.bcjds9j7ht.workers.dev/reports", {
-            method: "POST",
-            body: JSON.stringify({
-                action: "boss_edit_employee",
-                discord_id: id,
-                ic_name: name,
-                ssn: ssn,
-                rank: rank
-            })
-        });
-        
-        window.addSystemLog('ZARZĄDZANIE KADRĄ', `Zaktualizowano profil IC pracownika: ${name}.`);
-        showNotice("Pomyślnie zaktualizowano kartotekę!", "success");
-        window.closeEditEmployeeModal();
-        window.loadEmployeesDirectory();
-    } catch (e) {
-        showNotice("Błąd podczas zapisywania w bazie!", "danger");
-    } finally {
-        btn.innerHTML = origText;
-        btn.disabled = false;
-    }
-};
-
-window.deleteEmployeeProfile = async function(id, name) {
-    if (!confirm(`UWAGA!\nCzy na pewno chcesz bezpowrotnie usunąć kartotekę pracownika: ${name}?\n\n(Dostęp do panelu odbierasz w rolach na serwerze Discord)`)) return;
-
-    try {
-        await fetch("https://elcartel-wbhk.bcjds9j7ht.workers.dev/reports", {
-            method: "POST",
-            body: JSON.stringify({
-                action: "boss_delete_employee",
-                discord_id: id
-            })
-        });
-        
-        window.addSystemLog('ZARZĄDZANIE KADRĄ', `Usunięto kartotekę IC pracownika: ${name}.`);
-        showNotice(`Kartoteka ${name} została usunięta z bazy.`, "info");
-        window.loadEmployeesDirectory();
-    } catch (e) {
-        showNotice("Wystąpił błąd podczas usuwania profilu!", "danger");
-    }
-};
-
-// ==========================================
 // STATYSTYKI ZAAWANSOWANE PRODUKTU (MODAL)
 // ==========================================
 window.openProductStats = function(itemName) {
@@ -1656,6 +1316,79 @@ window.closeProductStats = function() {
     document.getElementById('product-stats-modal').classList.add('hidden');
 }
 
+// ==========================================
+// ZARZĄDZANIE PRACOWNIKAMI I PROFILE
+// ==========================================
+
+window.openEmployeeManager = async function() {
+    document.getElementById('employee-manager-modal').classList.remove('hidden');
+    await loadEmployeesToTable();
+}
+
+window.closeEmployeeManager = function() {
+    document.getElementById('employee-manager-modal').classList.add('hidden');
+}
+
+async function loadEmployeesToTable() {
+    const tbody = document.getElementById('emp-manager-table-body');
+    
+    const empSkeletonHTML = Array(4).fill(`
+        <tr>
+            <td><div class="skeleton" style="height: 16px; width: 120px; border-radius: 4px;"></div></td>
+            <td style="text-align:center;"><div class="skeleton" style="height: 22px; width: 80px; margin: 0 auto; border-radius: 6px;"></div></td>
+            <td style="text-align:center;"><div class="skeleton" style="height: 20px; width: 40px; margin: 0 auto; border-radius: 6px;"></div></td>
+            <td style="text-align:right;">
+                <div style="display: flex; justify-content: flex-end; gap: 5px;">
+                    <div class="skeleton" style="width: 34px; height: 34px; border-radius: 8px;"></div>
+                    <div class="skeleton" style="width: 34px; height: 34px; border-radius: 8px;"></div>
+                    <div class="skeleton" style="width: 34px; height: 34px; border-radius: 8px;"></div>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+    tbody.innerHTML = empSkeletonHTML;
+    
+    try {
+        const data = await window.preloadEmployeesData();
+        
+        if (data.employees && data.employees.length > 0) {
+            window.currentEmployeesList = data.employees; 
+
+            tbody.innerHTML = data.employees.map(emp => {
+                const isBoss = emp.role && emp.role.toLowerCase() === 'szef';
+                const rankDisplay = emp.rank ? emp.rank : "Pracownik";
+                return `
+                    <tr>
+                        <td onclick="window.openEmployeeProfile('${emp.name}')" title="Kliknij, aby zobaczyć profil"><strong class="clickable-emp"><i class="fas fa-user-circle"></i> ${emp.name}</strong></td>
+                        <td style="text-align: center;">
+                            <span class="emp-rank-badge">${rankDisplay}</span>
+                        </td>
+                        <td style="text-align: center;">
+                            ${isBoss ? '<span class="is-boss-badge">Tak</span>' : '<span class="no-access-badge">Nie</span>'}
+                        </td>
+                        <td style="text-align: right;">
+                            <button onclick="openEditEmployee('${emp.pin}')" class="emp-action-btn" style="color: var(--accent-color); border-color: rgba(56, 189, 248, 0.3);" title="Edytuj dane">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                            <button onclick="toggleEmployeeRole('${emp.pin}', '${isBoss ? '' : 'szef'}')" class="emp-action-btn emp-btn-role" title="Zmień uprawnienia">
+                                <i class="fas fa-user-shield"></i>
+                            </button>
+                            <button onclick="deleteEmployee('${emp.pin}', '${emp.name}')" class="emp-action-btn emp-btn-del" title="Usuń pracownika">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            window.currentEmployeesList = [];
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Brak zapisanych pracowników w bazie.</td></tr>';
+        }
+    } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--danger);">Błąd połączenia z bazą!</td></tr>';
+    }
+}
+
 // ------------------------------------------
 // PROFIL PRACOWNIKA (WIZYTÓWKA) - ZAAWANSOWANA ANALIZA
 // ------------------------------------------
@@ -1850,6 +1583,153 @@ window.updateReputation = async function(name, type) {
         else mVal.innerText = parseInt(mVal.innerText) - 1;
         showNotice("Błąd połączenia z serwerem!", "danger");
     }
+}
+
+// ------------------------------------------
+// EDYCJA DANYCH PRACOWNIKA (MODAL)
+// ------------------------------------------
+window.openEditEmployee = function(pin) {
+    const emp = window.currentEmployeesList.find(e => e.pin === pin);
+    if (!emp) return showNotice("Błąd: Nie znaleziono pracownika!", "danger");
+
+    document.getElementById('edit-emp-pin').value = emp.pin;
+    document.getElementById('edit-emp-name').value = emp.name;
+    document.getElementById('edit-emp-rank').value = emp.rank || "Pracownik";
+    document.getElementById('edit-emp-ssn').value = emp.ssn || "";
+    document.getElementById('edit-emp-photo').value = emp.photo || "";
+
+    document.getElementById('edit-employee-modal').classList.remove('hidden');
+}
+
+window.closeEditEmployee = function() {
+    document.getElementById('edit-employee-modal').classList.add('hidden');
+}
+
+window.saveEmployeeEdit = async function() {
+    const btn = document.getElementById('save-edit-emp-btn');
+    const pin = document.getElementById('edit-emp-pin').value;
+    const rank = document.getElementById('edit-emp-rank').value;
+    const ssn = document.getElementById('edit-emp-ssn').value;
+    const photo = document.getElementById('edit-emp-photo').value;
+    const name = document.getElementById('edit-emp-name').value;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Zapisywanie...';
+
+    try {
+        const res = await fetch(PIN_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ 
+                action: 'edit_employee', 
+                pin: pin, 
+                rank: rank, 
+                ssn: ssn, 
+                photo: photo 
+            })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            showNotice("Dane pracownika zostały zaktualizowane!", "success");
+            
+            // DODANIE LOGU
+            window.addSystemLog('EDYCJA PRACOWNIKA', `Zaktualizowano dane pracownika: ${name} (Stopień: ${rank}, SSN: ${ssn || 'Brak'})`);
+
+            window.employeesFetchPromise = null;
+            closeEditEmployee();
+            await loadEmployeesToTable();
+        } else {
+            showNotice("Błąd zapisywania danych!", "danger");
+        }
+    } catch (e) {
+        showNotice("Błąd połączenia z serwerem!", "danger");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> Zapisz zmiany';
+    }
+}
+// ------------------------------------------
+
+window.addNewEmployee = async function() {
+    const btn = document.getElementById('add-emp-btn');
+    const nameInput = document.getElementById('new-emp-name');
+    const pinInput = document.getElementById('new-emp-pin');
+    const rankInput = document.getElementById('new-emp-rank'); 
+    const isBoss = document.getElementById('new-emp-boss').checked;
+    
+    const name = nameInput.value.trim();
+    const pin = pinInput.value.trim();
+    const rank = rankInput ? rankInput.value : "Pracownik";
+    
+    if (!name || !pin) return showNotice("Uzupełnij nick i PIN!", "danger");
+    if (pin.length < 4) return showNotice("PIN musi mieć minimum 4 znaki!", "warning");
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
+    try {
+        const res = await fetch(PIN_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ 
+                action: 'add', 
+                name: name, 
+                pin: pin, 
+                role: isBoss ? 'szef' : '',
+                rank: rank  
+            })
+        });
+        
+        showNotice("Przetwarzanie...", "info");
+        
+        // DODANIE LOGU
+        window.addSystemLog('NOWY PRACOWNIK', `Zatrudniono nową osobę: ${name} (Stopień: ${rank}, Uprawnienia Szefa: ${isBoss ? 'TAK' : 'NIE'})`);
+
+        window.employeesFetchPromise = null;
+        await loadEmployeesToTable();
+        showNotice(`Dodano pracownika: ${name}`, "success");
+        nameInput.value = '';
+        pinInput.value = '';
+        document.getElementById('new-emp-boss').checked = false;
+        if(rankInput) rankInput.value = "Pracownik"; 
+    } catch (e) {
+        showNotice("Nie udało się zapisać pracownika!", "danger");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-user-plus"></i> Dodaj';
+    }
+}
+
+window.deleteEmployee = async function(pin, name) {
+    if (!confirm(`Na pewno chcesz usunąć pracownika: ${name}?`)) return;
+    try {
+        showNotice("Usuwanie pracownika...", "info");
+        await fetch(PIN_API_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', pin: pin }) });
+        
+        // DODANIE LOGU
+        window.addSystemLog('USUNIĘTO PRACOWNIKA', `Zwolniono pracownika z firmy: ${name}`);
+
+        window.employeesFetchPromise = null;
+        await loadEmployeesToTable();
+        showNotice("Pracownik usunięty!", "warning");
+    } catch (e) { showNotice("Błąd usuwania!", "danger"); }
+}
+
+window.toggleEmployeeRole = async function(pin, newRole) {
+    try {
+        showNotice("Zmienianie uprawnień...", "info");
+        await fetch(PIN_API_URL, { method: 'POST', body: JSON.stringify({ action: 'toggle_role', pin: pin, role: newRole }) });
+        
+        // Znajdź pracownika dla logu
+        const emp = window.currentEmployeesList.find(e => e.pin === pin);
+        const empName = emp ? emp.name : "Nieznany PIN";
+
+        // DODANIE LOGU
+        window.addSystemLog('ZMIANA UPRAWNIEŃ', `Zmieniono dostęp do panelu dla: ${empName} na: ${newRole === 'szef' ? 'Pełny dostęp' : 'Brak dostępu'}`);
+
+        window.employeesFetchPromise = null;
+        await loadEmployeesToTable();
+        showNotice("Zmieniono uprawnienia!", "success");
+    } catch (e) { showNotice("Błąd zmiany uprawnień!", "danger"); }
 }
 
 // ==========================================
@@ -2646,9 +2526,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- INICJALIZACJA ZAPISANYCH PROFILI ---
     if (typeof renderSavedProfiles === 'function') renderSavedProfiles();
-    
-    // --- URUCHOMIENIE SPRAWDZANIA SESJI DISCORD ---
-    if (typeof window.checkSavedDiscordSession === 'function') window.checkSavedDiscordSession();
 });
 
 window.toggleTable = function(id, header) {
@@ -2797,98 +2674,6 @@ function showUpdatePrompt(serverVersion) {
     `;
     document.body.appendChild(div);
 }
-
-// ==========================================
-// AUTOMATYCZNE LOGOWANIE ZAPAMIĘTANEJ SESJI
-// ==========================================
-window.checkSavedDiscordSession = function() {
-    const saved = localStorage.getItem('elcartel_discord_session');
-    if (!saved) return; // Brak zapisanej sesji, zostajemy na ekranie logowania
-
-    try {
-        const userData = JSON.parse(saved);
-        if (!userData || !userData.name) return;
-
-        // Wstrzykujemy dane zalogowanego Szefa
-        currentEmployeeName = userData.name;
-        const nameDisplay = document.getElementById('logged-boss-name');
-        if (nameDisplay) nameDisplay.innerText = currentEmployeeName.toUpperCase();
-
-        // Błyskawicznie przełączamy widoki bez animacji logowania
-        document.getElementById('login-screen').classList.remove('active');
-        document.getElementById('dashboard-screen').classList.remove('hidden');
-        document.getElementById('user-profile').classList.remove('hidden');
-
-        showNotice(`Witaj ponownie, ${userData.name}!`, "success");
-
-        // Pobieramy dane pracowników w tle
-        window.preloadEmployeesData().then(d => { if(d.employees) window.currentEmployeesList = d.employees; });
-
-        // Ładujemy statystyki finansowe
-        loadRealData().catch(() => {
-            showNotice("Uwaga: Wystąpił problem przy ładowaniu statystyk.", "danger");
-        });
-
-    } catch (e) {
-        console.error("Błąd odczytu sesji:", e);
-        localStorage.removeItem('elcartel_discord_session');
-    }
-};
-
-// ==========================================
-// BEZPIECZNE WYLOGOWANIE Z SYSTEMU (RAPORTY)
-// ==========================================
-window.logoutBoss = function() {
-    // --- CZYSZCZENIE TRWAŁEJ SESJI DISCORD ---
-    localStorage.removeItem('elcartel_discord_session');
-    
-    // --- LIVE ROLE CHECK - CZYSZCZENIE INTERWAŁU ---
-    if (window.accessCheckInterval) clearInterval(window.accessCheckInterval);
-    // -------------------------------------------------------------
-
-    window.addSystemLog('WYLOGOWANIE', `Wylogowano z panelu statystyk.`);
-    
-    const dashboard = document.getElementById('dashboard-screen');
-    const loginScreen = document.getElementById('login-screen');
-    const loginCard = document.querySelector('.login-card');
-    const mainIcon = document.querySelector('.login-icon');
-
-    // Ukrywanie profilu i zamykanie menu
-    document.getElementById('user-dropdown').classList.remove('active');
-    document.getElementById('user-profile').classList.add('hidden');
-
-    if (dashboard) {
-        dashboard.classList.remove('app-zoom-out');
-        dashboard.classList.add('app-zoom-in');
-    }
-
-    setTimeout(() => {
-        if (dashboard) {
-            dashboard.classList.add('hidden');
-            dashboard.classList.remove('app-zoom-in');
-        }
-        
-        if (loginScreen) loginScreen.classList.add('active');
-        if (loginCard) loginCard.classList.add('login-zoom-out');
-
-        // Przywracamy kłódkę (zamiana z Avatara Discorda)
-        if (mainIcon) {
-            mainIcon.outerHTML = '<i class="fas fa-unlock login-icon"></i>';
-            setTimeout(() => {
-                const newIcon = document.querySelector('.login-icon');
-                if (newIcon) {
-                    newIcon.className = 'fas fa-lock login-icon icon-lock-anim';
-                }
-            }, 550);
-        }
-
-        // Twardy restart strony dla pełnego wyczyszczenia pamięci podręcznej wykresów
-        setTimeout(() => {
-            location.reload();
-        }, 1200);
-        
-    }, 400);
-};
 
 window.forceHardReload = async function(serverVersion) {
     console.log("[SYSTEM] Inicjowanie twardego przeładowania...");
