@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Statystyki</title>
-    <link rel="stylesheet" href="style-raporty.css?v=4.6.7">
+    <link rel="stylesheet" href="style-raporty.css?v=4.5.7">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -57,22 +57,24 @@
         <div class="login-card">
             <i class="fas fa-lock login-icon"></i>
             <h2>Wymagana autoryzacja</h2>
-            <p>Wymagana rola na Discord: <b>Statystyki</b></p>
+            <p>Wprowadź kod PIN, aby uzyskać dostęp do raportów finansowych.</p>
             
-            <div id="login-normal-form" style="margin-bottom: 20px;">
-                <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">Weryfikacja tożsamości odbywa się poprzez bezpieczne połączenie serwera Cartelu z Discordem.</p>
+            <div id="login-normal-form">
+                <input type="password" id="boss-pin-input" placeholder="****" class="pin-input" maxlength="4" style="margin-bottom: 20px;">
             </div>
 
-            <button onclick="loginBoss()" id="login-btn" class="login-btn" style="background: #5865F2; border-color: #4752C4; color: white; width: 100%; display: flex; justify-content: center; align-items: center; gap: 10px; transition: 0.3s; box-shadow: 0 0 15px rgba(88, 101, 242, 0.4);">
-                <i class="fab fa-discord" style="font-size: 1.3rem;"></i> Zaloguj przez Discord
+            <button onclick="loginBoss()" id="login-btn" class="login-btn">
+                Zaloguj <i class="fas fa-unlock"></i>
             </button>
 
             <div class="remember-me-container" style="margin-top: 20px;">
                 <label class="emp-checkbox-label" style="width: 100%; justify-content: center; margin-bottom: 0; border-color: rgba(255,255,255,0.1); background: rgba(0,0,0,0.3);">
-                    <input type="checkbox" id="remember-discord-checkbox" class="emp-checkbox-input" checked>
-                    <span class="emp-access-text" style="color: var(--text-secondary);">Zapamiętaj moją sesję</span>
+                    <input type="checkbox" id="remember-me-checkbox" class="emp-checkbox-input">
+                    <span class="emp-access-text" style="color: var(--text-secondary);">Zapamiętaj mnie</span>
                 </label>
             </div>
+
+            <div id="saved-profiles-container" class="saved-profiles-container"></div>
         </div>
     </div>
 
@@ -324,72 +326,6 @@
         </footer>
     </div>
 
-    <div id="employee-manager-modal" class="emp-modal-overlay hidden" style="z-index: 10000;">
-        <div class="emp-modal-content" style="max-width: 900px;">
-            <div class="emp-modal-header">
-                <h2 style="color: var(--accent-color);"><i class="fas fa-users-cog"></i> Kartoteka Pracowników (IC)</h2>
-                <button onclick="closeEmployeeManager()" class="emp-close-btn"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="emp-modal-body">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <p style="color: var(--text-secondary); margin: 0;">Lista pracowników zarejestrowanych w systemie (odpytywanie Supabase).</p>
-                    <button onclick="loadEmployeesDirectory()" class="filter-btn success-btn" style="background: rgba(88, 101, 242, 0.2); color: #5865F2; border: 1px solid #5865F2; padding: 8px 15px; border-radius: 8px;">
-                        <i class="fas fa-sync-alt"></i> Odśwież listę
-                    </button>
-                </div>
-                <div class="emp-table-container">
-                    <table class="modern-table emp-table">
-                        <thead>
-                            <tr>
-                                <th>Pracownik</th>
-                                <th style="text-align: center;">SSN</th>
-                                <th style="text-align: center;">Stanowisko</th>
-                                <th style="text-align: center;">Zatrudnienie</th>
-                                <th style="text-align: right;">Akcje</th>
-                            </tr>
-                        </thead>
-                        <tbody id="emp-manager-table-body">
-                            <tr><td colspan="5" style="text-align:center;">Ładowanie danych...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="edit-employee-modal" class="emp-modal-overlay hidden" style="z-index: 10010;">
-        <div class="emp-modal-content" style="max-width: 450px;">
-            <div class="emp-modal-header">
-                <h2><i class="fas fa-user-edit text-accent"></i> Edytuj profil pracownika</h2>
-                <button onclick="closeEditEmployeeModal()" class="emp-close-btn"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="emp-modal-body" style="padding-top: 15px;">
-                <div class="settings-form">
-                    <input type="hidden" id="edit-emp-discord-id">
-                    
-                    <div class="input-group">
-                        <label>Imię i Nazwisko IC</label>
-                        <input type="text" id="edit-emp-name" class="emp-input">
-                    </div>
-                    
-                    <div class="input-group">
-                        <label>Numer SSN</label>
-                        <input type="text" id="edit-emp-ssn" class="emp-input">
-                    </div>
-
-                    <div class="input-group">
-                        <label>Stanowisko (Ranga RP)</label>
-                        <input type="text" id="edit-emp-rank" class="emp-input">
-                    </div>
-                    
-                    <button onclick="saveEmployeeEdit()" id="btn-save-edit" class="settings-save-btn" style="margin-top: 20px;">
-                        <i class="fas fa-save"></i> Zapisz zmiany
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div id="clients-manager-modal" class="emp-modal-overlay hidden">
         <div class="emp-modal-content" style="max-width: 800px;">
             <div class="emp-modal-header">
@@ -430,8 +366,10 @@
             <div class="emp-modal-body">
                 <p style="color: var(--text-secondary); margin-bottom: 20px;">
                     Czy na pewno chcesz wyzerować pieczątki klienta o SSN: <strong id="reset-stamps-ssn" style="color: white;"></strong>?<br><br>
+                    Wprowadź swój PIN, aby potwierdzić.
                 </p>
                 <input type="hidden" id="reset-stamps-target-ssn">
+                <input type="password" id="reset-stamps-pin" placeholder="****" class="pin-input" maxlength="4" style="margin-bottom: 20px; width: 100%;">
                 <button onclick="confirmResetStamps()" id="confirm-reset-stamps-btn" class="danger-submit-btn" style="margin-top: 0; width: 100%;">
                     <i class="fas fa-trash-alt"></i> Zresetuj pieczątki
                 </button>
@@ -515,6 +453,93 @@
                             <tr><td colspan="4" style="text-align:center;">Ładowanie danych...</td></tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="employee-manager-modal" class="emp-modal-overlay hidden">
+        <div class="emp-modal-content">
+            <div class="emp-modal-header">
+                <h2><i class="fas fa-users-cog"></i> Zarządzanie pracownikami</h2>
+                <button onclick="closeEmployeeManager()" class="emp-close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="emp-modal-body">
+                <div class="emp-add-form">
+                    <input type="text" id="new-emp-name" placeholder="Imię i nazwisko IC" class="emp-input">
+                    <input type="password" id="new-emp-pin" placeholder="PIN (4 cyfry)" maxlength="4" class="emp-input pin-input-small">
+                    
+                    <select id="new-emp-rank" class="emp-input emp-select-rank">
+                        <option value="Właściciel">Właściciel</option>
+                        <option value="Kierownik">Kierownik</option>
+                        <option value="Pracownik">Pracownik</option>
+                        <option value="Praktykant" selected>Praktykant</option>
+                    </select>
+
+                    <label class="emp-checkbox-label">
+                        <input type="checkbox" id="new-emp-boss" class="emp-checkbox-input"> 
+                        <span class="emp-access-text">Dostęp do panelu</span>
+                    </label>
+                    <button onclick="addNewEmployee()" id="add-emp-btn" class="filter-btn success-btn"><i class="fas fa-user-plus"></i> Dodaj</button>
+                </div>
+                
+                <div class="emp-table-container">
+                    <table class="modern-table emp-table">
+                        <thead>
+                            <tr>
+                                <th>Pracownik</th>
+                                <th style="text-align: center;">Stopień</th>
+                                <th style="text-align: center;">Dostęp do panelu</th>
+                                <th style="text-align: right;">Akcje</th>
+                            </tr>
+                        </thead>
+                        <tbody id="emp-manager-table-body">
+                            <tr><td colspan="4" style="text-align:center;">Ładowanie danych...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-employee-modal" class="emp-modal-overlay hidden" style="z-index: 10000;">
+        <div class="emp-modal-content" style="max-width: 500px;">
+            <div class="emp-modal-header">
+                <h2><i class="fas fa-user-edit"></i> Edycja pracownika</h2>
+                <button onclick="closeEditEmployee()" class="emp-close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="emp-modal-body" style="padding-top: 15px;">
+                <div class="settings-form">
+                    <input type="hidden" id="edit-emp-pin">
+                    
+                    <div class="input-group">
+                        <label>Pracownik</label>
+                        <input type="text" id="edit-emp-name" class="emp-input" disabled style="opacity: 0.7; cursor: not-allowed;">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Stopień</label>
+                        <select id="edit-emp-rank" class="emp-input emp-select-rank">
+                            <option value="Właściciel">Właściciel</option>
+                            <option value="Kierownik">Kierownik</option>
+                            <option value="Pracownik">Pracownik</option>
+                            <option value="Praktykant">Praktykant</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Numer SSN</label>
+                        <input type="number" id="edit-emp-ssn" placeholder="np. 12345" class="emp-input">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Link do zdjęcia profilowego (URL)</label>
+                        <input type="text" id="edit-emp-photo" placeholder="https://..." class="emp-input">
+                    </div>
+                    
+                    <button onclick="saveEmployeeEdit()" id="save-edit-emp-btn" class="settings-save-btn" style="margin-top: 20px;">
+                        <i class="fas fa-save"></i> Zapisz zmiany
+                    </button>
                 </div>
             </div>
         </div>
@@ -643,34 +668,6 @@
     </div>
 
     <div id="toast-container" class="toast-container"></div>
-    <script src="raporty.js?v=4.6.7"></script>
-    
-    <div id="first-login-modal" class="modal-overlay" style="z-index: 10005;">
-        <div class="settings-modal-content modal-box" style="max-width: 480px; margin: 15vh auto; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.1); padding: 30px; border-radius: 12px; position: relative;">
-            <div class="settings-header">
-                <h2 style="color: #fff; margin-bottom: 10px;"><i class="fas fa-id-card-alt text-accent"></i> Kartoteka pracownika</h2>
-            </div>
-            <p class="settings-desc mb-20" style="margin-bottom: 20px; color: var(--text-secondary); font-size: 0.9rem;">Wygląda na to, że logujesz się do systemu po raz pierwszy. Wypełnij swoje dane In-Character.</p>
-            <div class="settings-form">
-                <div class="input-group" style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; color: var(--text-secondary); font-size: 0.85rem;">Imię i nazwisko (IC)</label>
-                    <input type="text" id="setup-ic-name" placeholder="np. Travis Vance" style="width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 8px;">
-                </div>
-                <div class="input-group" style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; color: var(--text-secondary); font-size: 0.85rem;">Numer SSN</label>
-                    <input type="number" id="setup-ssn" placeholder="np. 4512" style="width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 8px;">
-                </div>
-                <div class="input-group" style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; color: var(--text-secondary); font-size: 0.85rem;">URL zdjęcia profilowego (opcjonalnie)</label>
-                    <input type="text" id="setup-avatar" placeholder="https://..." style="width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 8px;">
-                    <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">Jeśli pole zostanie puste, użyjemy avatara z Discorda.</p>
-                </div>
-                <button id="save-setup-btn" onclick="saveFirstSetup()" style="margin-top: 15px; width: 100%; background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid #22c55e; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s;">
-                    <i class="fas fa-check"></i> Zapisz i otwórz raporty
-                </button>
-            </div>
-        </div>
-    </div>
-    
+    <script src="raporty.js?v=4.5.7"></script>
 </body>
 </html>
