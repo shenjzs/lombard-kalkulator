@@ -296,7 +296,7 @@ window.executeReportsLoginSequence = async function(userData, userRoles, btnElem
             if (avatarInput) avatarInput.value = userData.avatar || "";
             
             const modal = document.getElementById('first-login-modal');
-            if (modal) modal.classList.add('active');
+            if (modal) modal.classList.remove('hidden');
             
             window.tempDiscordUserData = userData; 
             window.tempDetectedRank = detectedRank; 
@@ -353,7 +353,7 @@ window.saveFirstSetup = async function() {
         });
 
         const modal = document.getElementById('first-login-modal');
-        if (modal) modal.classList.remove('active');
+        if (modal) modal.classList.add('hidden');
         
         const newEmpData = {
             ic_name: icName,
