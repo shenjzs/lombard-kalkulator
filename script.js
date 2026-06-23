@@ -1919,7 +1919,19 @@ window.sendToDiscord = async function() {
 
             formData.append("payload_json", JSON.stringify(embedPayload));
             
-            const res = await fetch(DISCORD_WEBHOOK_URL_SKUP, { method: "POST", body: formData });
+            // --- POPRAWKA: Pobieranie ID Discorda z zapisanej sesji i przekazanie go w nagłówku ---
+            const savedSession = JSON.parse(localStorage.getItem('elcartel_discord_session') || '{}');
+            const discordId = savedSession.user ? savedSession.user.id : (savedSession.id || "brak");
+            
+            const res = await fetch(DISCORD_WEBHOOK_URL_SKUP, { 
+                method: "POST", 
+                headers: {
+                    "X-Discord-ID": discordId
+                },
+                body: formData 
+            });
+            // --------------------------------------------------------------------------------------
+
             if (res.ok) {
                 // ZAPIS DO BAZY PRZEZ WORKERA (TŁUMACZA)
                 fetch(REPORTS_API_URL, { 
@@ -1932,7 +1944,7 @@ window.sendToDiscord = async function() {
                     addDailyStat(currentEmployeeName, finalPriceNumeric);
                     isStatAddedForCurrentReceipt = true;
                 }
-                // Wstaw to przed showNotice("Wysłano na Discord...");
+                
                 window.updateWarehouse(itemsToLog, 'add');
                 showNotice("Wysłano na Discord i zaktualizowano obrót!", "success");
 
@@ -2477,7 +2489,19 @@ window.sendToDiscordExport = async function() {
 
             formData.append("payload_json", JSON.stringify(embedPayload));
 
-            const res = await fetch(DISCORD_WEBHOOK_URL_EXPORT, { method: "POST", body: formData });
+            // --- POPRAWKA: Pobieranie ID Discorda z zapisanej sesji i przekazanie go w nagłówku ---
+            const savedSession = JSON.parse(localStorage.getItem('elcartel_discord_session') || '{}');
+            const discordId = savedSession.user ? savedSession.user.id : (savedSession.id || "brak");
+
+            const res = await fetch(DISCORD_WEBHOOK_URL_EXPORT, { 
+                method: "POST", 
+                headers: {
+                    "X-Discord-ID": discordId
+                },
+                body: formData 
+            });
+            // --------------------------------------------------------------------------------------
+
             if (res.ok) {
                 // ZAPIS DO BAZY PRZEZ WORKERA (TŁUMACZA)
                 fetch(REPORTS_API_URL, { 
@@ -2486,7 +2510,6 @@ window.sendToDiscordExport = async function() {
                     body: JSON.stringify(logPayload) 
                 }).catch(e => console.error("Błąd zapisu:", e));
 
-                // Wstaw to przed showNotice("Wysłano raport na Discord!");
                 window.updateWarehouse(itemsToLog, 'remove');
                 showNotice("Wysłano raport na Discord!", "success");
 
