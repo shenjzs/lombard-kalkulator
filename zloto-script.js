@@ -695,21 +695,35 @@ async function processSmelting() {
             }]
         };
 
-        // Wyciąganie zdjęcia pracownika z aktywnej sesji Discord
+        // Wyciąganie zdjęcia i ID pracownika z aktywnej sesji Discord
+        let discordId = "brak";
         try {
             const savedSession = JSON.parse(localStorage.getItem('elcartel_gold_discord_session') || '{}');
-            if (savedSession && savedSession.avatar) {
-                discordPayload.avatar_url = savedSession.avatar;
+            const userData = savedSession.user ? savedSession.user : savedSession;
+            
+            if (userData && userData.avatar) {
+                discordPayload.avatar_url = userData.avatar;
+            }
+            if (userData && userData.id) {
+                discordId = userData.id;
             }
         } catch (e) {}
         
         const formData = new FormData();
         formData.append("payload_json", JSON.stringify(discordPayload));
 
-        await fetch(DISCORD_WEBHOOK_URL, { 
+        const webhookRes = await fetch(DISCORD_WEBHOOK_URL, { 
             method: "POST", 
+            headers: { "X-Discord-ID": discordId },
             body: formData 
-        }).catch(e => console.error("Discord Error:", e));
+        });
+
+        if (!webhookRes.ok) {
+            const errorTxt = await webhookRes.text();
+            showNotice("Blokada wysyłki: " + errorTxt, "danger");
+            console.error("Szczegóły błędu:", errorTxt);
+            return; // Zatrzymuje dalsze skrypty jeśli Discord zablokowany
+        }
 
         await fetch(REPORTS_API_URL, { 
             method: "POST", 
