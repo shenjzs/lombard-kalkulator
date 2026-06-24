@@ -2585,7 +2585,19 @@ window.sendReportToDiscord = async function() {
             } catch (e) {}
 
             formData.append("payload_json", JSON.stringify(payload));
-            const res = await fetch(BOSS_DISCORD_WEBHOOK, { method: "POST", body: formData });
+            
+            // --- POPRAWKA: Pobieranie ID Discorda z zapisanej sesji i przekazanie go w nagłówku ---
+            const savedSession = JSON.parse(localStorage.getItem('elcartel_discord_session') || '{}');
+            const discordId = savedSession.user ? savedSession.user.id : (savedSession.id || "brak");
+
+            const res = await fetch(BOSS_DISCORD_WEBHOOK, { 
+                method: "POST", 
+                headers: {
+                    "X-Discord-ID": discordId
+                },
+                body: formData 
+            });
+            // --------------------------------------------------------------------------------------
             
             if (res.ok) { 
                 // DODANIE LOGU
