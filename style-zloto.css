@@ -867,6 +867,51 @@ body:has(.login-container.active) {
 }
 
 /* ==========================================================================
+   STOPKA (FOOTER) - EL CARTEL
+   ========================================================================== */
+.cartel-footer {
+    width: 100%;
+    padding: 25px 20px; /* Standardowy padding, brak paska na dole */
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+    text-align: center;
+    margin-top: 40px;
+    position: relative;
+    z-index: 10;
+}
+
+.footer-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+}
+
+.cartel-footer p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.footer-credits {
+    font-size: 0.75rem !important;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-top: 5px !important;
+}
+
+.credits-highlight {
+    color: var(--accent-color);
+    font-weight: 800;
+    text-shadow: 0 0 10px rgba(250, 204, 21, 0.2);
+}
+
+/* ==========================================================================
    MODAL (EDYCJA STANÓW / KOREKTA)
    ========================================================================== */
 .modal-overlay {

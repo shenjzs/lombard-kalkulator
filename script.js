@@ -1,4 +1,4 @@
-const APP_VERSION = "4.6.8";
+const APP_VERSION = "4.6.9";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const ALLOWED_DISCORD_ROLES = ["1518034647219572746"];
@@ -6,7 +6,8 @@ const ALLOWED_DISCORD_ROLES = ["1518034647219572746"];
 const RANK_HIERARCHY = [
     { id: "1499138968065806356", name: "Właściciel" },
     { id: "1499145834644635839", name: "Kierownik" },
-    { id: "1499146687560552479", name: "Pracownik" }
+    { id: "1499146687560552479", name: "Pracownik" },
+	{ id: "1520912431445180636", name: "Praktykant" }
 ];
 const DISCORD_WEBHOOK_URL_SKUP = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/skup"; 
 const DISCORD_WEBHOOK_URL_EXPORT = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/export";
