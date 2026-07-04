@@ -3,7 +3,7 @@ const APP_VERSION = "4.6.9";
 // ==========================================
 // KONFIGURACJA
 // ==========================================
-const ALLOWED_DISCORD_ROLES = ["1518034726512885851"];
+const ALLOWED_DISCORD_ROLES = ["1518034726512885851", "1522969080481579148"];
 const DISCORD_WEBHOOK_URL = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/zloto"; 
 const PIN_API_URL = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/pin";
 const REPORTS_API_URL = "https://elcartel-wbhk.bcjds9j7ht.workers.dev/reports";

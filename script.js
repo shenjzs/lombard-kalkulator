@@ -1,7 +1,7 @@
 const APP_VERSION = "4.6.9";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
-const ALLOWED_DISCORD_ROLES = ["1518034647219572746"];
+const ALLOWED_DISCORD_ROLES = ["1518034647219572746", "1522969080481579148"];
 // Hierarchia stanowisk w firmie (od najwyższej do najniższej)
 const RANK_HIERARCHY = [
     { id: "1499138968065806356", name: "Właściciel" },

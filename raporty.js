@@ -6,7 +6,7 @@ const APP_VERSION = "4.6.9"; // Normalizacja nazw produktów
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
 // ==========================================
-const ALLOWED_DISCORD_ROLES = ["1518034764974657566"];
+const ALLOWED_DISCORD_ROLES = ["1518034764974657566", "1522969080481579148"];
 // Hierarchia stanowisk w firmie (od najwyższej do najniższej)
 const RANK_HIERARCHY = [
     { id: "1499138968065806356", name: "Właściciel" },
