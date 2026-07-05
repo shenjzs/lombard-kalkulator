@@ -82,7 +82,7 @@ window.preloadLoyaltySettingsData = function() {
 
 window.preloadEmployeesData = function() {
     if (!window.employeesFetchPromise) {
-        window.employeesFetchPromise = fetch(`${PIN_API_URL}?action=get_all&t=${new Date().getTime()}`)
+        window.employeesFetchPromise = fetch(`${REPORTS_API_URL}?action=get_all_employees&t=${new Date().getTime()}`)
             .then(res => res.json())
             .catch(err => { window.employeesFetchPromise = null; return { employees: [] }; });
     }
@@ -2152,12 +2152,26 @@ window.openBonusesManager = async function() {
     const select = document.getElementById('new-bonus-emp');
     select.innerHTML = '<option value="">Wybierz pracownika...</option>';
     
+    // Zmuszamy aplikację do pobrania świeżej listy prosto z Supabase
+    try {
+        const res = await fetch(`${REPORTS_API_URL}?action=get_all_employees&t=${new Date().getTime()}`);
+        const data = await res.json();
+        if (data.employees) {
+            window.currentEmployeesList = data.employees;
+        }
+    } catch (e) {
+        console.error("Nie udało się odświeżyć bazy pracowników z Supabase", e);
+    }
+
     if (window.currentEmployeesList) {
         window.currentEmployeesList.forEach(emp => {
-            const opt = document.createElement('option');
-            opt.value = emp.name;
-            opt.innerText = emp.name;
-            select.appendChild(opt);
+            const empName = emp.ic_name || emp.name;
+            if (empName) {
+                const opt = document.createElement('option');
+                opt.value = empName;
+                opt.innerText = empName;
+                select.appendChild(opt);
+            }
         });
     }
     
