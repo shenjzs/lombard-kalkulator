@@ -2352,39 +2352,97 @@ window.finalizeQuoteExport = function(employeeName) {
     lastGeneratedReportID = `EXP-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
     const date = getFormattedDateTime();
     
-    let employeeText = `PRACOWNIK: ${employeeName.toUpperCase()}`;
-    if (currentCustomerSSNExport !== "") employeeText += `<br>KLIENT [SSN]: ${currentCustomerSSNExport}`;
+    // Logika Nabywcy
+    const clientText = currentCustomerSSNExport !== "" ? `Klient detaliczny<br>SSN: ${currentCustomerSSNExport}` : "Kontrahent zewnętrzny";
 
+    // Filtrowanie i generowanie tabeli
+    const activeItems = exportInventory.map((item, i) => {
+        if (countsExport[i] > 0) {
+            return {
+                name: item.isCustom ? (item.name || "Własny przedmiot") : item.name,
+                qty: countsExport[i],
+                price: item.price,
+                total: item.price * countsExport[i]
+            };
+        }
+        return null;
+    }).filter(item => item !== null);
+
+    let tableRowsHTML = activeItems.map((item) => `
+        <tr>
+            <td class="text-left">${item.name}</td>
+            <td class="text-center">${item.qty}</td>
+            <td class="text-center">${item.price}$</td>
+            <td class="text-right bold-text">${item.total}$</td>
+        </tr>
+    `).join('');
+
+    // Gotowy układ z podpisem i pieczątką na samym dole
     const receiptHTML = `
-        <div class="receipt receipt-shake">
-            <div class="receipt-header">
-                <h2>EL CARTEL EXPORT</h2>
-                <p class="receipt-meta">Raport sprzedaży przedmiotów</p>
-                <p class="receipt-meta">NR: ${lastGeneratedReportID}</p>
-                <p class="receipt-meta">${employeeText}</p>
+        <div class="invoice-exact">
+            <div class="invoice-exact-header">
+                <div class="invoice-exact-logo-section">
+                    <img src="https://i.imgur.com/LmDdxrQ.jpeg" class="invoice-logo-img" alt="Logo Cartel">
+                    <div class="invoice-logo-text">
+                        <h1>EL CARTEL</h1>
+                        <p>PAWN SHOP</p>
+                    </div>
+                </div>
+                <div class="invoice-exact-meta">
+                    <h2>FAKTURA SPRZEDAŻY</h2>
+                    <p>NR: ${lastGeneratedReportID}</p>
+                    <p>Data wystawienia: ${date}</p>
+                </div>
             </div>
-            <div class="receipt-divider"></div>
-            <div class="receipt-items-list">
-                ${exportInventory.map((item, i) => {
-                    if (countsExport[i] > 0) {
-                        let dName = item.isCustom ? (item.name || "Własny przedmiot") : item.name;
-                        return `
-                        <div class="receipt-row">
-                            <span>${dName} x${countsExport[i]}</span>
-                            <span>${item.price * countsExport[i]}$</span>
-                        </div>
-                        `;
-                    }
-                    return '';
-                }).join('')}
+
+            <div class="invoice-exact-divider"></div>
+
+            <div class="invoice-exact-parties">
+                <div class="invoice-party-box">
+                    <div class="party-title">SPRZEDAWCA:</div>
+                    <div class="party-details">
+                        EL CARTEL PAWN SHOP<br>
+                        Pracownik: ${employeeName.toUpperCase()}
+                    </div>
+                </div>
+                <div class="invoice-party-box">
+                    <div class="party-title">NABYWCA:</div>
+                    <div class="party-details">
+                        ${clientText}
+                    </div>
+                </div>
             </div>
-            <div class="receipt-divider"></div>
-            <div class="receipt-row total">
-                <span>RAZEM:</span>
-                <span>${currentTotalExport}$</span>
+
+            <table class="invoice-exact-table">
+                <thead>
+                    <tr>
+                        <th class="text-left">NAZWA TOWARU</th>
+                        <th class="text-center">ILOŚĆ</th>
+                        <th class="text-center">CENA SZT.</th>
+                        <th class="text-right">WARTOŚĆ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRowsHTML}
+                </tbody>
+            </table>
+
+            <div class="invoice-exact-summary-wrapper">
+                <div class="invoice-exact-summary">
+                    <span class="summary-label">DO ZAPŁATY:</span>
+                    <span class="summary-value">${currentTotalExport}$</span>
+                </div>
             </div>
-            <p class="receipt-meta mt-15">Data wystawienia: ${date}</p>
-            <div class="receipt-stamp">SPRZEDANO</div>
+
+            <div class="invoice-exact-footer">
+                <div class="invoice-exact-signature">
+                    <span class="signature-label">Podpis pracownika</span>
+                    <span class="signature-text">${employeeName}</span>
+                </div>
+                <div class="invoice-exact-stamp">
+                    SPRZEDANO
+                </div>
+            </div>
         </div>
     `;
 
