@@ -1334,6 +1334,8 @@ window.openEmployeeManager = function() {
 window.closeEmployeeManager = function() {
     const modal = document.getElementById('employee-manager-modal');
     if (modal) modal.classList.add('hidden');
+    const searchInput = document.getElementById('emp-search-input');
+    if(searchInput) searchInput.value = ''; // Czyszczenie lupy po zamknięciu
 };
 
 window.loadEmployeesDirectory = async function() {
@@ -1343,41 +1345,145 @@ window.loadEmployeesDirectory = async function() {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 30px; color: #64748b;"><i class="fas fa-spinner fa-spin"></i> Pobieranie danych z centrali...</td></tr>';
     
     try {
-        const res = await fetch(`https://elcartel-wbhk.bcjds9j7ht.workers.dev/reports?action=get_all_employees&t=${new Date().getTime()}`);
+        const res = await fetch(`${REPORTS_API_URL}?action=get_all_employees&t=${new Date().getTime()}`);
         const data = await res.json();
         
-        if (!data.employees || data.employees.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 30px; color: var(--text-secondary);">Brak zarejestrowanych pracowników w bazie.</td></tr>';
-            return;
-        }
+        window.currentEmployeesList = data.employees || [];
 
-        // Zapis do globalnej listy (przydaje się do innych modułów i wizytówek)
-        window.currentEmployeesList = data.employees;
-
-        let html = '';
-        data.employees.forEach(emp => {
-            const avatar = emp.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png';
-            html += `
-                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
-                    <td style="padding: 15px; display: flex; align-items: center; gap: 12px;">
-                        <img src="${avatar}" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #5865F2; object-fit: cover;">
-                        <strong style="color: #fff; font-size: 1rem;">${emp.ic_name}</strong>
-                    </td>
-                    <td style="padding: 15px; color: #cbd5e1; font-weight: 500; text-align: center;">${emp.ssn || '---'}</td>
-                    <td style="padding: 15px; color: var(--accent-color); font-weight: 600; text-align: center;">${emp.rank || 'Pracownik'}</td>
-                    <td style="padding: 15px; color: #94a3b8; font-size: 0.85rem; text-align: center;">${emp.hire_date || 'Brak danych'}</td>
-                    <td style="padding: 15px; text-align: right;">
-                        <button onclick="openEditEmployeeModal('${emp.discord_id}', '${emp.ic_name}', '${emp.ssn}', '${emp.rank}')" style="background: transparent; border: none; color: #3b82f6; cursor: pointer; margin-right: 15px; font-size: 1.1rem;" title="Edytuj profil"><i class="fas fa-edit"></i></button>
-                        <button onclick="deleteEmployeeProfile('${emp.discord_id}', '${emp.ic_name}')" style="background: transparent; border: none; color: #ef4444; cursor: pointer; font-size: 1.1rem;" title="Usuń kartotekę"><i class="fas fa-user-times"></i></button>
-                    </td>
-                </tr>
-            `;
-        });
-        tbody.innerHTML = html;
+        window.updateEmployeeManagerStats();
+        window.renderEmployeesTable();
         
     } catch (e) {
         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 30px; color: var(--danger);"><i class="fas fa-exclamation-triangle"></i> Błąd połączenia z bazą danych Supabase.</td></tr>';
     }
+};
+
+window.updateEmployeeManagerStats = function() {
+    const countEl = document.getElementById('em-total-count');
+    const topActiveEl = document.getElementById('em-top-active');
+    const newestEl = document.getElementById('em-newest-emp');
+    
+    if (!window.currentEmployeesList || window.currentEmployeesList.length === 0) return;
+
+    if (countEl) countEl.innerText = window.currentEmployeesList.length;
+
+    // Wyznaczanie najaktywniejszego pracownika z pobranego wcześniej feeda
+    let mostActive = "Brak danych";
+    if (window.globalRawFeed && window.globalRawFeed.length > 0) {
+        let opsCount = {};
+        window.globalRawFeed.forEach(tx => {
+            if(tx.employee && tx.employee !== "Nieznany") {
+                opsCount[tx.employee] = (opsCount[tx.employee] || 0) + 1;
+            }
+        });
+        let maxOps = 0;
+        for (const [emp, count] of Object.entries(opsCount)) {
+            if (count > maxOps) {
+                maxOps = count;
+                mostActive = emp;
+            }
+        }
+    }
+    
+    if (topActiveEl) {
+        topActiveEl.innerHTML = mostActive !== "Brak danych" 
+            ? `<span class="clickable-emp" onclick="window.openEmployeeProfile('${mostActive}')"><i class="fas fa-trophy" style="color: var(--success); margin-right: 5px;"></i>${mostActive}</span>` 
+            : "Brak danych";
+    }
+
+    // --- POPRAWKA: Prawidłowe wyszukiwanie najmłodszego stażem po dacie ---
+    let newestEmp = null;
+    let latestTimestamp = -Infinity;
+
+    window.currentEmployeesList.forEach(emp => {
+        if (emp.hire_date) {
+            // Rozbicie daty w formacie DD.MM.YYYY
+            const parts = emp.hire_date.split('.'); 
+            if (parts.length === 3) {
+                // Przekształcenie daty na czas (timestamp), aby móc łatwo porównać która jest większa (nowsza)
+                const ts = new Date(parts[2], parts[1] - 1, parts[0]).getTime();
+                if (ts > latestTimestamp) {
+                    latestTimestamp = ts;
+                    newestEmp = emp;
+                }
+            }
+        }
+    });
+
+    // Zabezpieczenie: jeśli nikt nie miał poprawnej daty, bierzemy ostatniego z listy
+    if (!newestEmp) {
+        newestEmp = window.currentEmployeesList[window.currentEmployeesList.length - 1];
+    }
+
+    if (newestEl && newestEmp) {
+        const nName = newestEmp.ic_name || newestEmp.name || "Nieznany";
+        newestEl.innerHTML = `<span class="clickable-emp" onclick="window.openEmployeeProfile('${nName}')"><i class="fas fa-user-plus" style="color: var(--warning); margin-right: 5px;"></i>${nName}</span> <span style="display:block; font-size:0.75rem; color:var(--text-secondary); margin-top: 3px;">Data: ${newestEmp.hire_date || 'Niedawno'}</span>`;
+    }
+};
+
+window.renderEmployeesTable = function() {
+    const tbody = document.getElementById('emp-manager-table-body');
+    const searchInput = document.getElementById('emp-search-input');
+    const term = searchInput ? searchInput.value.toLowerCase().trim() : "";
+
+    if (!window.currentEmployeesList || window.currentEmployeesList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 30px; color: var(--text-secondary);">Brak zarejestrowanych pracowników w bazie.</td></tr>';
+        return;
+    }
+
+    // Filtrowanie z Wyszukiwarki
+    let filtered = window.currentEmployeesList;
+    if (term) {
+        filtered = filtered.filter(emp => {
+            const name = (emp.ic_name || emp.name || "").toLowerCase();
+            const rank = (emp.rank || "").toLowerCase();
+            const ssn = String(emp.ssn || "");
+            return name.includes(term) || rank.includes(term) || ssn.includes(term);
+        });
+    }
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--text-secondary); padding: 20px;">Brak danych pasujących do wyszukiwania.</td></tr>';
+        return;
+    }
+
+    // Sortowanie alfabetyczne by domyślnie panował ład
+    filtered.sort((a,b) => (a.ic_name || a.name || "").localeCompare(b.ic_name || b.name || ""));
+
+    let html = '';
+    filtered.forEach(emp => {
+        const avatar = emp.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png';
+        const empName = emp.ic_name || emp.name || "Nieznany";
+        
+        // Inteligentne kolory dla rangi
+        let rankStyle = "background: rgba(56, 189, 248, 0.1); color: var(--accent-color); border-color: rgba(56, 189, 248, 0.2);";
+        if (emp.rank === "Właściciel") rankStyle = "background: rgba(239, 68, 68, 0.15); color: var(--danger); border-color: rgba(239, 68, 68, 0.3);";
+        else if (emp.rank === "Kierownik") rankStyle = "background: rgba(245, 158, 11, 0.15); color: var(--warning); border-color: rgba(245, 158, 11, 0.3);";
+
+        html += `
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                <td style="padding: 15px; display: flex; align-items: center; gap: 12px;">
+                    <img src="${avatar}" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #5865F2; object-fit: cover;">
+                    <strong class="clickable-emp" onclick="window.openEmployeeProfile('${empName}')" style="font-size: 1.05rem;" title="Zobacz Akta">${empName}</strong>
+                </td>
+                <td style="padding: 15px; color: #cbd5e1; font-weight: 500; text-align: center;">${emp.ssn || '---'}</td>
+                <td style="padding: 15px; text-align: center;">
+                    <span class="emp-rank-badge" style="${rankStyle}">${emp.rank || 'Pracownik'}</span>
+                </td>
+                <td style="padding: 15px; color: #94a3b8; font-size: 0.85rem; text-align: center;">${emp.hire_date || 'Brak danych'}</td>
+                <td style="padding: 15px; text-align: right;">
+                    <button onclick="window.openEmployeeProfile('${empName}')" class="emp-action-btn" style="color: var(--success); border-color: rgba(34, 197, 94, 0.3);" title="Przeglądaj Akta"><i class="fas fa-id-badge"></i></button>
+                    <button onclick="openEditEmployeeModal('${emp.discord_id}', '${empName}', '${emp.ssn}', '${emp.rank}')" class="emp-action-btn" style="color: #3b82f6; border-color: rgba(59, 130, 246, 0.3);" title="Edytuj profil"><i class="fas fa-edit"></i></button>
+                    <button onclick="deleteEmployeeProfile('${emp.discord_id}', '${empName}')" class="emp-action-btn emp-btn-del" title="Zwolnij / Usuń"><i class="fas fa-user-times"></i></button>
+                </td>
+            </tr>
+        `;
+    });
+    tbody.innerHTML = html;
+};
+
+window.filterEmployeesTable = function() {
+    window.renderEmployeesTable();
 };
 
 window.openEditEmployeeModal = function(id, name, ssn, rank) {
@@ -1681,7 +1787,7 @@ window.openEmployeeProfile = function(name) {
     // Generowanie głównego modalu jeśli nie istnieje
     if (!document.getElementById('employee-profile-modal')) {
         const profileModalHTML = `
-            <div id="employee-profile-modal" class="emp-modal-overlay hidden">
+            <div id="employee-profile-modal" class="emp-modal-overlay hidden" style="z-index: 10050;">
                 <div class="emp-modal-content" style="max-width: 580px;">
                     <div class="emp-modal-header">
                         <h2><i class="fas fa-id-badge"></i> Akta pracownika</h2>
