@@ -1,7 +1,7 @@
 // ==========================================
 // WERSJA APLIKACJI (Zmień, aby wymusić odświeżenie u wszystkich)
 // ==========================================
-const APP_VERSION = "4.6.9"; // Normalizacja nazw produktów
+const APP_VERSION = "4.7.0"; // Normalizacja nazw produktów
 
 // ==========================================
 // KONFIGURACJA LINKÓW I CEN
@@ -1678,11 +1678,11 @@ window.closeProductStats = function() {
 window.openEmployeeProfile = function(name) {
     if(!name || name === "Nieznany") return;
     
-    // Zabezpieczenie: jeśli modal nie istnieje na stronie w momencie kliknięcia, dodaj go
+    // Generowanie głównego modalu jeśli nie istnieje
     if (!document.getElementById('employee-profile-modal')) {
         const profileModalHTML = `
             <div id="employee-profile-modal" class="emp-modal-overlay hidden">
-                <div class="emp-modal-content" style="max-width: 550px;">
+                <div class="emp-modal-content" style="max-width: 580px;">
                     <div class="emp-modal-header">
                         <h2><i class="fas fa-id-badge"></i> Akta pracownika</h2>
                         <button class="emp-close-btn" onclick="window.closeEmployeeProfile()"><i class="fas fa-times"></i></button>
@@ -1703,15 +1703,16 @@ window.openEmployeeProfile = function(name) {
     let activeDays = new Set();
     let firstFound = false;
     let lastActive = "Brak aktywności";
+    let totalItemsProcessed = 0; // Nowa zmienna licząca wolumen
     
     const feed = window.globalSortedTransactions || [];
     
+    // Obliczanie danych analitycznych
     feed.forEach(tx => {
-        if (tx.employee === name) {
+        if (tx.employee === name || tx.employee.toLowerCase() === name.toLowerCase()) {
             ops++;
             activeDays.add(parseDate(tx.date).toLocaleDateString());
             
-            // Ostatnia aktywność
             if (!firstFound) {
                 let dDate = tx.date;
                 if (typeof dDate === 'string' && dDate.includes('T')) {
@@ -1728,6 +1729,7 @@ window.openEmployeeProfile = function(name) {
             
             tx.items.forEach(i => {
                 itemCounts[i.name] = (itemCounts[i.name] || 0) + i.qty;
+                totalItemsProcessed += i.qty; // Dodawanie sztuk
             });
         }
     });
@@ -1735,80 +1737,195 @@ window.openEmployeeProfile = function(name) {
     const favItem = Object.entries(itemCounts)
         .sort((a,b) => b[1] - a[1])[0] || ["Brak", 0];
 
-    const empData = window.currentEmployeesList.find(e => e.name === name) || {};
+    // Pobieranie danych z bazy
+    const empData = window.currentEmployeesList.find(e => e.ic_name === name || e.name === name) || {};
     const rank = empData.rank || "Pracownik";
     const ssn = empData.ssn || "Brak danych";
+    const hireDate = empData.hire_date || "Nieznana";
     const pluses = empData.pluses || 0;
     const minuses = empData.minuses || 0;
     
     const totalVolume = tBuy + tSell;
     const avgOpsPerDay = activeDays.size > 0 ? (ops / activeDays.size).toFixed(1) : 0;
+    const avgDealValue = ops > 0 ? (totalVolume / ops) : 0; // Średni deal
 
+    // Generator Avatara / Inicjałów
+    const avatarUrl = empData.avatar_url || '';
+    const isDefaultAvatar = !avatarUrl || avatarUrl.includes('embed/avatars') || avatarUrl.includes('default');
+    const initials = name.split(' ').map(n => n.charAt(0)).join('').toUpperCase().substring(0, 2);
+
+    const avatarStyle = isDefaultAvatar
+        ? "background: var(--bg-color); color: var(--accent-color); font-size: 2.5rem; display: flex; justify-content: center; align-items: center;"
+        : "background: var(--bg-color);";
+
+    const avatarContent = isDefaultAvatar
+        ? initials
+        : `<img src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 16px;">`;
+
+    // Budowanie UI
     const body = document.getElementById('emp-profile-body');
     if (body) {
         body.innerHTML = `
-            <div class="profile-header-info">
-                <div class="profile-avatar">${name.charAt(0).toUpperCase()}</div>
-                <div class="profile-details">
-                    <h3>${name}</h3>
-                    <div style="display:flex; gap:10px; font-size:0.85rem; flex-wrap:wrap;">
-                        <span class="emp-rank-badge">${rank}</span>
-                        <span class="qty-badge" style="color:var(--text-secondary); border:1px dashed rgba(255,255,255,0.2);">SSN: ${ssn}</span>
-                    </div>
+            <!-- BANNER I AWATAR -->
+            <div style="position: relative; margin: -30px -30px 20px -30px; background: linear-gradient(135deg, var(--accent-color), #0284c7); height: 110px;">
+                <div style="position: absolute; bottom: -35px; left: 30px; width: 85px; height: 85px; border-radius: 20px; border: 4px solid var(--card-bg); box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 10; ${avatarStyle} cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    ${avatarContent}
                 </div>
             </div>
             
-            <div class="profile-stats">
-                <div class="p-stat-box">
-                    <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">Suma Obrtu</div>
-                    <div class="p-stat-val" style="color:var(--accent-color)">${window.formatMoney(totalVolume)}$</div>
-                </div>
-                <div class="p-stat-box">
-                    <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">Operacji łącznie</div>
-                    <div class="p-stat-val" style="color:white">${ops}</div>
-                </div>
-            </div>
-
-            <div class="profile-insights">
-                <div class="insight-row">
-                    <span class="insight-label">Efektywność (śr. operacji/dzień)</span>
-                    <span class="insight-value" style="color:var(--success);">${avgOpsPerDay}</span>
-                </div>
-                <div class="insight-row">
-                    <span class="insight-label">Ostatnio widziany</span>
-                    <span class="insight-value" style="color:var(--accent-color);">${lastActive}</span>
-                </div>
-                <div class="insight-row">
-                    <span class="insight-label">Specjalizacja</span>
-                    <span class="insight-value" style="color:var(--warning);">${favItem[0]} (${favItem[1]} szt.)</span>
-                </div>
-                <div class="insight-row">
-                    <span class="insight-label">Rekordowy pojedynczy deal</span>
-                    <span class="insight-value"><i class="fas fa-dollar-sign"></i> ${window.formatMoney(maxDeal)}</span>
-                </div>
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.05);">
-                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">
-                        <span>Wkład w aktywność firmy</span>
-                        <span>${ops > 10 ? 'Aktywny' : 'Początkujący'}</span>
-                    </div>
-                    <div class="trust-bar-container">
-                        <div class="trust-bar-fill" style="width: ${Math.min(ops * 2, 100)}%;"></div>
-                    </div>
+            <!-- NAGŁÓWEK (Imię, Ranga, SSN, Data) -->
+            <div style="margin-left: 130px; min-height: 55px; display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 5px;">
+                <h3 style="font-size: 1.7rem; font-weight: 900; margin: 0; line-height: 1.1; color: var(--text-primary);">${name}</h3>
+                <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center;">
+                    <span class="emp-rank-badge" style="background: var(--warning-bg); color: var(--warning); border-color: var(--warning); padding: 4px 10px;"><i class="fas fa-briefcase" style="margin-right: 4px;"></i>${rank}</span>
+                    <span class="qty-badge" style="border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); padding: 4px 10px; font-size: 0.8rem;">SSN: ${ssn}</span>
+                    <span class="qty-badge" style="border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); padding: 4px 10px; font-size: 0.8rem;"><i class="fas fa-calendar-alt" style="margin-right: 4px; color: var(--text-secondary);"></i>Od: ${hireDate}</span>
                 </div>
             </div>
 
-            <div class="reputation-box">
-                <div class="rep-item">
-                    <span class="rep-title">Pochwały</span>
-                    <span class="rep-score plus" id="prof-plus-val">${pluses}</span>
+            <div style="padding-top: 25px;">
+                <!-- GŁÓWNE STATYSTYKI (GRID 4 PÓL) -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                    <!-- Kafelek z naprawionym dolarem -->
+                    <div style="background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 16px; padding: 15px 20px; text-align: left; position: relative; overflow: hidden;">
+                        <i class="fas fa-dollar-sign" style="position: absolute; right: 10px; bottom: 5px; font-size: 3.5rem; opacity: 0.05; color: var(--accent-color); line-height: 1;"></i>
+                        <div style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; font-weight: 800;">Suma Obrotu</div>
+                        <div style="font-size: 1.6rem; font-weight: 900; color: var(--accent-color); position: relative; z-index: 2;">${window.formatMoney(totalVolume)}$</div>
+                    </div>
+                    
+                    <div style="background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 15px 20px; text-align: left;">
+                        <div style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; font-weight: 800;">Operacji łącznie</div>
+                        <div style="font-size: 1.6rem; font-weight: 900; color: white;">${ops}</div>
+                    </div>
+
+                    <div style="background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 15px 20px; text-align: left;">
+                        <div style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; font-weight: 800;">Średnia wielkość dealu</div>
+                        <div style="font-size: 1.6rem; font-weight: 900; color: var(--success);">${window.formatMoney(avgDealValue)}$</div>
+                    </div>
+
+                    <div style="background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 15px 20px; text-align: left;">
+                        <div style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; font-weight: 800;">Przetworzone towary</div>
+                        <div style="font-size: 1.6rem; font-weight: 900; color: var(--warning);">${totalItemsProcessed} szt.</div>
+                    </div>
                 </div>
-                <div class="rep-actions">
-                    <button class="rep-btn add" onclick="window.updateReputation('${name}', 'plus')" title="Dodaj plusa"><i class="fas fa-plus"></i></button>
-                    <button class="rep-btn sub" onclick="window.updateReputation('${name}', 'minus')" title="Dodaj minusa"><i class="fas fa-minus"></i></button>
+
+                <!-- SZCZEGÓŁY (PIONOWA LISTA) -->
+                <div style="display: flex; flex-direction: column; gap: 12px; background: rgba(255,255,255,0.02); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px;">
+                    <div class="insight-row">
+                        <span class="insight-label"><i class="fas fa-chart-line" style="margin-right: 8px; color: var(--text-secondary);"></i> Efektywność</span>
+                        <span class="insight-value" style="color:var(--success);">${avgOpsPerDay} op/dzień</span>
+                    </div>
+                    <div class="insight-row">
+                        <span class="insight-label"><i class="far fa-clock" style="margin-right: 8px; color: var(--text-secondary);"></i> Ostatnio widziany</span>
+                        <span class="insight-value" style="color:var(--accent-color);">${lastActive}</span>
+                    </div>
+                    <div class="insight-row">
+                        <span class="insight-label"><i class="fas fa-star" style="margin-right: 8px; color: var(--text-secondary);"></i> Specjalizacja</span>
+                        <span class="insight-value" style="color:var(--warning);">${favItem[0]} (${favItem[1]} szt.)</span>
+                    </div>
+                    <div class="insight-row">
+                        <span class="insight-label"><i class="fas fa-trophy" style="margin-right: 8px; color: var(--text-secondary);"></i> Rekordowy deal</span>
+                        <span class="insight-value"><i class="fas fa-dollar-sign" style="color: var(--success); margin-right: 3px;"></i>${window.formatMoney(maxDeal)}</span>
+                    </div>
+
+                    <!-- ROZBUDOWANY BALANS SKUP VS SPRZEDAŻ -->
+                    <div style="margin-top: 10px; padding-top: 15px; border-top: 1px dashed rgba(255,255,255,0.08);">
+                        <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:800; color:var(--text-secondary); text-transform:uppercase; margin-bottom: 10px;">
+                            <span><i class="fas fa-shopping-basket" style="color: var(--danger); margin-right: 5px;"></i> Skup: ${window.formatMoney(tBuy)}$</span>
+                            <span><i class="fas fa-truck-loading" style="color: var(--success); margin-right: 5px;"></i> Sprzedaż: ${window.formatMoney(tSell)}$</span>
+                        </div>
+                        <div style="height: 8px; background: rgba(0,0,0,0.5); border-radius: 10px; overflow: hidden; display: flex; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="height: 100%; width: ${totalVolume > 0 ? (tBuy / totalVolume) * 100 : 50}%; background: var(--danger); transition: 1s;"></div>
+                            <div style="height: 100%; width: ${totalVolume > 0 ? (tSell / totalVolume) * 100 : 50}%; background: var(--success); transition: 1s;"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- PASEK DOŚWIADCZENIA -->
+                    <div style="margin-top: 15px;">
+                        ${(function() {
+                            const now = new Date().getTime();
+                            const oneDay = 24 * 60 * 60 * 1000;
+                            let recentOps = 0;
+                            let daysSinceLast = Infinity;
+
+                            // Szybkie przeliczenie aktywności w czasie
+                            feed.forEach(tx => {
+                                if (tx.employee === name || tx.employee.toLowerCase() === name.toLowerCase()) {
+                                    const txTime = parseDate(tx.date).getTime();
+                                    const daysAgo = (now - txTime) / oneDay;
+                                    
+                                    if (daysAgo < daysSinceLast) daysSinceLast = daysAgo;
+                                    if (daysAgo <= 14) recentOps++; // Liczymy tylko operacje z ostatnich 2 tygodni
+                                }
+                            });
+
+                            let engStatus = "Brak danych";
+                            let engColor = "var(--text-secondary)";
+                            let engPct = 0;
+
+                            // Algorytm oceny zaangażowania
+                            if (daysSinceLast > 14 || recentOps === 0) {
+                                engStatus = "Nieaktywny";
+                                engColor = "var(--danger)";
+                                engPct = 5; // Minimalny widoczny pasek
+                            } else if (daysSinceLast > 7) {
+                                engStatus = "Słabnące";
+                                engColor = "var(--warning)";
+                                engPct = 25;
+                            } else if (recentOps >= 20) {
+                                engStatus = "Wzorowe";
+                                engColor = "var(--success)";
+                                engPct = 100;
+                            } else if (recentOps >= 10) {
+                                engStatus = "Wysokie";
+                                engColor = "var(--accent-color)"; // Niebieski akcent
+                                engPct = 75;
+                            } else if (recentOps >= 4) {
+                                engStatus = "Stabilne";
+                                engColor = "var(--warning)";
+                                engPct = 50;
+                            } else {
+                                engStatus = "Niskie";
+                                engColor = "var(--danger)";
+                                engPct = 20;
+                            }
+
+                            return `
+                                <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:800; color:var(--text-secondary); text-transform:uppercase; margin-bottom: 8px;">
+                                    <span>Zaangażowanie (Ostatnie 14 dni)</span>
+                                    <span style="color: ${engColor};">${engStatus}</span>
+                                </div>
+                                <div class="trust-bar-container" style="height: 8px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.05); margin-top: 0; border-radius: 10px;">
+                                    <div class="trust-bar-fill" style="width: ${engPct}%; background: ${engColor}; box-shadow: 0 0 10px ${engColor}; transition: width 1s;"></div>
+                                </div>
+                            `;
+                        })()}
+                    </div>
                 </div>
-                <div class="rep-item">
-                    <span class="rep-title">Kary</span>
-                    <span class="rep-score minus" id="prof-minus-val">${minuses}</span>
+
+                <!-- REPUTACJA -->
+                <div style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(90deg, rgba(34, 197, 94, 0.05), rgba(239, 68, 68, 0.05)); padding: 15px 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <button class="rep-btn add" onclick="window.updateReputation('${name}', 'plus')" title="Dodaj plusa" style="box-shadow: 0 4px 10px rgba(34, 197, 94, 0.15);">
+                            <i class="fas fa-thumbs-up"></i>
+                        </button>
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 800; letter-spacing: 1px;">Pochwały</span>
+                            <span class="rep-score plus" id="prof-plus-val" style="font-size: 1.6rem; line-height: 1; margin-top: 2px;">${pluses}</span>
+                        </div>
+                    </div>
+                    
+                    <div style="height: 35px; width: 1px; background: rgba(255,255,255,0.1);"></div>
+
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="display: flex; flex-direction: column; text-align: right;">
+                            <span style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 800; letter-spacing: 1px;">Kary</span>
+                            <span class="rep-score minus" id="prof-minus-val" style="font-size: 1.6rem; line-height: 1; margin-top: 2px;">${minuses}</span>
+                        </div>
+                        <button class="rep-btn sub" onclick="window.updateReputation('${name}', 'minus')" title="Dodaj minusa" style="box-shadow: 0 4px 10px rgba(239, 68, 68, 0.15);">
+                            <i class="fas fa-thumbs-down"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
@@ -2147,12 +2264,18 @@ window.deleteLoyaltyReward = async function(name) {
 // ==========================================
 // ZARZĄDZANIE PREMIAMI
 // ==========================================
+// Pomocnicza funkcja do sumowania kwot premii
+window.addBonusAmount = function(amount) {
+    const input = document.getElementById('new-bonus-amount');
+    const currentVal = parseFloat(input.value) || 0;
+    input.value = currentVal + amount;
+};
+
 window.openBonusesManager = async function() {
     document.getElementById('bonuses-manager-modal').classList.remove('hidden');
-    const select = document.getElementById('new-bonus-emp');
-    select.innerHTML = '<option value="">Wybierz pracownika...</option>';
+    const listContainer = document.getElementById('new-bonus-emp-list');
+    listContainer.innerHTML = '<span style="color: var(--text-secondary); font-size: 0.85rem;"><i class="fas fa-spinner fa-spin"></i> Pobieranie danych...</span>';
     
-    // Zmuszamy aplikację do pobrania świeżej listy prosto z Supabase
     try {
         const res = await fetch(`${REPORTS_API_URL}?action=get_all_employees&t=${new Date().getTime()}`);
         const data = await res.json();
@@ -2160,107 +2283,265 @@ window.openBonusesManager = async function() {
             window.currentEmployeesList = data.employees;
         }
     } catch (e) {
-        console.error("Nie udało się odświeżyć bazy pracowników z Supabase", e);
+        console.error("Nie udało się odświeżyć bazy pracowników", e);
     }
 
-    if (window.currentEmployeesList) {
+    listContainer.innerHTML = ''; 
+    
+    // Funkcja do aktualizacji stanu przycisku Zaznacz/Odznacz Wszystkich
+    const updateSelectAllBtnState = () => {
+        const all = listContainer.querySelectorAll('.emp-bonus-pill').length;
+        const selected = listContainer.querySelectorAll('.emp-bonus-pill.selected').length;
+        const btn = document.getElementById('select-all-bonus-btn');
+        if(!btn) return;
+        
+        if(all > 0 && selected === all) {
+            btn.innerHTML = '<i class="fas fa-times"></i> Odznacz wszystkich';
+            btn.style.color = 'var(--danger)';
+            btn.style.background = 'rgba(239, 68, 68, 0.1)';
+            btn.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+        } else {
+            btn.innerHTML = '<i class="fas fa-check-double"></i> Zaznacz wszystkich';
+            btn.style.color = 'var(--accent-color)';
+            btn.style.background = 'rgba(56, 189, 248, 0.1)';
+            btn.style.borderColor = 'rgba(56, 189, 248, 0.3)';
+        }
+    };
+
+    const selectAllBtn = document.createElement('div');
+    selectAllBtn.id = 'select-all-bonus-btn';
+    selectAllBtn.innerHTML = '<i class="fas fa-check-double"></i> Zaznacz wszystkich';
+    selectAllBtn.style.cssText = 'width: 100%; padding: 8px; background: rgba(56, 189, 248, 0.1); color: var(--accent-color); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; text-align: center; cursor: pointer; font-size: 0.8rem; font-weight: 800; margin-bottom: 5px; transition: 0.2s; user-select: none;';
+    
+    selectAllBtn.onclick = function() {
+        const allPills = listContainer.querySelectorAll('.emp-bonus-pill');
+        const selectedPills = listContainer.querySelectorAll('.emp-bonus-pill.selected');
+        
+        if (selectedPills.length === allPills.length) {
+            // Skoro wszyscy są zaznaczeni -> odznacz wszystkich
+            allPills.forEach(p => {
+                p.classList.remove('selected');
+                p.style.background = 'rgba(255,255,255,0.05)';
+                p.style.color = 'var(--text-primary)';
+                p.style.borderColor = 'rgba(255,255,255,0.1)';
+                p.style.boxShadow = 'none';
+            });
+        } else {
+            // Zaznacz wszystkich (tylko tych jeszcze niezaznaczonych, by nie psuć CSS)
+            const unselectedPills = listContainer.querySelectorAll('.emp-bonus-pill:not(.selected)');
+            unselectedPills.forEach(p => {
+                p.classList.add('selected');
+                p.style.background = 'var(--warning)';
+                p.style.color = '#000';
+                p.style.borderColor = 'var(--warning)';
+                p.style.boxShadow = '0 0 10px rgba(245, 158, 11, 0.4)';
+            });
+        }
+        updateSelectAllBtnState(); // Odśwież wygląd przycisku
+    };
+    listContainer.appendChild(selectAllBtn);
+
+    if (window.currentEmployeesList && window.currentEmployeesList.length > 0) {
         window.currentEmployeesList.forEach(emp => {
             const empName = emp.ic_name || emp.name;
             if (empName) {
-                const opt = document.createElement('option');
-                opt.value = empName;
-                opt.innerText = empName;
-                select.appendChild(opt);
+                const pill = document.createElement('div');
+                pill.className = 'emp-bonus-pill';
+                pill.dataset.value = empName;
+                pill.innerHTML = `<i class="fas fa-user" style="margin-right: 5px;"></i>${empName}`;
+                
+                pill.style.cssText = 'padding: 6px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; cursor: pointer; font-size: 0.8rem; color: var(--text-primary); transition: all 0.2s; user-select: none; display: flex; align-items: center;';
+                
+                pill.onclick = function() {
+                    this.classList.toggle('selected');
+                    if (this.classList.contains('selected')) {
+                        this.style.background = 'var(--warning)';
+                        this.style.color = '#000';
+                        this.style.borderColor = 'var(--warning)';
+                        this.style.boxShadow = '0 0 10px rgba(245, 158, 11, 0.4)';
+                    } else {
+                        this.style.background = 'rgba(255,255,255,0.05)';
+                        this.style.color = 'var(--text-primary)';
+                        this.style.borderColor = 'rgba(255,255,255,0.1)';
+                        this.style.boxShadow = 'none';
+                    }
+                    updateSelectAllBtnState(); // Sprawdź, czy trzeba zmienić główny przycisk
+                };
+                
+                listContainer.appendChild(pill);
             }
         });
+    } else {
+        listContainer.innerHTML = '<span style="color: var(--danger); font-size: 0.85rem;">Brak pracowników w bazie.</span>';
     }
     
-    await loadBonusesToTable();
+    await window.loadBonusesToTable();
 }
 
 window.closeBonusesManager = function() {
     document.getElementById('bonuses-manager-modal').classList.add('hidden');
 }
 
-async function loadBonusesToTable() {
+window.loadBonusesToTable = async function() {
     const tbody = document.getElementById('bonuses-table-body');
+    if(!tbody) return;
     tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Ładowanie danych...</td></tr>';
     
     try {
         const data = await window.preloadBonusesData();
         window.globalBonuses = data.bonuses || [];
 
-        if (window.globalBonuses.length > 0) {
-            const sortedBonuses = window.globalBonuses.sort((a,b) => parseDate(b.date).getTime() - parseDate(a.date).getTime());
-            tbody.innerHTML = sortedBonuses.map(b => {
-                let displayDate = b.date;
-                if (typeof displayDate === 'string' && displayDate.includes('T')) {
-                    displayDate = new Date(displayDate).toLocaleString('pl-PL');
-                }
-                return `
-                    <tr>
-                        <td>${displayDate}</td>
-                        <td><strong class="clickable-emp" onclick="window.openEmployeeProfile('${b.employee}')"><i class="fas fa-user-circle"></i> ${b.employee}</strong></td>
-                        <td><span style="color: var(--text-secondary);">${b.reason || '-'}</span></td>
-                        <td style="text-align: right; color: var(--warning); font-weight: 800;">${window.formatMoney(b.amount)}$</td>
-                    </tr>
-                `;
-            }).join('');
-        } else {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Brak wpisów o premiach.</td></tr>';
-        }
+        window.updateBonusStats();
+        window.renderBonusesTable();
     } catch (err) {
         tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--danger);">Błąd połączenia z bazą!</td></tr>';
     }
 }
 
+window.renderBonusesTable = function() {
+    const tbody = document.getElementById('bonuses-table-body');
+    if(!tbody) return;
+    const searchInput = document.getElementById('bonus-search-input');
+    const term = searchInput ? searchInput.value.toLowerCase().trim() : "";
+
+    let filtered = window.globalBonuses || [];
+    
+    if (term) {
+        filtered = filtered.filter(b => 
+            (b.employee || "").toLowerCase().includes(term) ||
+            (b.reason || "").toLowerCase().includes(term) ||
+            String(b.amount).includes(term)
+        );
+    }
+
+    if (filtered.length > 0) {
+        const sortedBonuses = filtered.sort((a,b) => {
+            const dateA = typeof parseDate === 'function' ? parseDate(a.date).getTime() : new Date(a.date).getTime();
+            const dateB = typeof parseDate === 'function' ? parseDate(b.date).getTime() : new Date(b.date).getTime();
+            return dateB - dateA;
+        });
+        
+        tbody.innerHTML = sortedBonuses.map(b => {
+            let displayDate = b.date;
+            if (typeof displayDate === 'string' && displayDate.includes('T')) {
+                displayDate = new Date(displayDate).toLocaleString('pl-PL');
+            }
+            return `
+                <tr>
+                    <td style="font-size: 0.8rem; color: var(--text-secondary);">${displayDate}</td>
+                    <td><strong class="clickable-emp" onclick="window.openEmployeeProfile('${b.employee}')"><i class="fas fa-user-circle"></i> ${b.employee}</strong></td>
+                    <td><span style="color: var(--text-primary); font-size: 0.9rem;">${b.reason || '-'}</span></td>
+                    <td style="text-align: right; color: var(--warning); font-weight: 900;">${window.formatMoney ? window.formatMoney(b.amount) : b.amount}$</td>
+                </tr>
+            `;
+        }).join('');
+    } else {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-secondary); padding: 20px;">Brak danych pasujących do wyszukiwania.</td></tr>';
+    }
+};
+
+window.filterBonusesTable = function() {
+    window.renderBonusesTable();
+};
+
+window.updateBonusStats = function() {
+    let totalPaid = 0;
+    let totalCount = (window.globalBonuses || []).length;
+    let employeeTotals = {};
+
+    (window.globalBonuses || []).forEach(b => {
+        const amt = parseFloat(b.amount) || 0;
+        totalPaid += amt;
+        employeeTotals[b.employee] = (employeeTotals[b.employee] || 0) + amt;
+    });
+
+    let topEmployee = "Brak danych";
+    let maxBonusVal = 0;
+    for (const [emp, val] of Object.entries(employeeTotals)) {
+        if (val > maxBonusVal) {
+            maxBonusVal = val;
+            topEmployee = emp;
+        }
+    }
+
+    const totalEl = document.getElementById('bm-total-bonuses');
+    const countEl = document.getElementById('bm-total-count');
+    const topEl = document.getElementById('bm-top-employee');
+
+    if(totalEl) totalEl.innerText = (window.formatMoney ? window.formatMoney(totalPaid) : totalPaid) + '$';
+    if(countEl) countEl.innerText = totalCount;
+    if(topEl) {
+        topEl.innerHTML = topEmployee !== "Brak danych" 
+            ? `<span class="clickable-emp" onclick="window.openEmployeeProfile('${topEmployee}')">${topEmployee}</span> <span style="display:block; font-size: 0.8rem; color: var(--warning); margin-top: 3px;">(${(window.formatMoney ? window.formatMoney(maxBonusVal) : maxBonusVal)}$)</span>` 
+            : "Brak danych";
+    }
+};
+
 window.addBonus = async function() {
     const btn = document.getElementById('add-bonus-btn');
-    const empInput = document.getElementById('new-bonus-emp');
     const amountInput = document.getElementById('new-bonus-amount');
     const reasonInput = document.getElementById('new-bonus-reason');
 
-    const employee = empInput.value;
+    const selectedPills = document.querySelectorAll('#new-bonus-emp-list .emp-bonus-pill.selected');
+    const selectedEmployees = Array.from(selectedPills).map(pill => pill.dataset.value);
+    
     const amount = parseFloat(amountInput.value);
     const reason = reasonInput.value.trim();
 
-    if (!employee) return showNotice("Wybierz pracownika!", "danger");
-    if (isNaN(amount) || amount <= 0) return showNotice("Wprowadź poprawną kwotę!", "danger");
+    if (selectedEmployees.length === 0) return typeof showNotice === 'function' ? showNotice("Wybierz co najmniej jednego pracownika z listy klikając w niego!", "danger") : alert("Wybierz pracownika");
+    if (isNaN(amount) || amount <= 0) return typeof showNotice === 'function' ? showNotice("Wprowadź poprawną kwotę!", "danger") : alert("Błędna kwota");
 
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Wypłacanie...';
+    if(typeof showNotice === 'function') showNotice(`Przetwarzanie premii dla ${selectedEmployees.length} pracowników...`, "info");
 
     try {
-        const res = await fetch(REPORTS_API_URL, {
-            method: 'POST',
-            body: JSON.stringify({
-                action: 'save_bonus',
-                employee: employee,
-                amount: amount,
-                reason: reason,
-                boss: document.getElementById('logged-boss-name').innerText 
-            })
+        const bossNameEl = document.getElementById('logged-boss-name');
+        const bossName = bossNameEl ? bossNameEl.innerText : "Szef";
+
+        const bonusPromises = selectedEmployees.map(employee => {
+            return fetch(typeof REPORTS_API_URL !== 'undefined' ? REPORTS_API_URL : '', {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'save_bonus',
+                    employee: employee,
+                    amount: amount,
+                    reason: reason,
+                    boss: bossName 
+                })
+            });
         });
 
-        showNotice("Przetwarzanie...", "info");
+        await Promise.all(bonusPromises);
         
-        // DODANIE LOGU
-        window.addSystemLog('PREMIA', `Wypłacono premię dla pracownika: ${employee} w kwocie: ${window.formatMoney(amount)}$ (Tytuł: ${reason || 'Brak tytułu'})`);
+        const empListString = selectedEmployees.join(', ');
+        if(typeof window.addSystemLog === 'function') {
+            window.addSystemLog('PREMIA ZBIORCZA', `Wypłacono premię (każdy po ${window.formatMoney ? window.formatMoney(amount) : amount}$) dla: ${empListString} (Tytuł: ${reason || 'Brak tytułu'})`);
+        }
 
         window.bonusesFetchPromise = null;
-        await loadBonusesToTable();
+        await window.loadBonusesToTable();
         window.reportsFetchPromise = null;
-        await loadRealData(); 
-        showNotice(`Wypłacono premię dla: ${employee}`, "success");
+        if(typeof loadRealData === 'function') await loadRealData(); 
+        
+        if(typeof showNotice === 'function') showNotice(`Sukces! Wypłacono premie dla ${selectedEmployees.length} osób.`, "success");
 
         amountInput.value = '';
         reasonInput.value = '';
-        empInput.value = '';
+        
+        selectedPills.forEach(pill => {
+            pill.classList.remove('selected');
+            pill.style.background = 'rgba(255,255,255,0.05)';
+            pill.style.color = 'var(--text-primary)';
+            pill.style.borderColor = 'rgba(255,255,255,0.1)';
+            pill.style.boxShadow = 'none';
+        });
+
     } catch (e) {
-        showNotice("Nie udało się zapisać premii!", "danger");
+        if(typeof showNotice === 'function') showNotice("Wystąpił błąd podczas nadawania premii!", "danger");
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-plus"></i> Wypłać';
+        btn.innerHTML = '<i class="fas fa-check-circle"></i> Zatwierdź i Wypłać';
     }
 }
 

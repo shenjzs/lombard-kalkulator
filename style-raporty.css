@@ -2873,6 +2873,22 @@ header h1 {
     animation: blinkText 1.5s infinite;
 }
 
+/* Niestandardowy suwak dla kafelków z pracownikami (Premie) */
+#new-bonus-emp-list::-webkit-scrollbar {
+    width: 6px;
+}
+#new-bonus-emp-list::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+}
+#new-bonus-emp-list::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 10px;
+}
+#new-bonus-emp-list::-webkit-scrollbar-thumb:hover {
+    background: #0284c7;
+}
+
 /* ==========================================================================
    STOPKA (FOOTER) - EL CARTEL
    ========================================================================== */

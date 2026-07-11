@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Statystyki</title>
-    <link rel="stylesheet" href="style-raporty.css?v=4.6.9">
+    <link rel="stylesheet" href="style-raporty.css?v=4.7.0">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -482,39 +482,89 @@
         </div>
     </div>
 
-    <div id="bonuses-manager-modal" class="emp-modal-overlay hidden">
-        <div class="emp-modal-content" style="max-width: 800px;">
+    <div id="bonuses-manager-modal" class="emp-modal-overlay hidden" style="z-index: 10015;">
+        <div class="emp-modal-content" style="max-width: 1000px;">
             <div class="emp-modal-header">
-                <h2 style="color: var(--warning);"><i class="fas fa-gift"></i> Panel premiowy</h2>
+                <h2 style="color: var(--warning);"><i class="fas fa-gift"></i> Panel zarządzania premiami</h2>
                 <button onclick="closeBonusesManager()" class="emp-close-btn"><i class="fas fa-times"></i></button>
             </div>
-            <div class="emp-modal-body">
-                <div class="emp-add-form" style="border-color: rgba(245, 158, 11, 0.3); background: rgba(245, 158, 11, 0.05);">
-                    <select id="new-bonus-emp" class="emp-input">
-                        <option value="">Wybierz pracownika...</option>
-                    </select>
-                    <input type="number" id="new-bonus-amount" placeholder="Kwota ($)" class="emp-input" style="flex: 0.5; text-align: center;">
-                    <input type="text" id="new-bonus-reason" placeholder="Tytuł" class="emp-input">
-                    <button onclick="addBonus()" id="add-bonus-btn" class="filter-btn success-btn" style="background: var(--warning); color: #000; border: none;">
-                        <i class="fas fa-plus"></i> Wypłać
-                    </button>
-                </div>
+            <div class="emp-modal-body" style="padding: 25px;">
                 
-                <div class="emp-table-container">
-                    <table class="modern-table emp-table">
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Pracownik</th>
-                                <th>Tytuł</th>
-                                <th style="text-align: right;">Kwota</th>
-                            </tr>
-                        </thead>
-                        <tbody id="bonuses-table-body">
-                            <tr><td colspan="4" style="text-align:center;">Ładowanie danych...</td></tr>
-                        </tbody>
-                    </table>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 25px;">
+                    <div style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 16px; padding: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <span style="font-size: 0.75rem; color: var(--warning); text-transform: uppercase; font-weight: 800; letter-spacing: 1px;">Suma wypłaconych premii</span>
+                        <span id="bm-total-bonuses" style="font-size: 1.8rem; font-weight: 900; color: white; margin-top: 3px;">0$</span>
+                    </div>
+                    <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 16px; padding: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <span style="font-size: 0.75rem; color: var(--accent-color); text-transform: uppercase; font-weight: 800; letter-spacing: 1px;">Łączna ilość wypłat</span>
+                        <span id="bm-total-count" style="font-size: 1.8rem; font-weight: 900; color: white; margin-top: 3px;">0</span>
+                    </div>
+                    <div style="background: rgba(34, 197, 94, 0.05); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 16px; padding: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <span style="font-size: 0.75rem; color: var(--success); text-transform: uppercase; font-weight: 800; letter-spacing: 1px;">Top nagradzany pracownik</span>
+                        <span id="bm-top-employee" style="font-size: 1.2rem; font-weight: 900; color: white; margin-top: 5px; text-align: center;">Brak danych</span>
+                    </div>
                 </div>
+
+                <div style="display: grid; grid-template-columns: 350px 1fr; gap: 25px; align-items: stretch;">
+                    
+                    <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 20px; display: flex; flex-direction: column;">
+                        <h3 style="font-size: 1rem; color: var(--text-primary); margin-bottom: 20px; display: flex; align-items: center; gap: 8px;"><i class="fas fa-hand-holding-usd" style="color: var(--warning);"></i> Kreator wypłaty</h3>
+                        
+                        <div class="input-group" style="margin-bottom: 15px;">
+                            <label>Wybierz pracowników (Kliknij, aby zaznaczyć/odznaczyć)</label>
+                            <div id="new-bonus-emp-list" style="display: flex; flex-wrap: wrap; gap: 8px; max-height: 140px; overflow-y: auto; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 12px; align-content: flex-start;">
+                                <span style="color: var(--text-secondary); font-size: 0.85rem;">Ładowanie listy...</span>
+                            </div>
+                        </div>
+
+                        <div class="input-group" style="margin-bottom: 15px;">
+                            <label>Kwota premii ($)</label>
+                            <input type="number" id="new-bonus-amount" placeholder="Wpisz kwotę ręcznie..." class="emp-input" style="width: 100%; text-align: left;">
+                            
+                            <div style="display: flex; gap: 5px; margin-top: 8px;">
+                                <button onclick="window.addBonusAmount(5000)" class="filter-btn" style="padding: 6px 0; font-size: 0.75rem; flex: 1; justify-content: center;">+5k</button>
+                                <button onclick="window.addBonusAmount(10000)" class="filter-btn" style="padding: 6px 0; font-size: 0.75rem; flex: 1; justify-content: center;">+10k</button>
+                                <button onclick="window.addBonusAmount(25000)" class="filter-btn" style="padding: 6px 0; font-size: 0.75rem; flex: 1; justify-content: center;">+25k</button>
+                                <button onclick="window.addBonusAmount(50000)" class="filter-btn" style="padding: 6px 0; font-size: 0.75rem; flex: 1; justify-content: center;">+50k</button>
+                            </div>
+                        </div>
+
+                        <div class="input-group" style="margin-bottom: auto;">
+                            <label>Tytuł</label>
+                            <input type="text" id="new-bonus-reason" placeholder="np. Premia" class="emp-input" style="width: 100%;">
+                        </div>
+
+                        <button onclick="addBonus()" id="add-bonus-btn" class="settings-save-btn" style="background: linear-gradient(135deg, var(--warning), #d97706); color: #000; border: none; width: 100%; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); margin-top: 20px;">
+                            <i class="fas fa-check-circle"></i> Wypłać
+                        </button>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 15px; border-left: 1px solid rgba(255,255,255,0.05); padding-left: 25px; height: 100%;">
+                        
+                        <div style="position: relative; flex-shrink: 0;">
+                            <i class="fas fa-search" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+                            <input type="text" id="bonus-search-input" placeholder="Wyszukaj w historii (np. imię pracownika, powód)..." class="emp-input" style="width: 100%; padding-left: 40px;" oninput="filterBonusesTable()">
+                        </div>
+                        
+                        <div class="emp-table-container" style="flex-grow: 1; max-height: 440px; height: 100%;">
+                            <table class="modern-table emp-table">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Pracownik</th>
+                                        <th>Tytuł</th>
+                                        <th style="text-align: right;">Kwota</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bonuses-table-body">
+                                    <tr><td colspan="4" style="text-align:center;">Ładowanie danych...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -642,7 +692,7 @@
     </div>
 
     <div id="toast-container" class="toast-container"></div>
-    <script src="raporty.js?v=4.6.9"></script>
+    <script src="raporty.js?v=4.7.0"></script>
     
     <div id="first-login-modal" class="emp-modal-overlay hidden" style="z-index: 10005;">
         <div class="emp-modal-content" style="max-width: 480px;">
