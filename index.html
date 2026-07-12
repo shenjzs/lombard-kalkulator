@@ -269,9 +269,12 @@
                 <div class="actions">
                     <button type="button" id="cart-toggle-btn-export" class="cart-toggle-btn"><i class="fas fa-shopping-cart"></i> Koszyk <span id="cart-badge-export" class="cart-badge">0</span></button>
                     <div class="input-field-group">
-                        <span class="field-label"><i class="fas fa-id-card"></i> SSN KLIENTA:</span>
-                        <input type="number" id="customer-ssn-input-export" placeholder="Opcjonalne" class="custom-input">
-                    </div>
+    <span class="field-label">
+        <i class="fas fa-id-card"></i> SSN KLIENTA: 
+        <i class="fas fa-question-circle" title="Jeżeli sprzedajesz towar klientowi to wpisz jego SSN, a jeżeli towar sprzedajesz u NPC zostaw to pole puste." style="cursor: help; color: var(--accent-color); margin-left: 3px; font-size: 0.8rem;"></i>
+    </span>
+    <input type="number" id="customer-ssn-input-export" placeholder="Opcjonalne" class="custom-input">
+</div>
                     <div class="button-group flex-gap10">
                         <button id="reset-btn-export" class="close-btn reset-export-padding"><i class="fas fa-trash-alt"></i></button>
                         <button id="quote-btn-export" class="quote-button"><i class="fas fa-file-invoice-dollar"></i> GENERUJ</button>
