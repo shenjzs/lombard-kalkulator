@@ -2467,6 +2467,12 @@ window.finalizeQuoteExport = function(employeeName) {
                     SPRZEDANO
                 </div>
             </div>
+
+            <!-- NOWY ELEMENT: Drobny druczek dla eksportu -->
+            <div class="micro-print-clause">
+                Kupujący akceptuje stan techniczny oraz wizualny przedmiotu. Towar używany, nie podlega gwarancji ani zwrotom, chyba że strony ustaliły inaczej w odrębnej umowie. Dokument wygenerowany elektronicznie w systemie El Cartel System.
+            </div>
+
         </div>
     `;
 

@@ -4205,6 +4205,18 @@ SMART WYSZUKIWARKA ALERTY
     font-weight: 900 !important;
 }
 
+.micro-print-clause {
+    font-size: 7.5px;
+    color: #888;
+    text-align: justify;
+    margin-top: 25px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    line-height: 1.4;
+    font-family: Arial, Helvetica, sans-serif;
+    text-transform: uppercase;
+}
+
 /* ==========================================================================
    PRZYCISK SAMOUCZKA OBOK KATEGORII
    ========================================================================== */
