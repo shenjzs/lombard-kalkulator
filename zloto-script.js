@@ -1,4 +1,4 @@
-const APP_VERSION = "4.7.0";
+const APP_VERSION = "4.7.1";
 
 // ==========================================
 // KONFIGURACJA
@@ -683,7 +683,7 @@ async function processSmelting() {
         ];
 
         const discordPayload = {
-        username: currentEmployeeName ? `${currentEmployeeName} | EL CARTEL` : "EL CARTEL SYSTEM",
+        username: currentEmployeeName ? `${currentEmployeeName}` : "EL CARTEL SYSTEM",
         avatar_url: currentEmployeeAvatar || "", // Bezpośrednie użycie gotowego, pełnego linku
         embeds: [
             {

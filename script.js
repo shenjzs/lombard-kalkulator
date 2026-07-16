@@ -1,4 +1,4 @@
-const APP_VERSION = "4.7.0";
+const APP_VERSION = "4.7.1";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const ALLOWED_DISCORD_ROLES = ["1518034647219572746", "1522969080481579148"];
@@ -1779,7 +1779,20 @@ function finalizeQuote(employeeName, finalPrice) {
                 const row = document.createElement('div');
                 row.className = 'receipt-row';
                 const calculatedItemTotal = Math.round(item.min * counts[i] * ratio);
-                row.innerHTML = `<span>${item.name} [x${counts[i]}]</span><span>${calculatedItemTotal}$</span>`;
+                
+                // Logika generująca miniaturę lub ikonę zastępczą
+                let imgHtml = item.image 
+                    ? `<img src="${item.image}" style="width: 28px; height: 28px; object-fit: contain;">` 
+                    : `<div style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: #94a3b8;"><i class="fas fa-box-open" style="font-size: 16px;"></i></div>`;
+
+                // Nowa struktura HTML wiersza - lewa strona (zdjęcie + nazwa) i prawa (cena)
+                row.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px; text-align: left;">
+                        ${imgHtml}
+                        <span>${item.name} [x${counts[i]}]</span>
+                    </div>
+                    <span>${calculatedItemTotal}$</span>
+                `;
                 itemsDiv.appendChild(row);
             }
         });
@@ -2355,27 +2368,38 @@ window.finalizeQuoteExport = function(employeeName) {
     // Logika Nabywcy
     const clientText = currentCustomerSSNExport !== "" ? `Klient detaliczny<br>SSN: ${currentCustomerSSNExport}` : "Kontrahent zewnętrzny";
 
-    // Filtrowanie i generowanie tabeli
+    // Filtrowanie i generowanie tabeli z pobieraniem zdjęć
     const activeItems = exportInventory.map((item, i) => {
         if (countsExport[i] > 0) {
             return {
                 name: item.isCustom ? (item.name || "Własny przedmiot") : item.name,
                 qty: countsExport[i],
                 price: item.price,
-                total: item.price * countsExport[i]
+                total: item.price * countsExport[i],
+                image: item.image || null // Zaciągamy link do obrazka
             };
         }
         return null;
     }).filter(item => item !== null);
 
-    let tableRowsHTML = activeItems.map((item) => `
+    let tableRowsHTML = activeItems.map((item) => {
+        // Logika generująca obrazek lub domyślną ikonę pudełka dla niestandardowych przedmiotów
+        let imgHtml = item.image 
+            ? `<img src="${item.image}" style="width: 32px; height: 32px; object-fit: contain; margin-right: 12px; vertical-align: middle;">` 
+            : `<div style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; margin-right: 12px; vertical-align: middle; color: #94a3b8;"><i class="fas fa-box-open" style="font-size: 18px;"></i></div>`;
+
+        return `
         <tr>
-            <td class="text-left">${item.name}</td>
-            <td class="text-center">${item.qty}</td>
-            <td class="text-center">${item.price}$</td>
-            <td class="text-right bold-text">${item.total}$</td>
+            <td class="text-left" style="white-space: nowrap;">
+                ${imgHtml}
+                <span style="vertical-align: middle;">${item.name}</span>
+            </td>
+            <td class="text-center" style="vertical-align: middle;">${item.qty}</td>
+            <td class="text-center" style="vertical-align: middle;">${item.price}$</td>
+            <td class="text-right bold-text" style="vertical-align: middle;">${item.total}$</td>
         </tr>
-    `).join('');
+        `;
+    }).join('');
 
     // Gotowy układ z podpisem i pieczątką na samym dole
     const receiptHTML = `
