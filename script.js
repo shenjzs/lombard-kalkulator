@@ -1,4 +1,4 @@
-const APP_VERSION = "4.7.2";
+const APP_VERSION = "4.8.2";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const ALLOWED_DISCORD_ROLES = ["1518034647219572746", "1522969080481579148"];
@@ -337,8 +337,12 @@ function getFormattedDateTime() {
 
 function parseDate(dateStr) {
     if (!dateStr) return new Date();
-    if (typeof dateStr === 'string' && dateStr.includes("T")) {
-        return new Date(dateStr); 
+    if (typeof dateStr === 'string') {
+        if (dateStr.includes("T")) return new Date(dateStr);
+        // Jeśli format to YYYY-MM-DD HH:mm:ss z Supabase
+        if (dateStr.includes("-")) {
+            return new Date(dateStr.replace(" ", "T"));
+        }
     }
     const parts = String(dateStr).split(" ");
     const dateParts = parts[0].split(".");
@@ -745,9 +749,9 @@ window.completeLoginFlow = function(userData, empData, btnElement, originalBtnCo
                     if (typeof updateOnlineEmployees === 'function') updateOnlineEmployees(); 
                 }).catch(e => console.error(e));
             
-            if (typeof onlineCheckInterval !== 'undefined' && onlineCheckInterval) clearInterval(onlineCheckInterval);
+            if (onlineCheckInterval) clearInterval(onlineCheckInterval);
             if (typeof updateOnlineEmployees === 'function') {
-                window.onlineCheckInterval = setInterval(updateOnlineEmployees, 60000);
+                onlineCheckInterval = setInterval(updateOnlineEmployees, 60000);
             }
 
             // --- LIVE ROLE CHECK (WYKOPANIE Z PANELU PO UTRACIE RANGI) ---
@@ -858,7 +862,10 @@ window.logout = function() {
         resetCartAndInventory();
         resetCartAndInventoryExport();
         
-        clearInterval(onlineCheckInterval);
+        if (onlineCheckInterval) {
+            clearInterval(onlineCheckInterval);
+            onlineCheckInterval = null;
+        }
         const widget = document.getElementById('online-employees-widget');
         if (widget) widget.classList.add('hidden');
 
@@ -903,10 +910,11 @@ window.clearCartExportWithUndo = function() {
 window.restoreCart = function() {
     if (!window.undoStateSkup) return;
     
-    // 1. Przywracamy dane z pamięci
+    // 1. Przywracamy dane z pamięci do zmiennych globalnych
     inventory = JSON.parse(JSON.stringify(window.undoStateSkup.inventory));
     counts = JSON.parse(JSON.stringify(window.undoStateSkup.counts));
     
+    // 2. Przywracamy dane do DOM
     const ssnInput = document.getElementById('customer-ssn-input');
     if(ssnInput) ssnInput.value = window.undoStateSkup.ssn;
     currentCustomerSSN = window.undoStateSkup.ssn;
@@ -914,12 +922,17 @@ window.restoreCart = function() {
     const priceInput = document.getElementById('final-price-input');
     if(priceInput) priceInput.value = window.undoStateSkup.price;
     
-    // 2. Czyścimy pamięć i odświeżamy widok
-    window.undoStateSkup = null;
+    // 3. KLUCZOWY KROK: Musisz wymusić synchronizację przywróconych danych z obiektem zakładki!
+    // Bez tego system uważa, że zakładka jest pusta.
+    window.saveCurrentTabState('skup'); 
+    
+    // 4. Odświeżamy widoki
     renderInventory();
     calculateTotal();
+    updateCartView(); 
     
-    // 3. Zamykamy powiadomienie ratunkowe
+    window.undoStateSkup = null;
+    
     const activeUndo = document.getElementById('undo-toast-skup');
     if(activeUndo) activeUndo.remove();
     
@@ -929,16 +942,27 @@ window.restoreCart = function() {
 window.restoreCartExport = function() {
     if (!window.undoStateExport) return;
     
+    // 1. Przywracamy dane z pamięci do zmiennych globalnych
     exportInventory = JSON.parse(JSON.stringify(window.undoStateExport.exportInventory));
     countsExport = JSON.parse(JSON.stringify(window.undoStateExport.countsExport));
     
+    // 2. Przywracamy dane do DOM
     const ssnInput = document.getElementById('customer-ssn-input-export');
     if(ssnInput) ssnInput.value = window.undoStateExport.ssn;
     currentCustomerSSNExport = window.undoStateExport.ssn;
     
-    window.undoStateExport = null;
+    // 3. Zapis zakładki dokładnie w tym samym miejscu co w skupie (przed odświeżeniem)
+    window.saveCurrentTabState('export'); 
+    
+    // 4. Odświeżamy widoki
     renderInventoryExport();
     calculateTotalExport();
+    
+    // UWAGA: Skup ma tutaj wywołanie updateCartView(); 
+    // Jeśli w eksporcie masz analogiczną funkcję do odświeżania bocznego panelu (np. updateCartViewExport), 
+    // koniecznie dopisz ją poniżej. Nie dodaję jej, aby nie ingerować w Twój kod w ciemno.
+    
+    window.undoStateExport = null;
     
     const activeUndo = document.getElementById('undo-toast-export');
     if(activeUndo) activeUndo.remove();
@@ -1111,7 +1135,27 @@ function renderInventory() {
     const customCards = [];
     const normalCards = [];
 
-    inventory.forEach((item, index) => {
+    // --- LOGIKA SORTOWANIA INDEKSÓW ---
+    let indices = inventory.map((_, i) => i);
+    
+    if (window.currentSortSkup === 'price-asc') {
+        indices.sort((a, b) => (inventory[a].min || 0) - (inventory[b].min || 0));
+    } else if (window.currentSortSkup === 'price-desc') {
+        indices.sort((a, b) => (inventory[b].min || 0) - (inventory[a].min || 0));
+    } else if (window.currentSortSkup === 'trend') {
+        const getTrendScore = (name) => {
+            const trend = window.productTrendsSkup ? window.productTrendsSkup[String(name).toLowerCase().trim()] : 'nodata';
+            if (trend === 'up') return 3;
+            if (trend === 'neutral') return 2;
+            if (trend === 'nodata') return 1;
+            if (trend === 'down') return 0;
+            return 1;
+        };
+        indices.sort((a, b) => getTrendScore(inventory[b].name) - getTrendScore(inventory[a].name));
+    }
+
+    indices.forEach(index => {
+        const item = inventory[index];
         if(counts[index] === undefined) counts[index] = 0;
         const card = document.createElement('div');
         let cardClass = showImagesSkup ? 'item-card show-images' : 'item-card';
@@ -1308,6 +1352,7 @@ window.updateCount = function(index, change) {
     }
     calculateTotal();
     window.triggerPulseEffect('total-price', 'cart-badge');
+    window.saveCurrentTabState('skup');
 }
 
 window.handleInput = function(index, value) {
@@ -1342,21 +1387,119 @@ window.exportTabs = [];
 window.activeExportTabId = null;
 
 window.initTabs = function() {
-    skupTabs = [];
-    exportTabs = [];
+    // 1. Zabezpieczamy kopie zapasowe z localStorage NA SAMYM POCZĄTKU
+    const savedSkup = localStorage.getItem('elcartel_skup_tabs_backup');
+    const savedExport = localStorage.getItem('elcartel_export_tabs_backup');
     
-    // Czysta karta dla Skupu
+    // Zabezpieczamy też informacje o tym, która zakładka była aktywna
+    const savedSkupActiveId = localStorage.getItem('elcartel_skup_active_tab');
+    const savedExportActiveId = localStorage.getItem('elcartel_export_active_tab');
+
+    // 2. Ładujemy czyste karty
+    skupTabs = [];
     const newSkupId = "skup_" + Date.now();
     skupTabs.push(createEmptyTabObj(newSkupId, "Klient 1", 'skup'));
     activeSkupTabId = newSkupId;
 
-    // Czysta karta dla Sprzedaży
+    exportTabs = [];
     const newExpId = "export_" + Date.now();
     exportTabs.push(createEmptyTabObj(newExpId, "Klient 1", 'export'));
     activeExportTabId = newExpId;
     
+    // To nadpisze localStorage pustym stanem, ale mamy stare kopie w zmiennych wyżej!
     loadTabState(activeSkupTabId, 'skup');
     loadTabState(activeExportTabId, 'export');
+
+    // 3. Sprawdzamy czy zgrane kopie zawierają jakieś przedmioty
+    if (savedSkup || savedExport) {
+        let hasItems = false;
+        try {
+            if (savedSkup) {
+                const parsedSkup = JSON.parse(savedSkup);
+                hasItems = hasItems || parsedSkup.some(tab => Object.values(tab.counts || {}).reduce((a, b) => a + b, 0) > 0);
+            }
+            if (savedExport && !hasItems) {
+                const parsedExport = JSON.parse(savedExport);
+                hasItems = hasItems || parsedExport.some(tab => Object.values(tab.countsExport || {}).reduce((a, b) => a + b, 0) > 0);
+            }
+        } catch(e) {}
+
+        if (hasItems) {
+            window.showRestorePrompt(savedSkup, savedExport, savedSkupActiveId, savedExportActiveId);
+        }
+    }
+};
+
+window.showRestorePrompt = function(savedSkup, savedExport, savedSkupActiveId, savedExportActiveId) {
+    const t = document.createElement('div');
+    t.style.position = 'fixed';
+    t.style.top = '0';
+    t.style.left = '0';
+    t.style.width = '100vw';
+    t.style.height = '100vh';
+    t.style.backgroundColor = 'rgba(0, 0, 0, 0.75)';
+    t.style.backdropFilter = 'blur(4px)';
+    t.style.display = 'flex';
+    t.style.alignItems = 'center';
+    t.style.justifyContent = 'center';
+    t.style.zIndex = '99999';
+    t.style.transition = 'opacity 0.3s ease';
+    t.style.opacity = '1';
+
+    t.innerHTML = `
+        <div style="background: var(--bg-card, #1e1e2e); border: 1px solid var(--border-color, #333); border-radius: 12px; padding: 25px 30px; max-width: 450px; width: 90%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 20px; align-items: center; text-align: center; color: #fff;">
+            <div style="font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-save" style="font-size: 1.4rem;"></i> Wykryto porzucone rachunki. Przywrócić koszyk?
+            </div>
+            <div style="display: flex; gap: 15px; width: 100%;">
+                <button id="btn-restore-yes" style="background: var(--success, #28a745); border: none; color: #fff; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1; transition: 0.2s; font-size: 1rem;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"><i class="fas fa-check"></i> Tak</button>
+                <button id="btn-restore-no" style="background: var(--danger, #dc3545); border: none; color: #fff; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1; transition: 0.2s; font-size: 1rem;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"><i class="fas fa-times"></i> Nie</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(t);
+    window.playSystemSound('notification');
+
+    document.getElementById('btn-restore-yes').addEventListener('click', () => {
+        try {
+            // Najpierw przywracamy w całości SKUP i ładujemy UI
+            if (savedSkup) {
+                const parsedSkup = JSON.parse(savedSkup);
+                if (parsedSkup.length > 0) {
+                    skupTabs = parsedSkup;
+                    activeSkupTabId = (savedSkupActiveId && skupTabs.some(tab => tab.id === savedSkupActiveId)) ? savedSkupActiveId : skupTabs[0].id;
+                    loadTabState(activeSkupTabId, 'skup');
+                }
+            }
+            // Następnie przywracamy w całości EXPORT i ładujemy UI
+            if (savedExport) {
+                const parsedExport = JSON.parse(savedExport);
+                if (parsedExport.length > 0) {
+                    exportTabs = parsedExport;
+                    activeExportTabId = (savedExportActiveId && exportTabs.some(tab => tab.id === savedExportActiveId)) ? savedExportActiveId : exportTabs[0].id;
+                    loadTabState(activeExportTabId, 'export');
+                }
+            }
+            
+            renderTabsUI();
+            showNotice("Przywrócono poprzedni stan koszyka!", "success");
+        } catch(e) {
+            showNotice("Błąd przywracania koszyka.", "danger");
+        }
+        t.style.opacity = '0';
+        setTimeout(() => t.remove(), 300);
+    });
+
+    document.getElementById('btn-restore-no').addEventListener('click', () => {
+        localStorage.removeItem('elcartel_skup_tabs_backup');
+        localStorage.removeItem('elcartel_export_tabs_backup');
+        localStorage.removeItem('elcartel_skup_active_tab');
+        localStorage.removeItem('elcartel_export_active_tab');
+        t.style.opacity = '0';
+        setTimeout(() => t.remove(), 300);
+        showNotice("Odrzucono kopię zapasową.", "info");
+    });
 };
 
 function createEmptyTabObj(id, name, type) {
@@ -1385,6 +1528,10 @@ window.saveCurrentTabState = function(viewType = currentActiveView) {
             const priceInput = document.getElementById('final-price-input');
             tab.finalPrice = priceInput ? priceInput.value : "";
         }
+        // AUTO-ZAPIS SKUPU W TLE
+        localStorage.setItem('elcartel_skup_tabs_backup', JSON.stringify(skupTabs));
+        localStorage.setItem('elcartel_skup_active_tab', activeSkupTabId);
+        
     } else if (viewType === 'export') {
         if (!activeExportTabId) return;
         let tab = exportTabs.find(t => t.id === activeExportTabId);
@@ -1394,6 +1541,9 @@ window.saveCurrentTabState = function(viewType = currentActiveView) {
             const ssnInput = document.getElementById('customer-ssn-input-export');
             tab.ssn = ssnInput ? ssnInput.value : "";
         }
+        // AUTO-ZAPIS SPRZEDAŻY W TLE
+        localStorage.setItem('elcartel_export_tabs_backup', JSON.stringify(exportTabs));
+        localStorage.setItem('elcartel_export_active_tab', activeExportTabId);
     }
 };
 
@@ -1402,15 +1552,17 @@ window.loadTabState = function(tabId, viewType = currentActiveView) {
         let tab = skupTabs.find(t => t.id === tabId);
         if (!tab) return;
         activeSkupTabId = tabId;
-        inventory = JSON.parse(JSON.stringify(tab.inventory));
-        counts = JSON.parse(JSON.stringify(tab.counts));
+        
+        // ZABEZPIECZENIE: Jeśli kopia w pamięci jest pusta, ładuje domyślny asortyment
+        inventory = (tab.inventory && tab.inventory.length > 0) ? JSON.parse(JSON.stringify(tab.inventory)) : JSON.parse(JSON.stringify(defaultInventory));
+        counts = tab.counts ? JSON.parse(JSON.stringify(tab.counts)) : {};
         
         const ssnInput = document.getElementById('customer-ssn-input');
-        if (ssnInput) ssnInput.value = tab.ssn;
-        currentCustomerSSN = tab.ssn;
+        if (ssnInput) ssnInput.value = tab.ssn || "";
+        currentCustomerSSN = tab.ssn || "";
         
         const priceInput = document.getElementById('final-price-input');
-        if (priceInput) priceInput.value = tab.finalPrice;
+        if (priceInput) priceInput.value = tab.finalPrice || "";
 
         renderInventory();
         calculateTotal();
@@ -1418,12 +1570,14 @@ window.loadTabState = function(tabId, viewType = currentActiveView) {
         let tab = exportTabs.find(t => t.id === tabId);
         if (!tab) return;
         activeExportTabId = tabId;
-        exportInventory = JSON.parse(JSON.stringify(tab.exportInventory));
-        countsExport = JSON.parse(JSON.stringify(tab.countsExport));
+        
+        // ZABEZPIECZENIE: Jeśli kopia w pamięci jest pusta, ładuje domyślny asortyment exportu
+        exportInventory = (tab.exportInventory && tab.exportInventory.length > 0) ? JSON.parse(JSON.stringify(tab.exportInventory)) : JSON.parse(JSON.stringify(defaultExportInventory));
+        countsExport = tab.countsExport ? JSON.parse(JSON.stringify(tab.countsExport)) : {};
         
         const ssnInput = document.getElementById('customer-ssn-input-export');
-        if (ssnInput) ssnInput.value = tab.ssn;
-        currentCustomerSSNExport = tab.ssn;
+        if (ssnInput) ssnInput.value = tab.ssn || "";
+        currentCustomerSSNExport = tab.ssn || "";
 
         renderInventoryExport();
         calculateTotalExport();
@@ -1501,6 +1655,10 @@ window.closeTab = function(tabId, viewType, event) {
     
     const idx = targetArr.findIndex(t => t.id === tabId);
     targetArr.splice(idx, 1);
+    
+    // AKTUALIZACJA KOPII ZAPASOWEJ PO USUNIĘCIU ZAKŁADKI
+    if (viewType === 'skup') localStorage.setItem('elcartel_skup_tabs_backup', JSON.stringify(skupTabs));
+    else localStorage.setItem('elcartel_export_tabs_backup', JSON.stringify(exportTabs));
     
     if (activeId === tabId) {
         const nextTab = targetArr[idx - 1] || targetArr[0];
@@ -1684,6 +1842,16 @@ function updateCartView() {
     // --- NOWE: Błyskawiczne odświeżanie paska zakładek i kropki ---
     if (typeof window.renderTabsUI === 'function') {
         window.renderTabsUI();
+    }
+    
+    // --- FLOATING ACTION BAR: Pokaż/ukryj resztę paska ---
+    const summaryBar = document.getElementById('summary-bar');
+    if (summaryBar) {
+        if (totalItems > 0) {
+            summaryBar.classList.add('has-items');
+        } else {
+            summaryBar.classList.remove('has-items');
+        }
     }
 }
 
@@ -2112,7 +2280,8 @@ function initExport() {
     list.innerHTML = '';
     const headerDateExport = document.getElementById('header-date-export');
     if(headerDateExport) headerDateExport.innerText = getFormattedDate();
-    resetCartAndInventoryExport();
+    
+    // UWAGA: Usunięto resetCartAndInventoryExport(), żeby nie niszczył przywróconych danych!
     
     // Czeka na dane o trendach i odświeża widok eksportu
     updateProductTrends().then(() => renderInventoryExport());
@@ -2148,7 +2317,27 @@ function renderInventoryExport() {
     const customCards = [];
     const normalCards = [];
 
-    exportInventory.forEach((item, index) => {
+    // --- LOGIKA SORTOWANIA INDEKSÓW EXPORTU ---
+    let indices = exportInventory.map((_, i) => i);
+    
+    if (window.currentSortExport === 'price-asc') {
+        indices.sort((a, b) => (exportInventory[a].price || 0) - (exportInventory[b].price || 0));
+    } else if (window.currentSortExport === 'price-desc') {
+        indices.sort((a, b) => (exportInventory[b].price || 0) - (exportInventory[a].price || 0));
+    } else if (window.currentSortExport === 'trend') {
+        const getTrendScore = (name) => {
+            const trend = window.productTrendsExport ? window.productTrendsExport[String(name).toLowerCase().trim()] : 'nodata';
+            if (trend === 'up') return 3;
+            if (trend === 'neutral') return 2;
+            if (trend === 'nodata') return 1;
+            if (trend === 'down') return 0;
+            return 1;
+        };
+        indices.sort((a, b) => getTrendScore(exportInventory[b].name) - getTrendScore(exportInventory[a].name));
+    }
+
+    indices.forEach(index => {
+        const item = exportInventory[index];
         if(countsExport[index] === undefined) countsExport[index] = 0;
         const card = document.createElement('div');
         let cardClass = showImagesExport ? 'item-card show-images' : 'item-card';
@@ -2256,6 +2445,7 @@ window.updateCountExport = function(index, change) {
     }
     calculateTotalExport();
     window.triggerPulseEffect('total-price-export', 'cart-badge-export');
+    window.saveCurrentTabState('export');
 }
 
 window.handleInputExport = function(i, value) {
@@ -2317,6 +2507,16 @@ window.updateCartViewExport = function() {
             // --- NOWE: Błyskawiczne odświeżanie paska zakładek i kropki w Sprzedaży ---
             if (typeof window.renderTabsUI === 'function') {
                 window.renderTabsUI();
+            }
+            
+            // --- FLOATING ACTION BAR EXPORT: Pokaż/ukryj resztę paska ---
+            const summaryBarExport = document.getElementById('summary-bar-export');
+            if (summaryBarExport) {
+                if (totalItems > 0) {
+                    summaryBarExport.classList.add('has-items');
+                } else {
+                    summaryBarExport.classList.remove('has-items');
+                }
             }
         };
 
@@ -4212,9 +4412,20 @@ function renderOnlineWidget(onlineData) {
     widget.classList.remove('hidden');
     let html = '';
     
+    // Pobieramy wyczyszczoną nazwę korzystając bezpośrednio z globalnej zmiennej
+    const myCleanName = typeof currentEmployeeName !== 'undefined' && currentEmployeeName 
+        ? String(currentEmployeeName).replace(/\s*\([^)]+\)/g, '').trim() 
+        : "";
+
     onlineData.forEach((user, index) => {
-        const emp = window.currentEmployeesList.find(e => e.name === user.name);
-        const photo = (emp && emp.photo) ? emp.photo : ''; 
+        // Szukamy po ic_name lub name w globalnej liście
+        const emp = window.currentEmployeesList ? window.currentEmployeesList.find(e => (e.ic_name || e.name) === user.name) : null;
+        
+        // ZMIANA: Porównujemy imię i jeśli to Ty, bierzemy currentEmployeePhoto z sesji
+        const photo = (user.name === myCleanName && typeof currentEmployeePhoto !== 'undefined' && currentEmployeePhoto) 
+            ? currentEmployeePhoto 
+            : (emp ? (emp.avatar_url || emp.photo || '') : ''); 
+        
         const avatarHtml = photo 
             ? `<img src="${photo}" class="online-avatar">` 
             : `<div class="online-avatar" style="display:flex; justify-content:center; align-items:center; background:var(--border-color); color:var(--text-secondary); font-size:1.2rem; width:100%; height:100%; border-radius:50%;"><i class="fas fa-user"></i></div>`;
@@ -4745,6 +4956,25 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.target.checked) {
                 window.playSystemSound('info'); // Krótkie piknięcie testowe przy włączeniu
             }
+        });
+    }
+
+    // Uruchomienie mechanizmu Sortowania
+    window.currentSortSkup = 'default';
+    const sortSelectSkup = document.getElementById('sort-select-skup');
+    if (sortSelectSkup) {
+        sortSelectSkup.addEventListener('change', (e) => {
+            window.currentSortSkup = e.target.value;
+            renderInventory();
+        });
+    }
+
+    window.currentSortExport = 'default';
+    const sortSelectExport = document.getElementById('sort-select-export');
+    if (sortSelectExport) {
+        sortSelectExport.addEventListener('change', (e) => {
+            window.currentSortExport = e.target.value;
+            renderInventoryExport();
         });
     }
 });

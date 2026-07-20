@@ -4140,6 +4140,79 @@ body:has(.modal.active) {
     font-weight: 800 !important;
 }
 
+.summary-bar {
+            position: fixed !important;
+            bottom: 30px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            width: auto !important;
+            min-width: 250px;
+            max-width: 95vw;
+            border-radius: 50px !important;
+            backdrop-filter: blur(15px) !important;
+            -webkit-backdrop-filter: blur(15px) !important;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6) !important;
+            padding: 12px 35px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 20px !important;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            z-index: 9999 !important;
+        }
+
+        /* Kolor dla kasy SKUP (Ciemny granat) */
+        #summary-bar {
+            background: rgba(15, 23, 42, 0.85) !important; 
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+
+        /* Kolor dla kasy SPRZEDAŻ (Ciemny brąz z pomarańczowym blaskiem) */
+        #summary-bar-export {
+            background: rgba(45, 27, 27, 0.9) !important; 
+            border: 1px solid rgba(245, 158, 11, 0.4) !important; 
+        }
+
+        /* Ukrycie starego przycisku wysuwania paska mobilnego */
+        #mobile-toggle-btn, #summary-toggle-export {
+            display: none !important;
+        }
+
+        /* Przyciski i pola ukryte domyślnie (szerokość 0) */
+        .summary-actions, .actions {
+            display: flex !important;
+            align-items: center !important;
+            gap: 15px !important;
+            max-width: 0px;
+            opacity: 0;
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+        }
+
+        /* Gdy koszyk ma przedmioty -> klasa .has-items płynnie "rozsuwa" pasek na boki */
+        .summary-bar.has-items .summary-actions,
+        .summary-bar.has-items .actions {
+            max-width: 1200px;
+            opacity: 1;
+            overflow: visible;
+        }
+
+        /* Poprawki estetyczne by elementy się nie łamały w trakcie animacji */
+        .total-group, .total-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+            margin: 0 !important;
+        }
+
+        .summary-bar input.custom-input {
+            border-radius: 20px !important;
+            background: rgba(0,0,0,0.3) !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+        }
+
 /* ==========================================================================
    FAKTURA EXPORT - DOKŁADNIE ODWZOROWANA ZE SCREENA
    ========================================================================== */

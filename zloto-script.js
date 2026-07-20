@@ -1,4 +1,4 @@
-const APP_VERSION = "4.7.2";
+const APP_VERSION = "4.8.2";
 
 // ==========================================
 // KONFIGURACJA

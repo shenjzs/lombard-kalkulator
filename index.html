@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Kasa fiskalna</title>
-    <link id="theme-style" rel="stylesheet" href="style.css?v=4.7.2">
+    <link id="theme-style" rel="stylesheet" href="style.css?v=4.8.2">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -167,6 +167,13 @@
             </label>
             <span class="image-toggle-label"><i class="fas fa-image"></i></span>
         </div>
+        <!-- Pasek sortowania SKUP -->
+        <select id="sort-select-skup" class="custom-input" style="padding: 4px 8px; font-size: 0.8rem; margin-left: 10px; height: 32px; width: 140px; cursor: pointer;">
+            <option value="default">Domyślnie</option>
+            <option value="price-desc">Od najdroższych</option>
+            <option value="price-asc">Od najtańszych</option>
+            <option value="trend">Popularne</option>
+        </select>
     </div>
     <button id="add-custom-slot-btn" class="add-custom-slot-btn">+ NIESTANDARDOWY PRODUKT</button>
 </div>
@@ -246,20 +253,27 @@
                 </div>
 
                 <div class="asortyment-header">
-                    <div class="flex-align-center-gap12">
-                        <h3 class="asortyment-title">ASORTYMENT</h3>
-                        <div class="image-toggle-wrapper">
-                            <label class="image-switch" title="Włącz/wyłącz zdjęcia produktów">
-                                <input type="checkbox" id="toggle-images-export">
-                                <span class="image-slider"></span>
-                            </label>
-                            <span class="image-toggle-label"><i class="fas fa-image"></i></span>
-                        </div>
-                    </div>
-                    <button id="add-custom-slot-btn-export" class="custom-product-btn">+ NIESTANDARDOWY PRODUKT</button>
-                </div>
+    <div class="flex-align-center-gap12">
+        <h3 class="asortyment-title">ASORTYMENT</h3>
+        <div class="image-toggle-wrapper">
+            <label class="image-switch" title="Włącz/wyłącz zdjęcia produktów">
+                <input type="checkbox" id="toggle-images-export">
+                <span class="image-slider"></span>
+            </label>
+            <span class="image-toggle-label"><i class="fas fa-image"></i></span>
+        </div>
+        <!-- Pasek sortowania EXPORT -->
+        <select id="sort-select-export" class="custom-input" style="padding: 4px 8px; font-size: 0.8rem; margin-left: 10px; height: 32px; width: 140px; cursor: pointer;">
+            <option value="default">Domyślnie</option>
+            <option value="price-desc">Od najdroższych</option>
+            <option value="price-asc">Od najtańszych</option>
+            <option value="trend">Popularne</option>
+        </select>
+    </div>
+    <button id="add-custom-slot-btn-export" class="custom-product-btn">+ NIESTANDARDOWY PRODUKT</button>
+</div>
 
-                <div id="items-list-export" class="items-grid"></div>
+<div id="items-list-export" class="items-grid"></div>
             </div>
 
             <div class="summary-bar" id="summary-bar-export">
@@ -878,7 +892,7 @@
     <audio id="sound-notification" src="sounds/notification.mp3" preload="auto"></audio>
 	
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js"></script>
-    <script src="script.js?v=4.7.2"></script>
+    <script src="script.js?v=4.8.2"></script>
 	<footer class="cartel-footer">
         <div class="footer-content">
             <p>&copy; 2026 El Cartel Pawn Shop. Wszelkie prawa zastrzeżone.</p>
