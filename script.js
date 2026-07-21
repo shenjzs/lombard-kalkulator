@@ -2882,7 +2882,7 @@ async function fetchChangelogData() {
                 grouped[r.report_id].items.push(r.name);
             });
             
-            const sortedVersions = Object.keys(grouped).reverse();
+            const sortedVersions = Object.keys(grouped).sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
             const container = document.getElementById('dynamic-changelog-container');
             if(container && sortedVersions.length > 0) {
                 LATEST_CHANGELOG_VERSION = sortedVersions[0]; 
@@ -2904,11 +2904,19 @@ async function fetchChangelogData() {
                     let listHtml = "";
                     let displayVersion = v.startsWith('v') ? v.substring(1) : v;
                     
+                    // Sortujemy punkty, aby ułożyły się wg ukrytych indeksów
+                    grouped[v].items.sort();
+                    
                     grouped[v].items.forEach(itemStr => {
                         let tag = "INFO", desc = itemStr;
                         if(itemStr.includes('|||')) {
                             const parts = itemStr.split('|||');
-                            tag = parts[0]; desc = parts[1];
+                            tag = parts[0]; 
+                            desc = parts[1];
+                            // Odcinamy ukryty indeks przed wyświetleniem
+                            if (/^\d{3}#/.test(tag)) {
+                                tag = tag.substring(4);
+                            }
                         }
                         let clClass = "cl-tag";
                         if (tag === "NOWOŚĆ") clClass = "cl-new";
@@ -2998,11 +3006,13 @@ window.publishChangelog = async function() {
     if (rows.length === 0) return showNotice("Dodaj co najmniej jedną zmianę!", "warning");
     
     let itemsToLog = [], valid = true;
-    rows.forEach(row => {
+    rows.forEach((row, index) => {
         const tag = row.querySelector('.admin-change-tag').value;
         const desc = row.querySelector('.admin-change-desc').value.trim();
         if (!desc) valid = false;
-        itemsToLog.push({ name: `${tag}|||${desc}`, qty: 1, total: 0 });
+        // Dodajemy ukryty indeks do tagu (np. 000#, 001#)
+        const sortPrefix = String(index).padStart(3, '0');
+        itemsToLog.push({ name: `${sortPrefix}#${tag}|||${desc}`, qty: 1, total: 0 });
     });
     
     if (!valid) return showNotice("Wypełnij opisy!", "warning");
@@ -3034,9 +3044,21 @@ window.openEditChangelog = function(version, itemsJson) {
     
     const container = document.getElementById('edit-cl-changes-list');
     container.innerHTML = "";
+    
+    // Utrzymanie odpowiedniej kolejności kafelków w edytorze
+    items.sort();
+    
     items.forEach(itemStr => {
         let tag = "INFO", desc = itemStr;
-        if(itemStr.includes('|||')) { const parts = itemStr.split('|||'); tag = parts[0]; desc = parts[1]; }
+        if(itemStr.includes('|||')) { 
+            const parts = itemStr.split('|||'); 
+            tag = parts[0]; 
+            desc = parts[1]; 
+            // Ukrycie systemowych prefiksów w kafelkach selektora
+            if (/^\d{3}#/.test(tag)) {
+                tag = tag.substring(4);
+            }
+        }
         const div = document.createElement('div');
         div.className = "admin-change-slot-layout";
         div.draggable = true;
@@ -3085,11 +3107,13 @@ window.saveEditedChangelog = async function() {
     if(rows.length === 0) return showNotice("Podaj chociaż jedną zmianę!", "warning");
     
     let itemsToLog = [], valid = true;
-    rows.forEach(row => {
+    rows.forEach((row, index) => {
         const tag = row.querySelector('.admin-change-tag').value;
         const desc = row.querySelector('.admin-change-desc').value.trim();
         if(!desc) valid = false;
-        itemsToLog.push({ name: `${tag}|||${desc}`, qty: 1, total: 0 });
+        // Dodajemy ukryty indeks do tagu
+        const sortPrefix = String(index).padStart(3, '0');
+        itemsToLog.push({ name: `${sortPrefix}#${tag}|||${desc}`, qty: 1, total: 0 });
     });
     
     if(!valid) return showNotice("Wypełnij opisy!", "warning");
@@ -4830,26 +4854,45 @@ document.addEventListener('DOMContentLoaded', () => {
         const list = document.getElementById(listId);
         if (!list) return;
 
+        // POPRAWKA: Dynamiczna kontrola atrybutu draggable
+        list.addEventListener('mousedown', e => {
+            const slot = e.target.closest('.admin-change-slot-layout');
+            if (!slot) return;
+            
+            // Włącz przeciąganie TYLKO jeśli kliknięto w kropki (uchwyt)
+            if (e.target.closest('.drag-handle')) {
+                slot.setAttribute('draggable', 'true');
+            } else {
+                // Zablokuj przeciąganie, pozwalając na normalne używanie pól tekstowych
+                slot.removeAttribute('draggable');
+            }
+        });
+
         // Moment złapania kafelka myszką
         list.addEventListener('dragstart', e => {
             const slot = e.target.closest('.admin-change-slot-layout');
             if (!slot) return;
             draggingSlot = slot;
-            // Lekkie ściemnienie, by było widać, co aktualnie trzymamy
-            setTimeout(() => slot.style.opacity = '0.4', 0);
+            
+            setTimeout(() => {
+                slot.classList.add('is-dragging');
+                slot.style.opacity = '0.4';
+            }, 0);
         });
 
         // Upuszczenie kafelka
         list.addEventListener('dragend', e => {
             if (draggingSlot) {
+                draggingSlot.classList.remove('is-dragging');
                 draggingSlot.style.opacity = '1';
+                draggingSlot.removeAttribute('draggable'); // Zdejmujemy atrybut po upuszczeniu
                 draggingSlot = null;
             }
         });
 
         // Najeżdżanie trzymanym kafelkiem na inne elementy
         list.addEventListener('dragover', e => {
-            e.preventDefault(); // Wymagane, żeby pozwolić na upuszczenie
+            e.preventDefault(); 
             if (!draggingSlot) return;
             
             const afterElement = getDragAfterElement(list, e.clientY);
@@ -4861,9 +4904,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // Matematyka: Sprawdzanie, nad którym kafelkiem znajduje się myszka i czy przesunąć to nad, czy pod niego
+// Matematyka: Sprawdzanie, nad którym kafelkiem znajduje się myszka i czy przesunąć to nad, czy pod niego
     function getDragAfterElement(container, y) {
-        const draggableElements = [...container.querySelectorAll('.admin-change-slot-layout:not([style*="opacity: 0.4"])')];
+        // POPRAWKA: Użycie niezawodnego selektora klasy .is-dragging zamiast stylów inline
+        const draggableElements = [...container.querySelectorAll('.admin-change-slot-layout:not(.is-dragging)')];
         
         return draggableElements.reduce((closest, child) => {
             const box = child.getBoundingClientRect();
