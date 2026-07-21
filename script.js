@@ -5522,13 +5522,21 @@ window.startTutorial = function() {
 
     // 1. Sprawdzamy w jakiej zakładce jesteśmy
     const isSkup = currentActiveView === 'skup';
+
+    // --- NOWOŚĆ: Automatyczne dodanie przedmiotu do koszyka, aby wysunąć pasek ---
+    if (isSkup) {
+        window.updateCount(0, 1); 
+    } else {
+        window.updateCountExport(0, 1);
+    }
+
     let tutorialSteps = [];
 
     // Szukamy elementu z dynamiczną ceną na żywo
     const dynamicSkupPrice = document.querySelector('#view-skup .item-card:not(.custom-card-special) .custom-item-price');
     const dynamicExportPrice = document.querySelector('#view-export .item-card:not(.custom-item) .custom-price-input');
 
-    // 2. Ładujemy odpowiednią pulę celów
+    // 2. Ładujemy odpowiednią pulę celów (Z zachowaniem poprawek wycelowanych prosto w inputy)
     if (isSkup) {
         tutorialSteps = [
             { title: "Witaj w El Cartel! 👋", intro: "Ten krótki samouczek pokaże Ci, jak sprawnie obsługiwać kasę fiskalną. Kliknij <b>Dalej</b>, aby rozpocząć." },
@@ -5539,8 +5547,8 @@ window.startTutorial = function() {
             { element: document.getElementById('add-custom-slot-btn'), title: "Niestandardowy produkt", intro: "Jeśli klient przyniesie przedmiot spoza bazy, użyj tego przycisku.", position: 'top' },
             { element: dynamicSkupPrice || document.body, title: "Dynamiczna cena", intro: "Niektóre przedmioty nie mają sztywnej ceny (np. dekodery). Wpisz w tym polu wynegocjowaną kwotę.", position: 'top' },
             { element: document.getElementById('cart-toggle-btn'), title: "Koszyk transakcji", intro: "Każdy przedmiot, który dodasz ikonką '+', trafi do koszyka. Kliknij ten przycisk przed wydrukiem by go sprawdzić." },
-            { element: document.getElementById('customer-ssn-input')?.parentElement || document.body, title: "Karty lojalnościowe", intro: "Jeśli klient podał Ci swój numer <b>SSN</b>, wpisz go tutaj! System automatycznie przyzna mu pieczątki." },
-            { element: document.getElementById('final-price-input')?.parentElement || document.body, title: "Kwota transakcji", intro: "W tym polu wprowadź ostateczną sumę transakcji wynikającą z wyceny wszystkich dodanych przedmiotów." },
+            { element: document.getElementById('customer-ssn-input') || document.body, title: "Karty lojalnościowe", intro: "Jeśli klient podał Ci swój numer <b>SSN</b>, wpisz go tutaj! System automatycznie przyzna mu pieczątki." },
+            { element: document.getElementById('final-price-input') || document.body, title: "Kwota transakcji", intro: "W tym polu wprowadź ostateczną sumę transakcji wynikającą z wyceny wszystkich dodanych przedmiotów." },
             { element: document.getElementById('quote-btn'), title: "Wydruk paragonu", intro: "Kliknij ten przycisk, a system wygeneruje paragon i wyśle na Discord.<br><br><b>Miłej zmiany!</b>", position: 'top' }
         ];
     } else {
@@ -5550,7 +5558,7 @@ window.startTutorial = function() {
             { element: document.querySelector('#view-export .search-container'), title: "Wyszukiwarka", intro: "Możesz od razu wyszukać przedmiot lub błyskawicznie go dodać wpisując np. (katana x2) i wciskając Enter." },
             { element: document.getElementById('add-custom-slot-btn-export'), title: "Własny produkt", intro: "Sprzedajesz coś spoza katalogu? Użyj tego przycisku by dodać własny wpis na paragon.", position: 'top' },
             { element: document.getElementById('cart-toggle-btn-export'), title: "Koszyk sprzedaży", intro: "Tu podejrzysz asortyment przygotowany do wydania." },
-            { element: document.getElementById('customer-ssn-input-export')?.parentElement || document.body, title: "SSN Nabywcy", intro: "Sprzedajesz towar graczowi? Wpisz jego SSN. Jeżeli wywozisz towar do NPC - zostaw te pole puste." },
+            { element: document.getElementById('customer-ssn-input-export') || document.body, title: "SSN Nabywcy", intro: "Sprzedajesz towar graczowi? Wpisz jego SSN. Jeżeli wywozisz towar do NPC - zostaw te pole puste." },
             { element: document.getElementById('quote-btn-export'), title: "Generuj raport", intro: "Kliknij, aby wysłać raport na Discord i automatycznie ściągnąć przedmioty ze stanu magazynowego.<br><br><b>Miłej sprzedaży!</b>", position: 'top' }
         ];
     }
@@ -5562,7 +5570,7 @@ window.startTutorial = function() {
         showStepNumbers: false,
         showBullets: true,
         exitOnOverlayClick: false, 
-        scrollToElement: false, // KLUCZ: Wyłączamy scrollowanie przez Intro.js, robimy to ręcznie!
+        scrollToElement: false,
         steps: tutorialSteps
     });
 
@@ -5576,10 +5584,7 @@ window.startTutorial = function() {
             }
 
             if (targetElement && targetElement !== document.body) {
-                // Przewijamy stronę ręcznie na środek ekranu
                 targetElement.scrollIntoView({ behavior: 'auto', block: 'center' });
-                
-                // Czekamy 450ms, aż animacja paska nawigacji (0.4s) CAŁKOWICIE się zakończy
                 setTimeout(() => resolve(), 450);
             } else {
                 resolve();
@@ -5588,12 +5593,10 @@ window.startTutorial = function() {
     });
 
     tutorial.onafterchange(function(targetElement) {
-        // Twarde wymuszenie odświeżenia pozycji dymka by zapobiec zjawisku "uciekającej ramki"
         setTimeout(() => tutorial.refresh(), 100);
         setTimeout(() => tutorial.refresh(), 400);
     });
 
-    // Zabezpieczenie przed niewidocznym ciemnym tekstem - dynamiczny wybór koloru tła
     const fixColors = () => {
         const bgHex = isSkup ? '#1e293b' : '#2d1b1b';
         document.querySelectorAll('.introjs-tooltip').forEach(t => {
@@ -5607,6 +5610,19 @@ window.startTutorial = function() {
 
     tutorial.onchange(fixColors);
     tutorial.onafterchange(fixColors);
+
+    // --- NOWOŚĆ: Czyszczenie koszyka po zakończeniu lub wymuszeniu wyjścia z samouczka ---
+    const clearTutorialCart = () => {
+        if (isSkup) {
+            resetCartAndInventory();
+        } else {
+            resetCartAndInventoryExport();
+        }
+    };
+
+    tutorial.oncomplete(clearTutorialCart);
+    tutorial.onexit(clearTutorialCart);
+    // -----------------------------------------------------------------------------------
 
     tutorial.start();
 };
