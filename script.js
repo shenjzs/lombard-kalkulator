@@ -204,7 +204,7 @@ const defaultInventory = [
 	{ name: "Sztabka srebra", min: 950, max: 950, category: "surowce", image: "", slots: 2, maxStack: 5 },
 	{ name: "Sztabka tytanu", min: 1200, max: 1200, category: "surowce", image: "", slots: 2, maxStack: 5 },
 	{ name: "Kamień duszy", min: 2000, max: 2000, category: "surowce", image: "", slots: 2, maxStack: 5 },
-	{ name: "Samorodek złota", min: 10000, max: 10000, category: "surowce", image: "https://img.realmgaming.eu/onbeat/items/gold_ore.webp", slots: 2, maxStack: 5 },
+	{ name: "Samorodek złota", min: 10000, max: 10000, category: "surowce", image: "https://img.realmgaming.eu/onbeat/items/gold_ore.webp", slots: 2, maxStack: 5, isDisabled: true, disabledReason: "Możecie skupować ale chuj wie po ile, bo 10k na pewno nie jest warte." },
     { name: "Zdobiona zapalniczka", min: 0, max: 0, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/metallighter.webp", dynamicPrice: true, slots: 2, maxStack: 1 },
     { name: "Złoty zegarek", min: 0, max: 0, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/zloty_zegarek.webp", dynamicPrice: true, slots: 1, maxStack: 5 },
     { name: "Dziwny telefon", min: 0, max: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/trapphone.webp", dynamicPrice: true, slots: 2, maxStack: 5 },
@@ -284,7 +284,7 @@ const defaultExportInventory = [
 	{ name: "Sztabka srebra", price: 1140, category: "surowce", image: "", slots: 2, maxStack: 5 },
 	{ name: "Sztabka tytanu", price: 1440, category: "surowce", image: "", slots: 2, maxStack: 5 },
 	{ name: "Kamień duszy", price: 2640, category: "surowce", image: "", slots: 2, maxStack: 5 },
-	{ name: "Samorodek złota", price: 20000, category: "surowce", image: "https://img.realmgaming.eu/onbeat/items/gold_ore.webp", slots: 2, maxStack: 5 },
+{ name: "Samorodek złota", price: 20000, category: "surowce", image: "https://img.realmgaming.eu/onbeat/items/gold_ore.webp", slots: 2, maxStack: 5 },
     { name: "Zdobiona zapalniczka", price: 22, category: "inne", image: "https://img.realmgaming.eu/onbeat/items/metallighter.webp", slots: 2, maxStack: 1 },
     { name: "Złoty zegarek", price: 0, category: "biżuteria", image: "https://img.realmgaming.eu/onbeat/items/zloty_zegarek.webp", dynamicPrice: true, slots: 1, maxStack: 5 },
     { name: "Dziwny telefon", price: 0, category: "elektronika", image: "https://img.realmgaming.eu/onbeat/items/trapphone.webp", dynamicPrice: true, slots: 2, maxStack: 5 },
@@ -1182,6 +1182,17 @@ function renderInventory() {
 } else {
             card.className = cardClass;
             
+            // --- NOWOŚĆ: Logika zablokowanych przedmiotów ---
+            let disabledBadge = '';
+            let disableAttr = '';
+            
+            if (item.isDisabled) {
+                card.classList.add('disabled-item');
+                disabledBadge = `<div class="disabled-badge" title="Powód: ${item.disabledReason || 'Wstrzymane przez zarząd'}"><i class="fas fa-lock"></i> WSTRZYMANE</div>`;
+                disableAttr = 'disabled readonly';
+            }
+            // ------------------------------------------------
+            
             let trendHtml = '';
             const nameLow = String(item.name).toLowerCase().trim();
             const trend = window.productTrendsSkup ? window.productTrendsSkup[nameLow] : null;
@@ -1207,6 +1218,7 @@ function renderInventory() {
             }
 
             card.innerHTML = `
+                ${disabledBadge}
                 <div class="item-left-side">
                     ${imageHtml}
                     <div class="item-info">
@@ -1218,9 +1230,9 @@ function renderInventory() {
                     </div>
                 </div>
                 <div class="controls">
-                    <button class="btn-circle minus" data-action="minus" data-index="${index}">-</button>
-                    <input type="number" class="quantity-input" data-index="${index}" value="${counts[index]}" min="0">
-                    <button class="btn-circle plus" data-action="add" data-index="${index}">+</button>
+                    <button class="btn-circle minus" data-action="minus" data-index="${index}" ${disableAttr}>-</button>
+                    <input type="number" class="quantity-input" data-index="${index}" value="${counts[index]}" min="0" ${disableAttr}>
+                    <button class="btn-circle plus" data-action="add" data-index="${index}" ${disableAttr}>+</button>
                 </div>
             `;
             normalCards.push(card);
@@ -2365,6 +2377,17 @@ function renderInventoryExport() {
 } else {
             card.className = cardClass;
             
+            // --- NOWOŚĆ: Logika zablokowanych przedmiotów (Export) ---
+            let disabledBadge = '';
+            let disableAttr = '';
+            
+            if (item.isDisabled) {
+                card.classList.add('disabled-item');
+                disabledBadge = `<div class="disabled-badge" title="Powód: ${item.disabledReason || 'Wstrzymane przez zarząd'}"><i class="fas fa-lock"></i> WSTRZYMANE</div>`;
+                disableAttr = 'disabled readonly';
+            }
+            // ---------------------------------------------------------
+            
             let trendHtml = '';
             const nameLow = String(item.name).toLowerCase().trim();
             const trend = window.productTrendsExport ? window.productTrendsExport[nameLow] : null;
@@ -2391,6 +2414,7 @@ function renderInventoryExport() {
             }
 
             card.innerHTML = `
+                ${disabledBadge}
                 <div class="item-left-side">
                     ${imageHtml}
                     <div class="item-info">
@@ -2402,9 +2426,9 @@ function renderInventoryExport() {
                     </div>
                 </div>
                 <div class="controls">
-                    <button class="btn-circle minus" data-action="minus" data-index="${index}">-</button>
-                    <input type="number" class="quantity-input" data-index="${index}" value="${countsExport[index]}" min="0">
-                    <button class="btn-circle plus" data-action="add" data-index="${index}">+</button>
+                    <button class="btn-circle minus" data-action="minus" data-index="${index}" ${disableAttr}>-</button>
+                    <input type="number" class="quantity-input" data-index="${index}" value="${countsExport[index]}" min="0" ${disableAttr}>
+                    <button class="btn-circle plus" data-action="add" data-index="${index}" ${disableAttr}>+</button>
                 </div>
             `;
             normalCards.push(card);

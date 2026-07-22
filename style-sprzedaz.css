@@ -4456,3 +4456,38 @@ body:has(.modal.active) {
     letter-spacing: 2px; /* Lepsze rozstrzelenie liter */
     display: inline-block;
 }
+
+/* --- ZABLOKOWANE PRZEDMIOTY --- */
+.item-card.disabled-item {
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px dashed rgba(239, 68, 68, 0.3);
+    position: relative;
+}
+
+.item-card.disabled-item .item-left-side {
+    opacity: 0.4;
+    filter: grayscale(100%);
+}
+
+.item-card.disabled-item .controls {
+    opacity: 0.4;
+    pointer-events: none; /* Blokuje kliknięcia w zablokowane przyciski */
+}
+
+.disabled-badge {
+    position: absolute;
+    top: 6px;        /* Zmieniono z -10px na dodatnią wartość, żeby weszło do środka */
+    right: 6px;      /* Zmieniono z -10px na dodatnią wartość */
+    background: var(--danger, #ef4444);
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    z-index: 10;
+    cursor: help;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
