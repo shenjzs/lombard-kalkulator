@@ -23,8 +23,8 @@ let currentActiveView = 'skup';
 
 let showImagesSkup = localStorage.getItem('elcartel_images_skup') !== 'false';
 let showImagesExport = localStorage.getItem('elcartel_images_export') !== 'false';
-let showDynamicSkup = localStorage.getItem('elcartel_dynamic_skup') === 'true'; // Domyślnie wyłączone
-let showDynamicExport = localStorage.getItem('elcartel_dynamic_export') === 'true'; // Domyślnie wyłączone
+let showDynamicSkup = localStorage.getItem('elcartel_dynamic_skup') !== 'false'; // Domyślnie włączone
+let showDynamicExport = localStorage.getItem('elcartel_dynamic_export') !== 'false'; // Domyślnie włączone
 
 let myStatsRawData = [];
 let myBonusesRawData = [];
