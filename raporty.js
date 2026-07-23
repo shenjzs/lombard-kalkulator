@@ -2965,6 +2965,7 @@ window.sendReportToDiscord = async function() {
 
             const payload = {
                 username: currentEmployeeName ? `${currentEmployeeName}` : "Szef zarządu",
+                content: "<@&1500558699239047300>", // <--- Oznaczenie roli na Discordzie
                 embeds: [{
                     title: "🏛️ PROTOKÓŁ ANALITYCZNY ZARZĄDU EL CARTEL",
                     description: `Dokładne zestawienie operacji finansowych dla okresu:\n📅 **${dFrom || "Początek"} — ${dTo || "Dziś"}**\n👤 Analizowani: **${empSelectValue === "ALL" ? "Wszyscy pracownicy" : empSelectValue}**`,
