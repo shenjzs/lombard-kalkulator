@@ -4491,3 +4491,95 @@ body:has(.modal.active) {
     align-items: center;
     gap: 5px;
 }
+
+/* Custom Dropdown Sortowania */
+.custom-dropdown {
+    position: relative;
+    margin-left: 5px;
+    font-size: 0.8rem;
+    user-select: none;
+}
+.custom-dropdown-trigger {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 0 12px;
+    height: 32px;
+    cursor: pointer;
+    transition: 0.2s ease;
+    gap: 8px;
+}
+.custom-dropdown-trigger:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+.custom-dropdown-trigger .sort-icon {
+    color: var(--text-secondary);
+}
+.custom-dropdown-trigger .arrow-icon {
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    transition: transform 0.2s ease;
+}
+.custom-dropdown.open .arrow-icon {
+    transform: rotate(180deg);
+}
+.custom-dropdown-text {
+    color: #fff;
+    font-weight: 600;
+	width: 120px; /* Zwiększona szerokość */
+    white-space: nowrap; /* To wymusza tekst w jednej linii */
+}
+.custom-dropdown-options {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+    z-index: 100;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    min-width: 150px;
+}
+.custom-dropdown.open .custom-dropdown-options {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+.custom-dropdown-option {
+    padding: 10px 14px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: 0.2s;
+    font-weight: 500;
+}
+.custom-dropdown-option:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+}
+.custom-dropdown-option.selected {
+    color: var(--accent-color);
+    background: rgba(255, 255, 255, 0.03);
+    font-weight: 600;
+}
+/* Custom Dropdown - Motyw Sprzedaży (Brązowy) */
+.custom-dropdown-options {
+    background: #221414; /* Ciemnobrązowe tło dopasowane do kart */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.custom-dropdown-option:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+}
+
+.custom-dropdown-option.selected {
+    color: var(--accent-color); /* Zachowa pomarańczowy/złoty z motywu sprzedaży */
+    background: rgba(255, 255, 255, 0.03);
+}

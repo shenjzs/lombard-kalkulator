@@ -1,4 +1,4 @@
-const APP_VERSION = "4.8.2";
+const APP_VERSION = "4.8.3";
 let LATEST_CHANGELOG_VERSION = APP_VERSION; 
 
 const ALLOWED_DISCORD_ROLES = ["1518034647219572746", "1522969080481579148"];
@@ -23,6 +23,8 @@ let currentActiveView = 'skup';
 
 let showImagesSkup = localStorage.getItem('elcartel_images_skup') !== 'false';
 let showImagesExport = localStorage.getItem('elcartel_images_export') !== 'false';
+let showDynamicSkup = localStorage.getItem('elcartel_dynamic_skup') === 'true'; // Domyślnie wyłączone
+let showDynamicExport = localStorage.getItem('elcartel_dynamic_export') === 'true'; // Domyślnie wyłączone
 
 let myStatsRawData = [];
 let myBonusesRawData = [];
@@ -1158,6 +1160,11 @@ function renderInventory() {
     indices.forEach(index => {
         const item = inventory[index];
         if(counts[index] === undefined) counts[index] = 0;
+        
+        // Ukryj przedmioty z dynamiczną ceną, jeśli przełącznik jest wyłączony, 
+        // CHYBA ŻE są już dodane do koszyka (counts > 0)
+        if (item.dynamicPrice && !showDynamicSkup && counts[index] === 0) return;
+
         const card = document.createElement('div');
         let cardClass = showImagesSkup ? 'item-card show-images' : 'item-card';
         card.setAttribute('data-category', item.category);
@@ -2352,6 +2359,11 @@ function renderInventoryExport() {
     indices.forEach(index => {
         const item = exportInventory[index];
         if(countsExport[index] === undefined) countsExport[index] = 0;
+
+        // Ukryj przedmioty z dynamiczną ceną, jeśli przełącznik jest wyłączony, 
+        // CHYBA ŻE są już dodane do koszyka (countsExport > 0)
+        if (item.dynamicPrice && !showDynamicExport && countsExport[index] === 0) return;
+
         const card = document.createElement('div');
         let cardClass = showImagesExport ? 'item-card show-images' : 'item-card';
         card.setAttribute('data-category', item.category);
@@ -5016,6 +5028,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const toggleDynamicSkup = document.getElementById('toggle-dynamic-skup');
+    if (toggleDynamicSkup) {
+        toggleDynamicSkup.checked = showDynamicSkup;
+        toggleDynamicSkup.addEventListener('change', (e) => {
+            showDynamicSkup = e.target.checked;
+            localStorage.setItem('elcartel_dynamic_skup', showDynamicSkup);
+            renderInventory();
+        });
+    }
+
+    const toggleDynamicExport = document.getElementById('toggle-dynamic-export');
+    if (toggleDynamicExport) {
+        toggleDynamicExport.checked = showDynamicExport;
+        toggleDynamicExport.addEventListener('change', (e) => {
+            showDynamicExport = e.target.checked;
+            localStorage.setItem('elcartel_dynamic_export', showDynamicExport);
+            renderInventoryExport();
+        });
+    }
+
     // --- OBSŁUGA PRZEŁĄCZNIKA DŹWIĘKÓW W USTAWIENIACH ---
     const toggleAudio = document.getElementById('toggle-audio-settings');
     if (toggleAudio) {
@@ -5028,24 +5060,60 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Uruchomienie mechanizmu Sortowania
+    // Uruchomienie mechanizmu Sortowania (Custom Dropdown)
     window.currentSortSkup = 'default';
-    const sortSelectSkup = document.getElementById('sort-select-skup');
-    if (sortSelectSkup) {
-        sortSelectSkup.addEventListener('change', (e) => {
-            window.currentSortSkup = e.target.value;
-            renderInventory();
-        });
-    }
-
     window.currentSortExport = 'default';
-    const sortSelectExport = document.getElementById('sort-select-export');
-    if (sortSelectExport) {
-        sortSelectExport.addEventListener('change', (e) => {
-            window.currentSortExport = e.target.value;
-            renderInventoryExport();
+
+    function setupCustomDropdown(dropdownId, sortType) {
+        const dropdown = document.getElementById(dropdownId);
+        if (!dropdown) return;
+        
+        const trigger = dropdown.querySelector('.custom-dropdown-trigger');
+        const options = dropdown.querySelectorAll('.custom-dropdown-option');
+        const textEl = dropdown.querySelector('.custom-dropdown-text');
+        
+        // Otwieranie / zamykanie
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Najpierw zamknij inne otwarte dropdowny
+            document.querySelectorAll('.custom-dropdown.open').forEach(d => {
+                if (d !== dropdown) d.classList.remove('open');
+            });
+            dropdown.classList.toggle('open');
+        });
+        
+        // Wybór opcji z listy
+        options.forEach(opt => {
+            opt.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const val = opt.getAttribute('data-value');
+                const text = opt.innerText;
+                
+                // Zmiana tekstu i stylów wybranej opcji
+                textEl.innerText = text;
+                options.forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+                dropdown.classList.remove('open');
+                
+                // Odpalenie prawdziwego sortowania w pamięci
+                if (sortType === 'skup') {
+                    window.currentSortSkup = val;
+                    renderInventory();
+                } else if (sortType === 'export') {
+                    window.currentSortExport = val;
+                    renderInventoryExport();
+                }
+            });
         });
     }
+    
+    setupCustomDropdown('sort-dropdown-skup', 'skup');
+    setupCustomDropdown('sort-dropdown-export', 'export');
+    
+    // Zamykanie listy po kliknięciu gdziekolwiek indziej na ekranie
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.custom-dropdown.open').forEach(d => d.classList.remove('open'));
+    });
 });
 
 /* ==========================================================================

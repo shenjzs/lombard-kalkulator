@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>El Cartel | Kasa fiskalna</title>
-    <link id="theme-style" rel="stylesheet" href="style.css?v=4.8.2">
+    <link id="theme-style" rel="stylesheet" href="style.css?v=4.8.3">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -167,13 +167,27 @@
             </label>
             <span class="image-toggle-label"><i class="fas fa-image"></i></span>
         </div>
+        <div class="image-toggle-wrapper" style="margin-left: 5px;">
+            <label class="image-switch" title="Pokaż/ukryj przedmioty do ręcznej wyceny">
+                <input type="checkbox" id="toggle-dynamic-skup">
+                <span class="image-slider"></span>
+            </label>
+            <span class="image-toggle-label"><i class="fas fa-tag"></i></span>
+        </div>
         <!-- Pasek sortowania SKUP -->
-        <select id="sort-select-skup" class="custom-input" style="padding: 4px 8px; font-size: 0.8rem; margin-left: 10px; height: 32px; width: 140px; cursor: pointer;">
-            <option value="default">Domyślnie</option>
-            <option value="price-desc">Od najdroższych</option>
-            <option value="price-asc">Od najtańszych</option>
-            <option value="trend">Popularne</option>
-        </select>
+        <div class="custom-dropdown" id="sort-dropdown-skup">
+            <div class="custom-dropdown-trigger">
+                <i class="fas fa-sort-amount-down sort-icon"></i>
+                <span class="custom-dropdown-text">Domyślnie</span>
+                <i class="fas fa-chevron-down arrow-icon"></i>
+            </div>
+            <div class="custom-dropdown-options">
+                <div class="custom-dropdown-option selected" data-value="default">Domyślnie</div>
+                <div class="custom-dropdown-option" data-value="price-desc">Od najdroższych</div>
+                <div class="custom-dropdown-option" data-value="price-asc">Od najtańszych</div>
+                <div class="custom-dropdown-option" data-value="trend">Popularne</div>
+            </div>
+        </div>
     </div>
     <button id="add-custom-slot-btn" class="add-custom-slot-btn">+ NIESTANDARDOWY PRODUKT</button>
 </div>
@@ -262,13 +276,27 @@
             </label>
             <span class="image-toggle-label"><i class="fas fa-image"></i></span>
         </div>
+        <div class="image-toggle-wrapper" style="margin-left: 5px;">
+            <label class="image-switch" title="Pokaż/ukryj przedmioty do ręcznej wyceny">
+                <input type="checkbox" id="toggle-dynamic-export">
+                <span class="image-slider"></span>
+            </label>
+            <span class="image-toggle-label"><i class="fas fa-tag"></i></span>
+        </div>
         <!-- Pasek sortowania EXPORT -->
-        <select id="sort-select-export" class="custom-input" style="padding: 4px 8px; font-size: 0.8rem; margin-left: 10px; height: 32px; width: 140px; cursor: pointer;">
-            <option value="default">Domyślnie</option>
-            <option value="price-desc">Od najdroższych</option>
-            <option value="price-asc">Od najtańszych</option>
-            <option value="trend">Popularne</option>
-        </select>
+        <div class="custom-dropdown" id="sort-dropdown-export">
+            <div class="custom-dropdown-trigger">
+                <i class="fas fa-sort-amount-down sort-icon"></i>
+                <span class="custom-dropdown-text">Domyślnie</span>
+                <i class="fas fa-chevron-down arrow-icon"></i>
+            </div>
+            <div class="custom-dropdown-options">
+                <div class="custom-dropdown-option selected" data-value="default">Domyślnie</div>
+                <div class="custom-dropdown-option" data-value="price-desc">Od najdroższych</div>
+                <div class="custom-dropdown-option" data-value="price-asc">Od najtańszych</div>
+                <div class="custom-dropdown-option" data-value="trend">Popularne</div>
+            </div>
+        </div>
     </div>
     <button id="add-custom-slot-btn-export" class="custom-product-btn">+ NIESTANDARDOWY PRODUKT</button>
 </div>
@@ -892,7 +920,7 @@
     <audio id="sound-notification" src="sounds/notification.mp3" preload="auto"></audio>
 	
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js"></script>
-    <script src="script.js?v=4.8.2"></script>
+    <script src="script.js?v=4.8.3"></script>
 	<footer class="cartel-footer">
         <div class="footer-content">
             <p>&copy; 2026 El Cartel Pawn Shop. Wszelkie prawa zastrzeżone.</p>
